@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '7';
+const VERSION = '8';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -86,8 +86,8 @@ function refreshCosts() {
 }
 
 /* --- costs --- */
-const permitCost = () => Math.round(150 * Math.pow(1.4, S.recruits));
-const bedCost = () => Math.round(400 * Math.pow(1.45, S.beds - 5));
+const permitCost = () => Math.round(250 * Math.pow(1.55, S.recruits));
+const bedCost = () => Math.round(600 * Math.pow(1.6, S.beds - 5));
 const wheelCost = () => Math.round(3000 * Math.pow(1.3, S.wheels));
 const xpNeed = l => Math.round(30 * Math.pow(1.75, l - 1));
 const money = n => `<span class="money">${ic('coin')}${fmt(n)}</span>`;
