@@ -224,12 +224,29 @@ const TILE_ART = {
   edelweiss(c) { circ(c, 0, 4, 11, '#9ccc65', false); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; ell(c, Math.cos(a) * 6, -1 + Math.sin(a) * 6, 5, 2.4, '#fafafa', true, a); } circ(c, 0, -1, 3.4, '#fff59d'); },
   snow(c) { circ(c, 0, 2, 12, '#e3f2fd'); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; line(c, 0, 0, Math.cos(a) * 11, Math.sin(a) * 11, '#90caf9', 1.6); line(c, Math.cos(a) * 6, Math.sin(a) * 6, Math.cos(a + .5) * 9, Math.sin(a + .5) * 9, '#90caf9', 1.2); } circ(c, 0, 0, 2.4, '#ffffff'); }
 };
+const FLOWER = {
+  cloud: { p: '#ffffff', p2: '#e9ecfb', c: '#ffcf4d' },
+  spice: { p: '#ff5d5d', p2: '#ff9a7a', c: '#ffd166' },
+  ice:   { p: '#45aee6', p2: '#9edcff', c: '#ffffff' }
+};
+function drawFlower(c, col, lv) {
+  const F = FLOWER[col], R = [0, 7, 8.5, 10, 11.5, 12.5][lv];
+  if (lv >= 2) { ell(c, -9, 7, 6, 2.6, '#5aab4f', true, .5); ell(c, 9, 7, 6, 2.6, '#4c9a45', true, -.5); }
+  if (lv >= 5) { c.save(); c.globalAlpha = .35; circ(c, 0, 0, R + 6, '#ffe36e', false); c.restore(); }
+  const n = [0, 5, 6, 7, 8, 9][lv];
+  for (let i = 0; i < n; i++) { const a = i / n * TAU - Math.PI / 2; ell(c, Math.cos(a) * R * .55, Math.sin(a) * R * .55, R * .58, R * .38, F.p, true, a); }
+  if (lv >= 3) for (let i = 0; i < n; i++) { const a = (i + .5) / n * TAU - Math.PI / 2; ell(c, Math.cos(a) * R * .33, Math.sin(a) * R * .33, R * .38, R * .25, F.p2, true, a); }
+  circ(c, 0, 0, R * (lv >= 4 ? .3 : .26), F.c);
+  if (lv >= 4) circ(c, -R * .08, -R * .1, R * .1, 'rgba(255,255,255,.8)', false);
+  if (lv >= 5) for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + .4; circ(c, Math.cos(a) * (R + 3), Math.sin(a) * (R + 3), 1.3, '#fff3a6', false); }
+}
 const TILE_CACHE = {};
-function tileSprite(art) {
-  if (TILE_CACHE[art]) return TILE_CACHE[art];
+function flowerSprite(col, lv) {
+  const k = col + lv;
+  if (TILE_CACHE[k]) return TILE_CACHE[k];
   const s = 96, cv = document.createElement('canvas'); cv.width = cv.height = s;
-  const c = cv.getContext('2d'); c.translate(s / 2, s / 2); c.scale(2.2, 2.2); TILE_ART[art](c);
-  return (TILE_CACHE[art] = cv);
+  const c = cv.getContext('2d'); c.translate(s / 2, s / 2); c.scale(2.6, 2.6); drawFlower(c, col, lv);
+  return (TILE_CACHE[k] = cv);
 }
 
 /* ---------------- portraits for UI ---------------- */
@@ -248,41 +265,77 @@ function portrait(id, blessed) {
 }
 
 /* ---------------- teahouse ---------------- */
+const ROOF = ['#8c9bb0', '#4aa564', '#3489c9', '#d9534f', '#e8b33a'];
+function roofShape(c, w, y, h, col) {
+  P(c); c.moveTo(-w / 2 - 14, y); c.lineTo(w / 2 + 14, y); c.lineTo(w / 2 - 8, y - h); c.lineTo(-w / 2 + 8, y - h); c.closePath(); fs(c, col, 2.4);
+  rr(c, -w / 2 + 10, y - h - 1, w - 20, 5, 2.5, 'rgba(255,255,255,.35)', false);
+  line(c, -w / 2 - 10, y - 3, w / 2 + 10, y - 3, 'rgba(0,0,0,.15)', 3);
+}
 function drawTeahouse(c, tier, t) {
-  const W = [130, 170, 200, 250, 280][tier], H = [60, 72, 104, 110, 120][tier];
-  const wall = ['#b08968', '#8d99ae', '#e9d8a6', '#f1e3c8', '#b5302f'][tier];
-  const roof = ['#7f8fa6', '#2e7d32', '#1e6091', '#c0392b', '#e1b12c'][tier];
-  c.save();
-  ell(c, 0, 6, W * .62, 16, 'rgba(0,0,0,.18)', false);
-  if (tier >= 3) { rr(c, W / 2 - 10, -H * .55, 70, H * .55, 4, wall); poly(c, [W / 2 - 16, -H * .55, W / 2 + 66, -H * .55, W / 2 + 54, -H * .55 - 26, W / 2 - 4, -H * .55 - 26], roof); for (let i = 0; i < 2; i++) rr(c, W / 2 + 6 + i * 26, -H * .4, 14, 14, 2, '#ffe39e'); }
-  rr(c, -W / 2, -H, W, H, 6, wall);
-  if (tier >= 1) for (let i = 0; i < W / 18; i++) rr(c, -W / 2 + 4 + i * 18, -10, 14, 8, 2, 'rgba(0,0,0,.08)', false);
-  if (tier >= 2) { rr(c, -W / 2 - 6, -H * .55, W + 12, 6, 2, '#7f5539'); for (let i = 0; i < 9; i++) line(c, -W / 2 + i * W / 8, -H * .55, -W / 2 + i * W / 8, -H * .55 + 14, '#7f5539', 2); }
-  const levels = tier === 4 ? 3 : 1;
-  for (let L = 0; L < levels; L++) {
-    const w = W + 24 - L * 60, y = -H - L * 34, rh = tier === 4 ? 30 : 38;
-    poly(c, [-w / 2, y, w / 2, y, w / 2 - 22, y - rh, -w / 2 + 22, y - rh], roof);
-    if (tier === 4) { poly(c, [-w / 2 - 6, y, -w / 2 + 6, y - 6, -w / 2 + 10, y], roof); poly(c, [w / 2 + 6, y, w / 2 - 6, y - 6, w / 2 - 10, y], roof); }
+  const W = [120, 140, 150, 160, 170][tier], H = 58, rc = ROOF[tier];
+  ell(c, 0, 4, W * .7, 14, 'rgba(0,0,0,.16)', false);
+  if (tier >= 3) {                                  // side wing
+    rr(c, W / 2 - 6, -40, 56, 40, 4, '#efe2c8'); roofShape(c, 56, -40, 18, rc); c.save(); c.translate(W / 2 + 22, 0); rr(c, -8, -30, 16, 14, 3, '#ffe6a3'); c.restore();
   }
-  if (tier === 4) { line(c, 0, -H - 3 * 34 + 4, 0, -H - 3 * 34 - 22, '#ffd24a', 4); circ(c, 0, -H - 3 * 34 - 24, 5, '#ffd24a'); }
-  if (tier === 0) { rr(c, W / 2 - 30, -H - 52, 10, 20, 2, '#636e72'); }
-  else { rr(c, W / 2 - 38, -H - 50 - (tier === 4 ? 60 : 0), 12, 22, 2, '#6d4c41'); }
-  rr(c, -12, -38, 24, 38, 4, '#6d4c41'); circ(c, 7, -19, 1.6, '#ffd24a', false);
-  const win = (x, y) => { rr(c, x, y, 18, 16, 3, '#ffe39e'); line(c, x + 9, y, x + 9, y + 16, '#7f5539', 1.6); };
-  win(-W / 2 + 12, -H + 16); win(W / 2 - 30, -H + 16);
-  if (tier >= 2) { win(-W / 2 + 12, -H * .45 + 6); win(W / 2 - 30, -H * .45 + 6); }
+  rr(c, -W / 2 - 6, -12, W + 12, 14, 4, '#bdb4a8', true);
+  for (let i = 0; i < 6; i++) line(c, -W / 2 + i * (W + 12) / 6, -11, -W / 2 + i * (W + 12) / 6, 0, 'rgba(0,0,0,.12)', 1.4);
+  rr(c, -W / 2, -H, W, H - 10, 4, '#f6ead3', true);
+  line(c, -W / 2 + 4, -H + 2, -W / 2 + 4, -12, '#9a6a45', 4); line(c, W / 2 - 4, -H + 2, W / 2 - 4, -12, '#9a6a45', 4);
+  P(c); c.roundRect(-11, -42, 22, 30, [10, 10, 2, 2]); fs(c, '#9a6a45', 2); circ(c, 6, -26, 1.6, '#ffd24a', false);
+  const win = x => { rr(c, x, -44, 20, 16, 3, '#ffe6a3', true); line(c, x + 10, -44, x + 10, -28, '#9a6a45', 1.8); line(c, x, -36, x + 20, -36, '#9a6a45', 1.8); };
+  win(-W / 2 + 12); win(W / 2 - 32);
+  let top = -H;
+  if (tier >= 2) {                                  // second floor
+    roofShape(c, W, top, 12, rc);
+    rr(c, -W / 2 + 14, top - 44, W - 28, 34, 4, '#f6ead3', true);
+    for (let i = 0; i < 3; i++) rr(c, -W / 2 + 26 + i * (W - 52) / 2 - 8, top - 38, 16, 14, 3, '#ffe6a3', true);
+    top -= 44;
+    roofShape(c, W - 28, top, 30, rc);
+  } else roofShape(c, W, top, 34, rc);
+  const peak = top - (tier >= 2 ? 30 : 34);
+  rr(c, -26, top - 2, 52, 14, 5, '#3d2b22', true);
+  c.fillStyle = '#ffd24a'; c.font = '900 9px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.fillText('CHIYA', 0, top + 8.5);
+  rr(c, W / 2 - 34, peak - 4, 10, 18, 2, '#8a8f99', true);
+  if (tier === 4) { line(c, 0, peak, 0, peak - 20, OUT, 5); line(c, 0, peak, 0, peak - 20, '#ffd24a', 3); circ(c, 0, peak - 22, 4.5, '#ffd24a'); }
   if (tier >= 1) {
-    const cols = ['#1e88e5', '#fafafa', '#e53935', '#43a047', '#fdd835'];
-    const x1 = -W / 2 - 10, x2 = W / 2 + 10, y0 = -H - 18;
-    P(c); c.moveTo(x1, y0); c.quadraticCurveTo(0, y0 + 26, x2, y0); c.strokeStyle = 'rgba(60,40,30,.6)'; c.lineWidth = 1; c.stroke();
-    for (let i = 1; i < 14; i++) { const u = i / 14, x = x1 + (x2 - x1) * u, y = y0 + 2 * u * (1 - u) * 26; const f = Math.sin(t * 3 + i) * 2; poly(c, [x - 4, y, x + 4, y, x + f, y + 9], cols[i % 5], false); }
+    const cols = ['#3d8fe0', '#ffffff', '#e5484d', '#3fae6b', '#f5c518'];
+    const x1 = -W / 2 - 12, x2 = W / 2 + 12, y0 = -H + 2;
+    P(c); c.moveTo(x1, y0); c.quadraticCurveTo(0, y0 + 18, x2, y0); c.strokeStyle = 'rgba(43,34,51,.5)'; c.lineWidth = 1; c.stroke();
+    for (let i = 1; i < 12; i++) { const u = i / 12, x = x1 + (x2 - x1) * u, y = y0 + 2 * u * (1 - u) * 18; const f = Math.sin(t * 3 + i) * 1.5; poly(c, [x - 4, y, x + 4, y, x + f, y + 8], cols[i % 5], false); }
   }
-  rr(c, -36, -H + 2, 72, 14, 4, '#3d2b22');
-  c.fillStyle = '#ffd24a'; c.font = '800 10px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.fillText('CHIYA', 0, -H + 12.5);
-  c.restore();
+  return peak;
+}
+function drawStall(c, t, brewing) {
+  ell(c, 0, 4, 46, 9, 'rgba(0,0,0,.15)', false);
+  rr(c, -36, -26, 72, 26, 5, '#b98455', true);
+  line(c, -32, -14, 32, -14, 'rgba(0,0,0,.15)', 2);
+  line(c, -30, -26, -30, -62, OUT, 5); line(c, -30, -26, -30, -62, '#8a5a3b', 3);
+  line(c, 30, -26, 30, -62, OUT, 5); line(c, 30, -26, 30, -62, '#8a5a3b', 3);
+  P(c); c.moveTo(-42, -60); c.lineTo(42, -60); c.lineTo(36, -74); c.lineTo(-36, -74); c.closePath(); fs(c, '#ff8a3d', 2.2);
+  for (let i = 0; i < 6; i++) { P(c); c.arc(-35 + i * 14, -60, 7, 0, Math.PI); fs(c, i % 2 ? '#ff8a3d' : '#fff3e0', 2); }
+  circ(c, -10, -33, 9, '#5d6670'); rr(c, -15, -44, 10, 4, 2, '#3f464e'); P(c); c.moveTo(-2, -36); c.quadraticCurveTo(6, -38, 8, -44); c.strokeStyle = OUT; c.lineWidth = 3.4; c.stroke(); c.strokeStyle = '#5d6670'; c.lineWidth = 1.8; c.stroke();
+  rr(c, 10, -36, 8, 9, 2, '#fff7e6'); rr(c, 21, -34, 7, 7, 2, '#fff7e6');
+  rr(c, -22, -100 + Math.sin(t * 3) * 2, 44, 18, 9, brewing ? '#3fae6b' : '#ffffff', true);
+  c.fillStyle = brewing ? '#ffffff' : '#2b2233'; c.font = '900 9px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.fillText(brewing ? 'BREWING' : 'SELL', 0, -88 + Math.sin(t * 3) * 2);
 }
 
 /* ---------------- decor ---------------- */
+function drawCloud(c, s) {
+  c.save(); c.globalAlpha = .9;
+  P(c); c.arc(-20 * s, 0, 14 * s, Math.PI * .5, Math.PI * 1.5); c.arc(-4 * s, -12 * s, 16 * s, Math.PI, 0); c.arc(18 * s, -4 * s, 13 * s, Math.PI * 1.3, Math.PI * .5); c.closePath();
+  c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = 'rgba(120,160,190,.55)'; c.lineWidth = 2; c.stroke();
+  c.restore();
+}
+function drawSummitFlag(c, t) {
+  ell(c, 0, 2, 26, 7, 'rgba(0,0,0,.12)', false);
+  poly(c, [-22, 0, -10, -10, 8, -12, 22, 0], '#dfe8f0');
+  line(c, 0, -6, 0, -78, OUT, 5); line(c, 0, -6, 0, -78, '#8a5a3b', 3);
+  const w = Math.sin(t * 4) * 4;
+  P(c); c.moveTo(2, -76); c.quadraticCurveTo(22, -76 + w, 40, -70); c.lineTo(38, -56); c.quadraticCurveTo(20, -60 + w, 2, -58); c.closePath(); fs(c, '#ff8a3d', 2);
+  const cols = ['#3d8fe0', '#ffffff', '#e5484d', '#3fae6b', '#f5c518'];
+  for (const dir of [-1, 1]) for (let i = 1; i < 7; i++) { const x = dir * i * 11, y = -70 + i * 9; const f = Math.sin(t * 4 + i) * 1.5; poly(c, [x - 3.5, y, x + 3.5, y, x + f, y + 8], cols[i % 5], false); }
+}
+
 function drawTreeRound(c, s, col) {
   rr(c, -3 * s, -14 * s, 6 * s, 15 * s, 2, '#8a5a3b');
   const g = col || '#58a64a', hi = col ? '#ffd27a' : '#7cc560';

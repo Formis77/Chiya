@@ -2,9 +2,13 @@
 /* =========================================================
    CHIYA — core game: world, player, crew AI, abilities, VFX
    ========================================================= */
-const WORLD = { w: 1400, h: 3000 };
-const BREW = { x: 700, y: 2915, r: 54 };
-const HOUSE = { x: 700, y: 2850 };
+const WORLD = { w: 1400, h: 3200 };
+const HOUSE = { x: 735, y: 2995 };
+const STALL = { x: 580, y: 3035 };
+const BREW = { x: 580, y: 3080, r: 46 };
+const PLAZA = { x: 665, y: 3045 };
+const PEAK = { x: 700, y: 120 };
+const mountHW = y => y < PEAK.y ? 0 : 80 + 640 * Math.pow(Math.min(1, (y - PEAK.y) / 2880), .6);
 const VIEW_W = 360;
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -52,44 +56,64 @@ function buildWorld() {
     const cols = Math.floor(f.w / TILE), rows = Math.floor(f.h / TILE), arr = [];
     const ox = f.x + (f.w - cols * TILE) / 2 + TILE / 2, oy = f.yy + (f.h - rows * TILE) / 2 + TILE / 2;
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-      const col = f.c === 'mix' ? ['spice', 'ice', 'cloud'][Math.floor(r() * 3)] : f.c;
-      arr.push({ f: fi, x: ox + i * TILE, y: oy + j * TILE, v: 1, col, art: FIELD_ART[f.id][col], wob: r() * TAU });
+      let q = r(), col = 'cloud'; for (const k in f.cw) { q -= f.cw[k]; if (q <= 0) { col = k; break; } }
+      const span = f.lv[1] - f.lv[0], lv = f.lv[0] + Math.min(span, Math.floor(Math.pow(r(), 1.6) * (span + 1)));
+      arr.push({ f: fi, x: ox + i * TILE, y: oy + j * TILE, v: 1, col, lv, wob: r() * TAU });
     }
     return arr;
   });
   // decor
   DECOR = [];
   const inField = (x, y, m) => FIELDS.some(f => x > f.x - m && x < f.x + f.w + m && y > f.yy - m && y < f.yy + f.h + m);
-  for (let i = 0; i < 1400 && DECOR.length < 300; i++) {
-    const x = r() * WORLD.w, y = 60 + r() * (WORLD.h - 80);
-    if (inField(x, y, 34) || Math.abs(x - 700) < 56 || (y > 2660 && Math.abs(x - 700) < 230)) continue;
-    const b = biomeAt(x, y), roll = r();
-    const type = b === 'grass' ? (roll < .5 ? 'tree' : roll < .8 ? 'bush' : 'rock')
-      : b === 'forest' ? (roll < .65 ? 'pine' : roll < .8 ? 'tree' : 'rock')
-      : b === 'alpine' ? (roll < .5 ? 'rock' : roll < .85 ? 'pine' : 'autumn')
-      : (roll < .4 ? 'pine' : roll < .8 ? 'rock' : 'dead');
-    DECOR.push({ type, x, y, s: .8 + r() * .6, snow: b === 'snow' });
+  const inMount = (x, y, m = 0) => y > PEAK.y + 40 && Math.abs(x - PEAK.x) < mountHW(y) - m;
+  const nearPath = (x, y, m) => PATH.some((p, i) => i && segDist(x, y, PATH[i - 1], p) < m);
+  const nearPlaza = (x, y) => Math.hypot((x - PLAZA.x) / 290, (y - PLAZA.y) / 170) < 1;
+  for (let i = 0; i < 3000 && DECOR.length < 320; i++) {
+    const x = r() * WORLD.w, y = 80 + r() * (WORLD.h);
+    if (inField(x, y, 34) || nearPath(x, y, 46) || nearPlaza(x, y)) continue;
+    const z = zoneAt(y), inside = inMount(x, y, 20), roll = r();
+    if (!inside && y < 2300) { if (roll < .25) DECOR.push({ type: 'cloud', x, y, s: .8 + r() * .8 }); continue; }
+    const type = !inside ? (roll < .55 ? 'tree' : roll < .8 ? 'pine' : 'bush')
+      : z === 0 ? (roll < .5 ? 'tree' : roll < .8 ? 'bush' : 'rock')
+      : z === 1 ? (roll < .65 ? 'pine' : roll < .8 ? 'tree' : 'rock')
+      : z === 2 ? (roll < .5 ? 'pine' : roll < .8 ? 'rock' : 'autumn')
+      : z === 3 ? (roll < .65 ? 'rock' : 'pine') : (roll < .6 ? 'rock' : 'dead');
+    DECOR.push({ type, x, y, s: .8 + r() * .6, snow: z >= 3 && inside });
   }
   SCATTER = [];
-  for (let i = 0; i < 2600 && SCATTER.length < 900; i++) {
+  for (let i = 0; i < 4000 && SCATTER.length < 1000; i++) {
     const x = r() * WORLD.w, y = r() * WORLD.h;
-    if (inField(x, y, 10) || Math.abs(x - 700) < 30) continue;
-    const b = biomeAt(x, y), roll = r();
-    SCATTER.push({ x, y, b, k: roll, t: b === 'snow' ? 'spark' : b === 'alpine' ? (roll < .6 ? 'pebble' : 'tuft') : (roll < .7 ? 'tuft' : 'flower') });
+    if (inField(x, y, 10) || nearPath(x, y, 26) || !(inMount(x, y) || y > 2300)) continue;
+    const z = inMount(x, y) ? zoneAt(y) : 0, roll = r();
+    SCATTER.push({ x, y, z, k: roll, t: z >= 4 ? 'spark' : z === 3 ? 'pebble' : z === 2 ? (roll < .5 ? 'pebble' : 'tuft') : (roll < .7 ? 'tuft' : 'flower') });
   }
-  BANDS = [[880, '#d1bc93', '#ae9873'], [1380, '#5fa552', '#4a8a41'], [2080, '#7cc35e', '#62a84b']].map(([y0, col, lip]) => {
-    const edge = x => y0 + Math.sin(x * .021 + y0) * 14 + Math.sin(x * .053) * 6;
-    const mk = off => { const p = new Path2D(); p.moveTo(0, WORLD.h + 200); p.lineTo(0, edge(0) + off); for (let x = 0; x <= WORLD.w; x += 20) p.lineTo(x, edge(x) + off); p.lineTo(WORLD.w, WORLD.h + 200); p.closePath(); return p; };
+  // mountain outline
+  MOUNT = new Path2D();
+  const L = [], R = [];
+  for (let y = PEAK.y; y <= WORLD.h + 200; y += 20) { const w = mountHW(y) + Math.sin(y * .03) * 10 + Math.sin(y * .011) * 16; L.push([PEAK.x - w, y]); R.push([PEAK.x + w * (1 + Math.sin(y * .017) * .03), y]); }
+  MOUNT.moveTo(PEAK.x, PEAK.y - 10); L.forEach(([x, y]) => MOUNT.lineTo(x, y)); R.reverse().forEach(([x, y]) => MOUNT.lineTo(x, y)); MOUNT.closePath();
+  SHADE = new Path2D(); SHADE.moveTo(PEAK.x, PEAK.y - 10); R.slice().reverse().forEach(([x, y]) => SHADE.lineTo(x, y)); SHADE.lineTo(PEAK.x + 60, WORLD.h + 200); SHADE.lineTo(PEAK.x + 10, PEAK.y + 400); SHADE.closePath();
+  BANDS = ZONES.slice(1).map((z, i) => {
+    const y0 = z.y, edge = x => y0 + Math.sin(x * .021 + y0) * 12 + Math.sin(x * .053) * 6;
+    const mk = off => { const p = new Path2D(); p.moveTo(0, -200); p.lineTo(0, edge(0) + off); for (let x = 0; x <= WORLD.w; x += 20) p.lineTo(x, edge(x) + off); p.lineTo(WORLD.w, -200); p.closePath(); return p; };
     const ln = new Path2D(); ln.moveTo(0, edge(0)); for (let x = 0; x <= WORLD.w; x += 20) ln.lineTo(x, edge(x));
-    return { lipP: mk(0), mainP: mk(9), line: ln, col, lip };
+    return { lipP: mk(0), mainP: mk(-8), line: ln, col: z.col, lip: z.lip, y0 };
   });
-  DECOR.push({ type: 'chorten', x: 790, y: 2620 }, { type: 'chorten', x: 610, y: 1720 }, { type: 'chorten', x: 790, y: 1000 }, { type: 'chorten', x: 600, y: 700 });
-  FLAGS = [[560, 2280, 850, 2290], [560, 1540, 840, 1545], [470, 1160, 930, 1165], [560, 780, 840, 785], [320, 230, 1060, 236], [580, 2700, 820, 2700]];
+  DECOR.push({ type: 'chorten', x: 470, y: 2920 }, { type: 'chorten', x: 600, y: 1700 }, { type: 'chorten', x: 640, y: 1160 }, { type: 'chorten', x: 600, y: 620 }, { type: 'flagpole', x: PEAK.x, y: PEAK.y + 30 });
+  FLAGS = [[440, 2240, 720, 2250], [480, 1790, 740, 1800], [640, 1320, 840, 1330], [620, 790, 740, 780], [560, 215, 860, 215]];
 }
-let DECOR = [], FLAGS = [], SCATTER = [], BANDS = [];
-const biomeAt = (x, y) => y > 2080 ? 'grass' : y > 1380 ? 'forest' : y > 880 ? 'alpine' : 'snow';
-const PATH = [[700, 2960], [700, 2640], [700, 2440], [700, 2080], [700, 1700], [700, 1320], [700, 940], [700, 640], [700, 440]];
-const BRANCH = [[700, 2440, 520, 2440], [700, 2440, 880, 2440], [700, 1700, 540, 1700], [700, 1700, 860, 1700], [700, 940, 540, 940], [700, 940, 860, 940]];
+let DECOR = [], FLAGS = [], SCATTER = [], BANDS = [], MOUNT = null, SHADE = null;
+const ZONES = [
+  { y: 3300, n: 'Foothills',    m: '2,800 m', col: '#86c763', lip: '#6aab50' },
+  { y: 2160, n: 'Pine Forest',  m: '3,600 m', col: '#62a854', lip: '#4b8c43' },
+  { y: 1600, n: 'High Pasture', m: '4,300 m', col: '#a9b86a', lip: '#8c9b54' },
+  { y: 1090, n: 'Rock Band',    m: '5,200 m', col: '#bba88a', lip: '#9a876a' },
+  { y: 660,  n: 'Snowline',     m: '6,500 m', col: '#e9f1f7', lip: '#c4d6e3' }
+];
+const zoneAt = y => { let z = 0; for (let i = 1; i < ZONES.length; i++) if (y < ZONES[i].y) z = i; return z; };
+function segDist(x, y, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy; const u = clamp(((x - a[0]) * dx + (y - a[1]) * dy) / l, 0, 1); return Math.hypot(x - a[0] - u * dx, y - a[1] - u * dy); }
+const PATH = [[PLAZA.x - 60, PLAZA.y - 10], [470, 2930], [360, 2760], [1030, 2420], [370, 2080], [1000, 1740], [420, 1420], [900, 1120], [500, 840], [800, 580], [700, 400], [700, 300]];
+const BRANCH = [];
 
 function fieldAt(x, y) { for (let i = 0; i < FIELDS.length; i++) { const f = FIELDS[i]; if (x > f.x && x < f.x + f.w && y > f.yy && y < f.yy + f.h) return i; } return -1; }
 const fieldOpen = fi => S.crew.length >= FIELDS[fi].gate;
@@ -153,7 +177,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   const space = capMax() - S.doko;
   if (space <= 0) { fullWarn(); return 0; }
   const tv = t.v; t.v = Math.max(0, tv - .22);
-  let amt = base * FIELDS[t.f].y * (.35 + .65 * tv) * extra;
+  let amt = base * FIELDS[t.f].y * LVM[t.lv] * (.35 + .65 * tv) * extra;
   const match = srcCol === t.col ? 1.5 : srcCol === 'neutral' ? 1.15 : 1;
   amt *= match * gMult(t.col, isTool) * zoneMult(t.x, t.y);
   let crit = false;
@@ -210,17 +234,17 @@ function updCrew(e, i, dt) {
     return;
   }
   const pf = fieldAt(player.x, player.y);
-  const atHome = dist(player.x, player.y, BREW.x, BREW.y) < BREW.r + 70;
+  const atHome = dist(player.x, player.y, BREW.x, BREW.y) < BREW.r + 90;
   const working = pf >= 0 && fieldOpen(pf) && S.doko < capMax() - .5;
   if (def.ab && pf >= 0 && fieldOpen(pf)) {
     e.cd -= dt * cdMul(def);
     if (e.cd <= 0) { e.cd = def.cd; useAbility(e, pf); }
   }
   if (atHome) {
-    const n = E.crew.length, a = Math.PI * (.15 + .7 * (i + .5) / n), rr = 95 + (i % 3) * 22;
-    moveTo(e, BREW.x + Math.cos(a) * rr * 1.5 - 0, BREW.y - 40 + Math.sin(a) * 30 + (i % 3) * 8, crewSpeed(e) * 1.4, dt);
+    const n = E.crew.length, a = Math.PI * (.08 + .84 * (i + .5) / n), rr = 150 + (i % 3) * 22;
+    moveTo(e, PLAZA.x + Math.cos(a) * rr * 1.2, PLAZA.y + 20 + Math.sin(a) * 50 + (i % 3) * 6, crewSpeed(e) * 1.4, dt);
     e.st = 'home'; e.tile = null;
-    if (!e.mv) { e.face = e.x < BREW.x ? 1 : -1; if (brewing) e.act = true; }
+    if (!e.mv) { e.face = e.x < STALL.x ? 1 : -1; if (brewing) e.act = true; }
     return;
   }
   if (working) {
@@ -420,8 +444,8 @@ function burst(x, y, n, o) {
     E.parts.push({ type: o.type, x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s * .7 - (o.up || 0), g: o.g || 0, life: o.life * rand(.7, 1.2), max: o.life * 1.2, size: o.size * rand(.7, 1.3), col: o.col, rot: rand(0, TAU), vr: rand(-6, 6) });
   }
 }
-const LEAF_COL = { tea: '#66bb6a', ginger: '#f0a24b', crystal: '#81d4fa', rhodo: '#ff4d6d', clover: '#ffffff', juniper: '#5c6bc0', saffron: '#b388ff', edelweiss: '#fafafa', snow: '#e3f2fd' };
-function leafBurst(t, n) { burst(t.x, t.y - 4, n, { type: 'leaf', col: LEAF_COL[t.art], spd: 70, life: .7, size: 3, g: 90, up: 40 }); }
+const LEAF_COL = { cloud: '#ffffff', spice: '#ff6b5d', ice: '#5cc0f0' };
+function leafBurst(t, n) { burst(t.x, t.y - 4, n, { type: 'leaf', col: LEAF_COL[t.col], spd: 70, life: .7, size: 3, g: 90, up: 40 }); }
 
 /* ---------------- update ---------------- */
 function update(dt) {
@@ -463,7 +487,7 @@ function update(dt) {
     if (Math.random() < .5) E.parts.push({ type: 'coin', x: BREW.x + rand(-30, 30), y: BREW.y - rand(0, 20), vx: rand(-20, 20), vy: -rand(60, 120), g: 60, life: 1, max: 1, size: 3.4, col: '#ffd24a' });
     if (S.doko === 0) toast('All brewed. Back to the fields', 'cup');
   }
-  if (Math.random() < dt * (brewing ? 10 : 2.5)) E.parts.push({ type: 'steam', x: HOUSE.x + teaChimney(), y: HOUSE.y - houseTop() - 6, vx: rand(-6, 6), vy: -rand(18, 30), g: 0, life: 2.4, max: 2.4, size: rand(5, 8), col: 'rgba(255,255,255,.55)' });
+  if (Math.random() < dt * (brewing ? 12 : 3)) E.parts.push({ type: 'steam', x: brewing && Math.random() < .6 ? STALL.x - 2 : HOUSE.x + teaChimney(), y: brewing && Math.random() < .6 ? STALL.y - 48 : HOUSE.y + houseTop() - 6, vx: rand(-6, 6), vy: -rand(18, 30), g: 0, life: 2.4, max: 2.4, size: rand(5, 8), col: 'rgba(255,255,255,.55)' });
   // crew
   E.crew.forEach((e, i) => updCrew(e, i, dt));
   // blessed sparkles
@@ -508,41 +532,66 @@ const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 let DPR = 1, scale = 1, viewH = 800, bgGrad = null;
 function resize() {
   DPR = Math.min(2.5, window.devicePixelRatio || 1);
-  cv.width = Math.round(innerWidth * DPR); cv.height = Math.round(innerHeight * DPR);
+  const w = document.documentElement.clientWidth || innerWidth, h = Math.max(innerHeight, document.documentElement.clientHeight || 0);
+  cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
   scale = cv.width / VIEW_W; viewH = cv.height / scale;
 }
 const teaTier = () => S.beds >= 40 ? 4 : S.beds >= 30 ? 3 : S.beds >= 20 ? 2 : S.beds >= 10 ? 1 : 0;
-const houseTop = () => [60, 72, 104, 110, 120][teaTier()] + 50 + (teaTier() === 4 ? 60 : 0);
-const teaChimney = () => [130, 170, 200, 250, 280][teaTier()] / 2 - (teaTier() === 0 ? 25 : 32);
+const houseTop = () => (teaTier() >= 2 ? -132 : -92);
+const teaChimney = () => [120, 140, 150, 160, 170][teaTier()] / 2 - 29;
 
 const TOKEN_COL = { spice: '#f0583a', ice: '#2ea4dc', cloud: '#6f7fd0', neutral: '#b07f4c' };
 const FIELD_BG = { tea: '#8a6a45', ginger: '#9b7449', glacier: '#c3e2f2', rhodo: '#7d5f40', meadow: '#8fbd5f', juniper: '#7a6a52', saffron: '#a68655', flags: '#b7c3a6', summit: '#dfeaf3' };
 
 function render() {
   const c = ctx;
-  cam.x = clamp(player.x - VIEW_W / 2, 0, WORLD.w - VIEW_W);
-  cam.y = clamp(player.y - viewH * .56, 0, Math.max(0, WORLD.h + 110 - viewH));
+  const pw = clamp(1.6 - Math.hypot((player.x - PLAZA.x) / 260, (player.y - PLAZA.y) / 140), 0, 1);
+  cam.tx = player.x + (PLAZA.x + 10 - player.x) * pw;
+  cam.sx = cam.sx == null ? cam.tx : cam.sx + (cam.tx - cam.sx) * .12;
+  cam.x = clamp(cam.sx - VIEW_W / 2, 0, WORLD.w - VIEW_W);
+  cam.y = clamp(player.y - viewH * .56, 0, Math.max(0, WORLD.h - viewH));
   const sx = (Math.random() - .5) * cam.shake, sy = (Math.random() - .5) * cam.shake;
   c.setTransform(scale, 0, 0, scale, (-cam.x + sx) * scale, (-cam.y + sy) * scale);
   const vx0 = cam.x - 60, vy0 = cam.y - 60, vx1 = cam.x + VIEW_W + 60, vy1 = cam.y + viewH + 80;
   const vis = (x, y, m = 0) => x > vx0 - m && x < vx1 + m && y > vy0 - m && y < vy1 + m;
 
-  c.fillStyle = '#eef4f8'; c.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0);
-  for (const b of BANDS) { c.fillStyle = b.lip; c.fill(b.lipP); c.fillStyle = b.col; c.fill(b.mainP); c.strokeStyle = OUT; c.lineWidth = 2.2; c.stroke(b.line); }
+  // valley / cloud sea around the mountain
+  if (!bgGrad) { bgGrad = c.createLinearGradient(0, 0, 0, WORLD.h); [[0, '#cfe6f3'], [.5, '#dcecef'], [.68, '#8fbf72'], [1, '#5e9e4e']].forEach(([o, col]) => bgGrad.addColorStop(o, col)); }
+  c.fillStyle = bgGrad; c.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0);
+  // mountain body with altitude zones
+  c.save(); c.translate(0, 14); c.fillStyle = 'rgba(43,34,51,.12)'; c.fill(MOUNT); c.restore();
+  c.save(); c.clip(MOUNT);
+  c.fillStyle = ZONES[0].col; c.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0);
+  for (const b of BANDS) { if (b.y0 < vy0 - 40) continue; c.fillStyle = b.lip; c.fill(b.lipP); c.fillStyle = b.col; c.fill(b.mainP); c.strokeStyle = 'rgba(43,34,51,.55)'; c.lineWidth = 2; c.stroke(b.line); }
   for (const d of SCATTER) {
     if (!vis(d.x, d.y, 10)) continue;
-    if (d.t === 'tuft') { const g = d.b === 'alpine' ? '#a08a66' : d.b === 'forest' ? '#3f7f39' : '#59a245'; line(c, d.x - 4, d.y, d.x - 6, d.y - 5, g, 1.6); line(c, d.x, d.y, d.x, d.y - 7, g, 1.6); line(c, d.x + 4, d.y, d.x + 6, d.y - 5, g, 1.6); }
+    if (d.t === 'tuft') { const g = d.z === 2 ? '#7f8c45' : d.z === 1 ? '#3f7f39' : '#5aa647'; line(c, d.x - 4, d.y, d.x - 6, d.y - 5, g, 1.6); line(c, d.x, d.y, d.x, d.y - 7, g, 1.6); line(c, d.x + 4, d.y, d.x + 6, d.y - 5, g, 1.6); }
     else if (d.t === 'flower') { circ(c, d.x, d.y, 2.2, d.k > .85 ? '#ffd166' : '#ffffff', false); circ(c, d.x + 6, d.y + 3, 1.6, d.k > .85 ? '#ffffff' : '#ffd166', false); }
-    else if (d.t === 'pebble') ell(c, d.x, d.y, 4, 2.6, '#b7a88a', false);
+    else if (d.t === 'pebble') ell(c, d.x, d.y, 4, 2.6, d.z === 3 ? '#9d8c70' : '#8f9a5c', false);
     else { line(c, d.x - 4, d.y, d.x, d.y - 3, '#b9d3e3', 1.6); line(c, d.x, d.y - 3, d.x + 4, d.y, '#b9d3e3', 1.6); }
   }
+  c.fillStyle = 'rgba(43,34,51,.07)'; c.fill(SHADE);
+  c.restore();
+  c.strokeStyle = OUT; c.lineWidth = 2.6; c.stroke(MOUNT);
+  // zone markers
+  for (let i = 1; i < ZONES.length; i++) {
+    const z = ZONES[i], y = z.y + 26, x = PEAK.x - mountHW(y) + 30;
+    if (!vis(x, y, 80)) continue;
+    c.font = '800 11px -apple-system,system-ui,sans-serif'; const tw = Math.max(c.measureText(z.n).width, 50) + 16;
+    P(c); c.roundRect(x, y - 16, tw, 30, 9); fs(c, 'rgba(255,255,255,.92)', 1.8);
+    c.fillStyle = OUT; c.textAlign = 'left'; c.fillText(z.n, x + 8, y - 3);
+    c.fillStyle = '#8c8296'; c.font = '700 10px -apple-system,system-ui,sans-serif'; c.fillText(z.m, x + 8, y + 9);
+  }
+  // plaza at the foot
+  ell(c, PLAZA.x, PLAZA.y, 250, 100, '#e2cfa3'); ell(c, PLAZA.x, PLAZA.y, 232, 88, '#ecdcb5', false);
+  for (let i = 0; i < 26; i++) { const a = i / 26 * TAU; ell(c, PLAZA.x + Math.cos(a) * 190, PLAZA.y + Math.sin(a) * 70, 11, 5.5, 'rgba(255,255,255,.35)', false); }
   c.lineCap = 'round'; c.lineJoin = 'round';
   const pathStroke = (w, col) => {
     P(c); PATH.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y));
     BRANCH.forEach(([a, b, x, y]) => { c.moveTo(a, b); c.lineTo(x, y); });
     c.strokeStyle = col; c.lineWidth = w; c.stroke();
   };
-  pathStroke(44, OUT); pathStroke(40, '#e6cf98'); pathStroke(24, '#f0dfb0');
+  pathStroke(36, OUT); pathStroke(32, '#e6cf98'); pathStroke(18, '#f0dfb0');
 
   // fields
   FIELDS.forEach((f, fi) => {
@@ -554,19 +603,20 @@ function render() {
     P(c); c.roundRect(f.x + 5, f.yy + 5, f.w - 10, f.h - 10, 16); c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 3; c.stroke();
     for (const t of TILES[fi]) {
       if (!vis(t.x, t.y, 30)) continue;
-      const s = TILE * 1.05 * (.32 + .68 * t.v), img = tileSprite(t.art);
+      const s = TILE * 1.1 * (.3 + .7 * t.v), img = flowerSprite(t.col, t.lv);
       const sway = Math.sin(now * 1.6 + t.wob) * .05;
       c.save(); c.translate(t.x, t.y + 6); c.rotate(sway); c.globalAlpha = .55 + .45 * t.v;
       c.drawImage(img, -s / 2, -s / 2 - 6, s, s); c.restore();
+      if (t.lv > 1 && t.v > .5 && scale > 1.6) { c.fillStyle = 'rgba(43,34,51,.55)'; c.font = '800 7px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.fillText(t.lv, t.x + 13, t.y + 17); }
     }
     c.restore();
     // sign
-    const label = `${f.n}  x${f.y}`;
+    const label = `${f.n}  Lv ${f.lv[0]}${f.lv[1] > f.lv[0] ? '-' + f.lv[1] : ''}`;
     c.font = '800 12px -apple-system,system-ui,sans-serif';
     const tw = c.measureText(label).width + 34;
     P(c); c.roundRect(f.x + 12, f.yy - 26, tw, 24, 8); fs(c, '#9a6a45', 2);
     rr(c, f.x + 15, f.yy - 23, tw - 6, 4, 2, 'rgba(255,255,255,.18)', false);
-    const fc = f.c === 'mix' ? '#b98af5' : f.c === 'cloud' ? '#8e9bd6' : COL[f.c].c;
+    const fc = f.c === 'mix' ? '#9b6ef3' : f.c === 'cloud' ? '#8e9bd6' : COL[f.c].c;
     circ(c, f.x + 25, f.yy - 14, 7, '#fff7e6', false);
     drawIcon(c, f.c === 'mix' ? 'sparkle' : COL[f.c].i, f.x + 25, f.yy - 14, 10, fc, 2.6);
     c.fillStyle = '#fff7e6'; c.textAlign = 'left'; c.fillText(label, f.x + 37, f.yy - 9.5);
@@ -574,16 +624,15 @@ function render() {
 
   // ground decals
   for (const d of E.decals) drawDecalGround(c, d);
-  // brew mat
-  const bp2 = brewing ? 1 + Math.sin(now * 8) * .04 : 1;
-  ell(c, BREW.x, BREW.y, BREW.r * bp2, BREW.r * .55 * bp2, brewing ? '#ffcf6b' : '#e9c98f');
-  ell(c, BREW.x, BREW.y, BREW.r * .72, BREW.r * .38, brewing ? '#ffe3a1' : '#f3dcae', false);
-  c.fillStyle = '#5d3b1e'; c.font = '800 12px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.fillText(brewing ? 'BREWING' : 'BREW', BREW.x + 8, BREW.y + 4.5); drawIcon(c, 'cup', BREW.x - (brewing ? 30 : 20), BREW.y, 13, '#5d3b1e', 2.4);
-
+  // sell spot
+  const pul = 1 + Math.sin(now * 4) * .04;
+  ell(c, BREW.x, BREW.y, BREW.r * pul, BREW.r * .5 * pul, brewing ? 'rgba(63,174,107,.35)' : 'rgba(255,138,61,.22)', false);
+  P(c); c.ellipse(BREW.x, BREW.y, BREW.r * pul, BREW.r * .5 * pul, 0, 0, TAU); c.setLineDash([7, 6]); c.lineDashOffset = -now * 20; c.strokeStyle = brewing ? '#3fae6b' : '#ff8a3d'; c.lineWidth = 2.6; c.stroke(); c.setLineDash([]);
   // y-sorted world objects
   const objs = [];
-  for (const d of DECOR) if (vis(d.x, d.y, 60)) objs.push({ y: d.y, f: () => { c.save(); c.translate(d.x, d.y); ({ pine: () => drawPine(c, d.s, d.snow), rock: () => drawRock(c, d.s, d.snow), tree: () => drawTreeRound(c, d.s), autumn: () => drawTreeRound(c, d.s, '#f2a33a'), bush: () => drawBush(c, d.s), dead: () => drawDeadBush(c, d.s), chorten: () => drawChorten(c, now) })[d.type](); c.restore(); } });
+  for (const d of DECOR) if (vis(d.x, d.y, 60)) objs.push({ y: d.y, f: () => { c.save(); c.translate(d.x, d.y); ({ pine: () => drawPine(c, d.s, d.snow), rock: () => drawRock(c, d.s, d.snow), tree: () => drawTreeRound(c, d.s), autumn: () => drawTreeRound(c, d.s, '#f2a33a'), bush: () => drawBush(c, d.s), dead: () => drawDeadBush(c, d.s), chorten: () => drawChorten(c, now), flagpole: () => drawSummitFlag(c, now), cloud: () => drawCloud(c, d.s) })[d.type](); c.restore(); } });
   if (vis(HOUSE.x, HOUSE.y, 200)) objs.push({ y: HOUSE.y, f: () => { c.save(); c.translate(HOUSE.x, HOUSE.y); drawTeahouse(c, teaTier(), now); c.restore(); } });
+  if (vis(STALL.x, STALL.y, 120)) objs.push({ y: STALL.y, f: () => { c.save(); c.translate(STALL.x, STALL.y); drawStall(c, now, brewing); c.restore(); } });
   for (const e of E.crew) if (vis(e.x, e.y, 40)) objs.push({ y: e.y, f: () => drawCrewEnt(c, e) });
   objs.push({ y: player.y, f: () => {
     c.save(); c.translate(player.x, player.y);
@@ -592,7 +641,7 @@ function render() {
     const dc = ['#c8913e', '#b5651d', '#8d6e63', '#6d4c41', '#2e86de', '#74b9ff', '#a29bfe'][DOKOS.findIndex(d => d.id === S.dokoId)];
     drawPlayer(c, player.anim, player.mv, player.swing, dc);
     c.restore();
-    const fillF = S.doko / capMax();
+    const fillF = Math.min(1, S.doko / capMax());
     rr(c, player.x - 14, player.y + 7, 28, 4, 2, 'rgba(0,0,0,.35)', false);
     rr(c, player.x - 14, player.y + 7, 28 * fillF, 4, 2, fillF >= 1 ? '#ff5a6e' : '#ffd24a', false);
   } });

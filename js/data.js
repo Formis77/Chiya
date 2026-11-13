@@ -74,26 +74,22 @@ const ABIL = {
   gust:        { n: 'Kite Gust',     i: 'wind', tok: false, d: 'Auto: wind sweeps a band of the field ×2.' }
 };
 
-/* Fields. x,y,w,h in world px. yield multiplies everything gathered there. */
+/* Fields sit along the switchback trail up the mountain.
+   w = color weights, lv = [min, max] flower level, y = field multiplier */
 const TILE = 40;
+const LVM = [0, 1, 3, 9, 27, 81];          // ingredients per flower level
 const FIELDS = [
-  { id: 'tea',     n: 'Tea Garden',          c: 'cloud', y: 1,   gate: 0,  x: 120, yy: 2300, w: 400, h: 280 },
-  { id: 'ginger',  n: 'Ginger Terraces',     c: 'spice', y: 1,   gate: 0,  x: 880, yy: 2300, w: 400, h: 280 },
-  { id: 'glacier', n: 'Glacier Spring',      c: 'ice',   y: 1,   gate: 0,  x: 500, yy: 1960, w: 400, h: 240 },
-  { id: 'rhodo',   n: 'Rhododendron Forest', c: 'spice', y: 4,   gate: 5,  x: 100, yy: 1560, w: 440, h: 280 },
-  { id: 'meadow',  n: 'Yak Meadow',          c: 'cloud', y: 4,   gate: 5,  x: 860, yy: 1560, w: 440, h: 280 },
-  { id: 'juniper', n: 'Juniper Ridge',       c: 'ice',   y: 10,  gate: 10, x: 480, yy: 1180, w: 440, h: 280 },
-  { id: 'saffron', n: 'Saffron Cliffs',      c: 'mix',   y: 25,  gate: 15, x: 100, yy: 800,  w: 440, h: 280 },
-  { id: 'flags',   n: 'Prayer Flag Pass',    c: 'cloud', y: 50,  gate: 22, x: 860, yy: 800,  w: 440, h: 280 },
-  { id: 'summit',  n: 'Summit Snowfield',    c: 'mix',   y: 120, gate: 30, x: 330, yy: 260,  w: 720, h: 360 }
+  { id: 'tea',     n: 'Tea Garden',          c: 'cloud', y: 1,   gate: 0,  lv: [1, 1], w: { cloud: .7, spice: .15, ice: .15 }, x: 790, yy: 2640, w_: 300, h: 200 },
+  { id: 'ginger',  n: 'Ginger Terraces',     c: 'spice', y: 1,   gate: 0,  lv: [1, 1], w: { spice: .7, cloud: .2, ice: .1 },  x: 150, yy: 2420, w_: 290, h: 200 },
+  { id: 'glacier', n: 'Glacier Spring',      c: 'ice',   y: 1,   gate: 0,  lv: [1, 1], w: { ice: .7, cloud: .2, spice: .1 },  x: 470, yy: 2290, w_: 250, h: 160 },
+  { id: 'rhodo',   n: 'Rhododendron Forest', c: 'spice', y: 1.5, gate: 5,  lv: [1, 2], w: { spice: .6, cloud: .25, ice: .15 }, x: 170, yy: 1800, w_: 300, h: 220 },
+  { id: 'meadow',  n: 'Yak Meadow',          c: 'cloud', y: 1.5, gate: 5,  lv: [1, 2], w: { cloud: .6, ice: .2, spice: .2 },  x: 760, yy: 1880, w_: 330, h: 200 },
+  { id: 'juniper', n: 'Juniper Ridge',       c: 'ice',   y: 2,   gate: 10, lv: [2, 3], w: { ice: .6, cloud: .25, spice: .15 }, x: 860, yy: 1330, w_: 260, h: 220 },
+  { id: 'saffron', n: 'Saffron Cliffs',      c: 'mix',   y: 3,   gate: 15, lv: [2, 3], w: { spice: .4, ice: .3, cloud: .3 },  x: 330, yy: 1020, w_: 260, h: 200 },
+  { id: 'flags',   n: 'Prayer Flag Pass',    c: 'cloud', y: 4,   gate: 22, lv: [3, 4], w: { cloud: .55, ice: .25, spice: .2 }, x: 740, yy: 800,  w_: 240, h: 170 },
+  { id: 'summit',  n: 'Summit Snowfield',    c: 'mix',   y: 6,   gate: 30, lv: [3, 5], w: { spice: .34, ice: .33, cloud: .33 }, x: 520, yy: 225, w_: 360, h: 165 }
 ];
-/* which tile art a color uses per field */
-const FIELD_ART = {
-  tea: { cloud: 'tea' }, ginger: { spice: 'ginger' }, glacier: { ice: 'crystal' },
-  rhodo: { spice: 'rhodo' }, meadow: { cloud: 'clover' }, juniper: { ice: 'juniper' },
-  saffron: { spice: 'saffron', ice: 'juniper', cloud: 'clover' }, flags: { cloud: 'edelweiss' },
-  summit: { spice: 'rhodo', ice: 'crystal', cloud: 'snow' }
-};
+FIELDS.forEach(f => { f.cw = f.w; f.w = f.w_; delete f.w_; });
 
 const TOOLS = [
   { id: 'sickle', n: 'Sickle',       i: 'sickle', cost: 0,     r: 30, amt: 2,  sw: .75, d: 'Humble but honest.' },
@@ -178,7 +174,7 @@ const QUESTS = [
   { t: 'Have 4 crew',                          g: ['crew', 4],                   rw: { rp: 300, items: { butterTea: 2 } } },
   { t: 'Feed your crew 5 times',               g: ['feed', 5],                   rw: { items: { selroti: 3 } } },
   { t: 'Buy the Bamboo Rake',                  g: ['tool', 'rake'],              rw: { rp: 1000 } },
-  { t: 'Gather 2,000 in Ginger Terraces',      g: ['field', 'ginger', 2000],     rw: { items: { spiceShot: 2, permit: 1 } } },
+  { t: 'Gather 1,500 in Ginger Terraces',      g: ['field', 'ginger', 1500],     rw: { items: { spiceShot: 2, permit: 1 } } },
   { t: 'Have 5 crew',                          g: ['crew', 5],                   rw: { items: { mysticWheel: 1 } } },
   { t: 'Brew tea worth ₨15,000',               g: ['earn', 15000],               rw: { items: { dalbhat: 3 } } },
   { t: 'Gather 10,000 in Rhododendron Forest', g: ['field', 'rhodo', 10000],     rw: { items: { permit: 2 } } },

@@ -5,10 +5,13 @@
 const $ = id => document.getElementById(id);
 let panel = null, panelTab = null, uiT = 0, crewSel = null;
 
+const VERSION = '3';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
   $('rpi').innerHTML = ic('coin'); $('dki').innerHTML = ic('basket');
+  $('gear').innerHTML = ic('gear'); $('gear').addEventListener('click', () => openPanel('settings'));
+  setTimeout(() => checkUpdate(true), 2500);
   $('bar').addEventListener('click', ev => {
     const b = ev.target.closest('button'); if (!b) return;
     const a = b.dataset.a;
@@ -66,7 +69,7 @@ function openPanel(name, tab) {
 }
 function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
-  const fn = { crew: pCrew, shop: pShop, items: pItems, quests: pQuests, codex: pCodex, map: pMap }[panel];
+  const fn = { crew: pCrew, shop: pShop, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings }[panel];
   if (!fn) return;
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
   document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel));
@@ -343,8 +346,48 @@ function pMap() {
   h += `<div class="item">${ib('home', '#ff8a3d')}<div class="it"><b>Teahouse</b><span class="mut small">Brew your doko here</span></div><button class="btn sm" onclick="goTo(${BREW.x},${BREW.y})"><span>Go</span></button></div>`;
   FIELDS.forEach((f, i) => {
     const open = fieldOpen(i), ci = f.c === 'mix' ? 'sparkle' : COL[f.c].i;
-    h += `<div class="item ${open ? '' : 'dim'}">${ib(open ? ci : 'lock', f.c === 'mix' ? '#9b6ef3' : icol(ci))}<div class="it"><b>${f.n} <span class="mut">x${f.y}</span></b><span class="mut small">${f.c === 'mix' ? 'Mixed colors' : COL[f.c].n} · ${open ? 'Open' : f.gate + ' crew needed'}</span></div>${open ? `<button class="btn sm" onclick="goTo(${f.x + f.w / 2},${f.yy + f.h / 2})"><span>Go</span></button>` : ''}</div>`;
+    h += `<div class="item ${open ? '' : 'dim'}">${ib(open ? ci : 'lock', f.c === 'mix' ? '#9b6ef3' : icol(ci))}<div class="it"><b>${f.n} <span class="mut">Lv ${f.lv[0]}${f.lv[1] > f.lv[0] ? '-' + f.lv[1] : ''}</span></b><span class="mut small">${f.c === 'mix' ? 'Mixed colors' : COL[f.c].n} · ${open ? 'Open' : f.gate + ' crew needed'}</span></div>${open ? `<button class="btn sm" onclick="goTo(${f.x + f.w / 2},${f.yy + f.h / 2})"><span>Go</span></button>` : ''}</div>`;
   });
   return h;
 }
 function goTo(x, y) { player.auto = { x, y }; closePanel(); }
+
+/* ---------------- SETTINGS & UPDATES ---------------- */
+let upd = { state: 'idle', remote: null };
+async function checkUpdate(silent) {
+  upd.state = 'checking'; if (panel === 'settings') renderPanel();
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    const j = await r.json(); upd.remote = String(j.version);
+    upd.state = upd.remote !== VERSION ? 'available' : 'latest';
+    if (silent && upd.state === 'available') toast('Update available. Open Settings to install', 'refresh');
+  } catch (e) { upd.state = 'offline'; }
+  if (panel === 'settings') renderPanel();
+}
+async function forceUpdate() {
+  upd.state = 'updating'; renderPanel(); save();
+  try {
+    const files = ['./', 'index.html', 'style.css', 'version.json', 'js/icons.js', 'js/data.js', 'js/art.js', 'js/game.js', 'js/ui.js', 'manifest.json'];
+    await Promise.all(files.map(f => fetch(f, { cache: 'reload' }).catch(() => {})));
+    if (window.caches) for (const k of await caches.keys()) await caches.delete(k);
+    if (navigator.serviceWorker) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+  } catch (e) {}
+  location.replace(location.pathname + '?v=' + Date.now());
+}
+let resetArm = false;
+function resetProgress() {
+  if (!resetArm) { resetArm = true; renderPanel(); setTimeout(() => { resetArm = false; if (panel === 'settings') renderPanel(); }, 4000); return; }
+  try { localStorage.removeItem('chiya_save'); } catch (e) {}
+  S = null; location.reload();
+}
+function pSettings() {
+  const st = { idle: 'Tap to check for a newer version.', checking: 'Checking…', latest: 'You have the latest version.', available: `Version ${upd.remote} is available.`, offline: 'No connection. Try again when you have signal.', updating: 'Updating…' }[upd.state];
+  let h = `<div class="ph"><h2>Settings</h2></div>`;
+  h += `<div class="item">${ib('refresh', upd.state === 'available' ? '#3fae6b' : '#2ea4dc')}<div class="it"><b>App version ${VERSION}</b><span class="mut small">${st}</span></div></div>`;
+  h += `<div class="row2"><button class="btn" onclick="checkUpdate()">${ic('refresh')}<span>Check for update</span></button>
+    <button class="btn primary" onclick="forceUpdate()">${ic('download')}<span>Update now</span><small>Reloads the latest version</small></button></div>`;
+  h += `<p class="mut small">Your progress is saved on this phone and stays when you update.</p>`;
+  h += `<h3>Game</h3><div class="item">${ib('cup', '#ff8a3d')}<div class="it"><b>How to play</b><span class="mut small">Show the intro again</span></div><button class="btn sm" onclick="closePanel();showIntro()"><span>Show</span></button></div>`;
+  h += `<div class="item">${ib('trash', '#ef4d5f')}<div class="it"><b>Reset progress</b><span class="mut small">Deletes your teahouse and crew. Cannot be undone.</span></div><button class="btn sm ${resetArm ? 'danger' : ''}" onclick="resetProgress()"><span>${resetArm ? 'Tap again' : 'Reset'}</span></button></div>`;
+  return h;
+}
