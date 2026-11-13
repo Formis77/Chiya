@@ -5,12 +5,13 @@
 const $ = id => document.getElementById(id);
 let panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '6';
+const VERSION = '7';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
   $('rpi').innerHTML = ic('coin'); $('dki').innerHTML = ic('basket');
   $('gear').innerHTML = ic('gear'); $('gear').addEventListener('click', () => openPanel('settings'));
+  $('statsb').innerHTML = ic('chart'); $('statsb').addEventListener('click', () => openPanel('stats'));
   setTimeout(() => checkUpdate(true), 2500);
   $('bar').addEventListener('click', ev => {
     const b = ev.target.closest('button'); if (!b) return;
@@ -70,7 +71,7 @@ function openPanel(name, tab) {
 }
 function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
-  const fn = { crew: pCrew, shop: pShop, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings }[panel];
+  const fn = { crew: pCrew, shop: pShop, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
   if (!fn) return;
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
   document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel));
@@ -145,13 +146,13 @@ const blessChance = () => Math.min(.15, .01 + .03 * (D.k.lama || 0));
 function doRecruit() {
   if (S.crew.length >= S.beds) { toast('No free bed. Buy a new one first.', 'bed'); return; }
   if ((S.items.permit || 0) > 0) S.items.permit--;
-  else { const c = permitCost(); if (S.rp < c) { toast('Not enough rupees', 'coin'); return; } S.rp -= c; S.recruits++; }
+  else { const c = permitCost(); if (S.rp < c) { toast('Not enough rupees', 'coin'); return; } spend(c); S.recruits++; }
   const id = rollCrew(PERMIT_ODDS), bl = Math.random() < blessChance();
   addCrew(id, bl);
 }
 function addCrew(id, bl) {
   const isNew = !S.found[id]; S.found[id] = true;
-  S.crew.push(mk(id, bl)); rebuildCrew();
+  S.crew.push(mk(id, bl)); S.stats.recruited++; if (bl) S.stats.blessed++; rebuildCrew();
   const e = E.crew[E.crew.length - 1]; e.x = player.x; e.y = player.y - 10;
   burst(player.x, player.y - 20, 30, { type: 'star', col: RAR[CREW[id].r].c, spd: 160, life: 1, size: 2.6 });
   reveal(id, bl, isNew); save(); if (panel) renderPanel();
@@ -165,7 +166,7 @@ function reveal(id, bl, isNew, title) {
 }
 function buyBed() {
   const c = bedCost(); if (S.rp < c || S.beds >= 50) return;
-  S.rp -= c; S.beds++; recompute(); toast(`Bed ${S.beds} added`, 'bed');
+  spend(c); S.beds++; recompute(); toast(`Bed ${S.beds} added`, 'bed');
   if ([10, 20, 30, 40].includes(S.beds)) { toast('Your teahouse grew', 'home'); shake(6); burst(HOUSE.x, HOUSE.y - 60, 60, { type: 'star', col: '#ffd24a', spd: 220, life: 1.4, size: 3 }); }
   save(); renderPanel();
 }
@@ -175,7 +176,7 @@ function feed(i, f) {
   S.items[f]--; S.stats.feed++;
   m.xp += FOOD[f].xp * (f === d.fav ? 3 : 1);
   let up = false;
-  while (m.lvl < 20 && m.xp >= xpNeed(m.lvl)) { m.xp -= xpNeed(m.lvl); m.lvl++; up = true; }
+  while (m.lvl < 20 && m.xp >= xpNeed(m.lvl)) { m.xp -= xpNeed(m.lvl); m.lvl++; up = true; S.stats.levels++; }
   if (m.lvl >= 20) m.xp = 0;
   const e = E.crew.find(x => x.m === m);
   if (e) { burst(e.x, e.y - 20, up ? 20 : 6, { type: up ? 'star' : 'heart', col: '#ffd24a', spd: 70, life: 1, size: up ? 2.6 : 4, g: -40 }); if (up) pop(e.x, e.y - 50, 'LEVEL ' + m.lvl, '#ffd24a', true); }
@@ -187,12 +188,12 @@ function reroll(i) {
   S.items.mysticWheel--;
   const m = S.crew[i], id = rollCrew(WHEEL_ODDS), bl = Math.random() < blessChance();
   const isNew = !S.found[id]; S.found[id] = true;
-  m.id = id; m.bl = bl; rebuildCrew(); save();
+  m.id = id; m.bl = bl; S.stats.rerolls++; if (bl) S.stats.blessed++; rebuildCrew(); save();
   reveal(id, bl, isNew, 'Nice'); renderPanel();
 }
 function bless(i) {
   const m = S.crew[i]; if (!(S.items.goldenMomo > 0) || m.bl) return;
-  S.items.goldenMomo--; m.bl = true; rebuildCrew(); save();
+  S.items.goldenMomo--; m.bl = true; S.stats.blessed++; rebuildCrew(); save();
   const e = E.crew.find(x => x.m === m); if (e) { burst(e.x, e.y - 20, 50, { type: 'star', col: '#ffd24a', spd: 200, life: 1.4, size: 3 }); E.decals.push({ kind: 'ring', x: e.x, y: e.y, r: 90, col: '#ffd24a', age: 0, dur: .7, w: 6 }); }
   reveal(m.id, true, false, 'Blessed'); renderPanel();
 }
@@ -229,17 +230,17 @@ function pShop() {
 function buyGear(key, id) {
   const list = { tool: TOOLS, doko: DOKOS, boots: BOOTS }[key], it = list.find(x => x.id === id);
   if (S.rp < it.cost) return;
-  S.rp -= it.cost;
+  spend(it.cost);
   ({ tool: S.tools, doko: S.dokos, boots: S.bootsOwned })[key].push(id);
   equip(key, id); toast(`${it.n} bought`, it.i); save();
 }
 function equip(key, id) { if (key === 'tool') S.tool = id; if (key === 'doko') S.dokoId = id; if (key === 'boots') S.boots = id; renderPanel(); }
 function buyItem(k, cost, n = 1) {
-  if (S.rp < cost) return; S.rp -= cost; S.items[k] = (S.items[k] || 0) + n;
+  if (S.rp < cost) return; spend(cost); S.items[k] = (S.items[k] || 0) + n;
   if (k === 'permit') S.recruits++; if (k === 'mysticWheel') S.wheels++;
   toast(`+${n} ${ITEMS[k].n}`, ITEMS[k].i); renderPanel();
 }
-function buyLodge(i) { const l = LODGE[i]; if (S.rp < l.cost) return; S.rp -= l.cost; S.lodge = i; toast(`Hired: ${l.n}`, 'key'); save(); renderPanel(); }
+function buyLodge(i) { const l = LODGE[i]; if (S.rp < l.cost) return; spend(l.cost); S.lodge = i; toast(`Hired: ${l.n}`, 'key'); save(); renderPanel(); }
 
 /* ---------------- ITEMS ---------------- */
 function pItems() {
@@ -382,8 +383,8 @@ function claimQuest(gid) {
   if (q.rw.crew && S.crew.length >= S.beds) return;
   if (q.rw.rp) S.rp += q.rw.rp;
   for (const k in q.rw.items || {}) S.items[k] = (S.items[k] || 0) + q.rw.items[k];
-  if (REPEAT[gid]) S.rq[gid].cd = Date.now() + REPEAT_CD;
-  else { S.q[gid] = (S.q[gid] || 0) + 1; S.qb[gid] = qBaseNow(gid); }
+  if (REPEAT[gid]) { S.rq[gid].cd = Date.now() + REPEAT_CD; S.stats.jobs++; }
+  else { S.stats.quests++; S.q[gid] = (S.q[gid] || 0) + 1; S.qb[gid] = qBaseNow(gid); }
   const g = npcOf(gid); burst(g.x, g.y - 40, 40, { type: 'star', col: '#ffd24a', spd: 200, life: 1.2, size: 3 });
   closeModal(); updateTalk();
   if (q.rw.crew) { addCrew(q.rw.crew, false); return; }
@@ -468,5 +469,47 @@ function pSettings() {
   h += `<p class="mut small">Your progress is saved on this phone and stays when you update.</p>`;
   h += `<h3>Game</h3><div class="item">${ib('cup', '#ff8a3d')}<div class="it"><b>How to play</b><span class="mut small">Show the intro again</span></div><button class="btn sm" onclick="closePanel();showIntro()"><span>Show</span></button></div>`;
   h += `<div class="item">${ib('trash', '#ef4d5f')}<div class="it"><b>Reset progress</b><span class="mut small">Deletes your teahouse and crew. Cannot be undone.</span></div><button class="btn sm ${resetArm ? 'danger' : ''}" onclick="resetProgress()"><span>${resetArm ? 'Tap again' : 'Reset'}</span></button></div>`;
+  return h;
+}
+
+/* ---------------- STATS ---------------- */
+function dur(sec) { sec = Math.floor(sec); const d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60); return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m ${sec % 60}s`; }
+function pStats() {
+  const st = S.stats, tile = (icon, col, label, val) => `<div class="stile">${ib(icon, col)}<div><span>${label}</span><b>${val}</b></div></div>`;
+  const bars = (rows, total) => rows.map(([label, v, col, icon]) => `<div class="srow">${icon ? ic(icon) : ''}<span class="sl">${label}</span><div class="sbar"><i style="width:${total ? Math.max(1.5, v / total * 100) : 0}%;background:${col}"></i></div><b>${fmt(v)}</b></div>`).join('');
+  const days = Math.max(1, Math.ceil((Date.now() - S.start) / 864e5));
+  let h = `<div class="ph"><h2>Stats</h2><span class="pill">${ic('clock')}Day ${days}</span></div><p class="mut small">All-time records for your teahouse.</p>`;
+  h += `<h3>Overview</h3><div class="sgrid">
+    ${tile('coin', '#ff8a3d', 'Rupees earned', fmt(st.earn))}
+    ${tile('leaf', '#3fae6b', 'Ingredients gathered', fmt(st.gather))}
+    ${tile('clock', '#2ea4dc', 'Time played', dur(st.time))}
+    ${tile('pin', '#9b6ef3', 'Distance walked', (st.walk / 100).toFixed(1) + ' km')}
+    ${tile('cup', '#b0784a', 'Doko brewed', fmt(st.brews))}
+    ${tile('moon', '#6f7fd0', 'Earned offline', fmt(st.offline))}
+    ${tile('shop', '#e5484d', 'Rupees spent', fmt(st.spent))}
+    ${tile('star', '#f0b429', 'Biggest single gather', fmt(st.best))}</div>`;
+  const ct = (st.col.spice || 0) + (st.col.ice || 0) + (st.col.cloud || 0);
+  h += `<h3>Gathered by color</h3><div class="sbox">${bars([['Spice', st.col.spice || 0, '#f26b4a', 'flame'], ['Ice', st.col.ice || 0, '#4fb6e6', 'snow'], ['Cloud', st.col.cloud || 0, '#8e9bd6', 'cloud']], ct)}</div>`;
+  const lt = [1, 2, 3, 4, 5].reduce((a, l) => a + (st.lv[l] || 0), 0);
+  h += `<h3>Gathered by flower level</h3><div class="sbox">${bars([1, 2, 3, 4, 5].map(l => [`Level ${l}`, st.lv[l] || 0, ['#cfd6dd', '#8fd18f', '#5ab0e6', '#a77de8', '#f0b429'][l - 1]]), lt)}</div>`;
+  const fmax = Math.max(1, ...FIELDS.map(f => st.field[f.id] || 0));
+  h += `<h3>Gathered by field</h3><div class="sbox">${bars(FIELDS.map(f => [f.n, st.field[f.id] || 0, f.c === 'mix' ? '#9b6ef3' : f.c === 'cloud' ? '#8e9bd6' : COL[f.c].c]), fmax)}</div>`;
+  h += `<h3>Crew</h3><div class="sgrid">
+    ${tile('crew', '#4cb782', 'Crew recruited', fmt(st.recruited))}
+    ${tile('star', '#f0b429', 'Blessed obtained', fmt(st.blessed))}
+    ${tile('up', '#2ea4dc', 'Levels gained', fmt(st.levels))}
+    ${tile('momo', '#e8a25b', 'Times fed', fmt(st.feed))}
+    ${tile('wheel', '#9b6ef3', 'Mystic Wheel rerolls', fmt(st.rerolls))}
+    ${tile('bed', '#c8913e', 'Beds', S.beds + ' / 50')}
+    ${tile('book', '#ff8a3d', 'Crew types found', CREW_IDS.filter(id => S.found[id]).length + ' / ' + CREW_IDS.length)}
+    ${tile('compass', '#3fae6b', 'Synergies active', D.syn.size + ' / ' + SYN.length)}</div>`;
+  const abs = Object.entries(st.ab).sort((a, b) => b[1] - a[1]), amax = abs.length ? abs[0][1] : 1;
+  h += `<h3>Abilities</h3><div class="sgrid">
+    ${tile('sparkle', '#9b6ef3', 'Bubbles collected', fmt(st.tokens))}
+    ${tile('focus', '#e5484d', 'Critical gathers', fmt(st.crits))}</div>`;
+  h += abs.length ? `<div class="sbox">${bars(abs.map(([k, v]) => [ABIL[k].n, v, '#9b6ef3', ABIL[k].i]), amax)}</div>` : '<p class="mut small">No abilities used yet.</p>';
+  h += `<h3>Quests</h3><div class="sgrid">
+    ${tile('flag', '#2ea4dc', 'Story quests', fmt(st.quests))}
+    ${tile('gift', '#c8913e', 'Odd jobs', fmt(st.jobs))}</div>`;
   return h;
 }

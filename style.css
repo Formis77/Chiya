@@ -157,8 +157,9 @@ p{margin:6px 0}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes rise{from{transform:scale(.3) translateY(30px);opacity:0}}
 .new{display:inline-block;background:var(--good);color:#fff;font-weight:900;font-size:11px;padding:3px 10px;border-radius:9px;margin-top:4px;text-transform:uppercase;letter-spacing:.6px}
-#gear{pointer-events:auto;width:34px;height:34px;border-radius:11px;background:var(--soft);color:var(--mut);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-#gear .ic{width:19px;height:19px}
+#gear,#statsb{pointer-events:auto;width:34px;height:34px;border-radius:11px;background:var(--soft);color:var(--mut);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#gear .ic,#statsb .ic{width:19px;height:19px}
+.hcard{gap:10px}
 .btn.danger{background:var(--bad);border-color:transparent;color:#fff}
 #talk{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom) + 92px - var(--gap,0px));z-index:6;display:flex;align-items:center;gap:9px;background:var(--card);border-radius:20px;padding:6px 14px 6px 6px;box-shadow:var(--sh);transform:translateY(20px) scale(.9);opacity:0;pointer-events:none;transition:.22s cubic-bezier(.2,1.4,.4,1);text-align:left;font-weight:800;font-size:14px}
 #talk.on{opacity:1;transform:none;pointer-events:auto}
@@ -179,3 +180,17 @@ p{margin:6px 0}
 body.panel #talk{opacity:0;pointer-events:none}
 .giver.dim{opacity:.6}
 .giver .ic{width:13px;height:13px;vertical-align:-2px}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stile{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:16px;padding:10px}
+.stile .ib{width:36px;height:36px;border-radius:11px}.stile .ib .ic{width:19px;height:19px}
+.stile div{display:flex;flex-direction:column;min-width:0}
+.stile span{font-size:11px;color:var(--mut);font-weight:700;line-height:1.2}
+.stile b{font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbox{background:var(--card);border-radius:16px;padding:8px 12px}
+.srow{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;font-weight:700}
+.srow .ic{width:15px;height:15px;color:var(--mut)}
+.srow .sl{width:120px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow .sbar{flex:1;height:8px;border-radius:5px;background:var(--soft);overflow:hidden}
+.srow .sbar i{display:block;height:100%;border-radius:5px}
+.srow b{min-width:44px;text-align:right}
+.pill .ic{width:15px;height:15px}

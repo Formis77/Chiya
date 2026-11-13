@@ -209,9 +209,11 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   const match = srcCol === t.col ? 1.5 : srcCol === 'neutral' ? 1.15 : 1;
   amt *= match * gMult(t.col, isTool) * zoneMult(t.x, t.y);
   let crit = false;
-  if (Math.random() < critChance()) { amt *= critMul(); crit = true; }
+  if (Math.random() < critChance()) { amt *= critMul(); crit = true; S.stats.crits++; }
   const add = Math.min(space, amt);
   S.doko += add; S.stats.gather += add;
+  const st = S.stats; st.col[t.col] = (st.col[t.col] || 0) + add; st.lv[t.lv] = (st.lv[t.lv] || 0) + add;
+  if (add > (st.best || 0)) st.best = add;
   const fid = FIELDS[t.f].id; S.stats.field[fid] = (S.stats.field[fid] || 0) + add;
   leafBurst(t, crit ? 5 : 2);
   if (crit) burst(t.x, t.y - 10, 5, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.2 });
@@ -312,10 +314,10 @@ function useAbility(e, fi) {
     if (E.tokens.length > 30) return;
     E.tokens.push({ x: e.x + rand(-18, 18), y: e.y + rand(-10, 10), ab: a, e, fi, life: 10, age: 0 });
     burst(e.x, e.y - 20, 6, { type: 'star', col: '#fff6c8', spd: 60, life: .5, size: 2 });
-  } else FX[a](e, fi);
+  } else { FX[a](e, fi); S.stats.ab[a] = (S.stats.ab[a] || 0) + 1; }
 }
 function takeToken(tk) {
-  const a = tk.ab;
+  const a = tk.ab; S.stats.ab[a] = (S.stats.ab[a] || 0) + 1;
   ring(tk.x, tk.y, 40, '#ffffff', .4, 3);
   burst(tk.x, tk.y, 14, { type: 'star', col: '#fff6c8', spd: 120, life: .6, size: 2.4 });
   pop(tk.x, tk.y - 22, ABIL[a].n, '#ffffff', true);
@@ -490,6 +492,8 @@ function update(dt) {
   player.x = clamp(player.x + ix * sp * dt, 20, WORLD.w - 20);
   player.y = clamp(player.y + iy * sp * dt, 40, WORLD.h - 20);
   player.mv = Math.abs(ix) + Math.abs(iy) > .05;
+  if (player.mv) S.stats.walk += sp * Math.hypot(ix, iy) * dt;
+  S.stats.time += dt;
   if (Math.abs(ix) > .1) player.face = ix > 0 ? 1 : -1;
   player.anim += dt; player.swing = Math.max(0, player.swing - dt * 4);
   if (player.mv && B.haste && Math.random() < .5) E.parts.push({ type: 'spark', x: player.x - ix * 14 + rand(-8, 8), y: player.y - rand(4, 26), vx: -ix * 160, vy: -iy * 160, life: .25, max: .25, size: 1.6, col: 'rgba(170,245,255,.9)' });
@@ -517,7 +521,7 @@ function update(dt) {
     S.doko -= conv; if (S.doko < .01) S.doko = 0;
     const val = conv * brewValue(); S.rp += val; S.stats.earn += val; brewing = true;
     if (Math.random() < .5) E.parts.push({ type: 'coin', x: BREW.x + rand(-30, 30), y: BREW.y - rand(0, 20), vx: rand(-20, 20), vy: -rand(60, 120), g: 60, life: 1, max: 1, size: 3.4, col: '#ffd24a' });
-    if (S.doko === 0) toast('All brewed. Back to the fields', 'cup');
+    if (S.doko === 0) { toast('All brewed. Back to the fields', 'cup'); S.stats.brews++; }
   }
   if (Math.random() < dt * (brewing ? 12 : 3)) E.parts.push({ type: 'steam', x: brewing && Math.random() < .6 ? STALL.x - 2 : HOUSE.x + teaChimney(), y: brewing && Math.random() < .6 ? STALL.y - 48 : HOUSE.y + houseTop() - 6, vx: rand(-6, 6), vy: -rand(18, 30), g: 0, life: 2.4, max: 2.4, size: rand(5, 8), col: 'rgba(255,255,255,.55)' });
   // crew
@@ -912,17 +916,24 @@ function offlineEarnings() {
   const eff = LODGE[S.lodge].eff * (D.hive === 'ice' ? 1.2 : 1) * (1 + bp('offline'));
   const amt = S.rate * secs * eff;
   if (amt < 1) return;
-  S.rp += amt; S.stats.earn += amt;
+  S.rp += amt; S.stats.earn += amt; S.stats.offline += amt;
   const h = Math.floor(secs / 3600), m = Math.floor(secs % 3600 / 60);
   showModal(`<div class="big-ico">${ic('moon')}</div><h2>While you were away</h2>
     <p class="mut">Your crew kept brewing for ${h ? h + 'h ' : ''}${m}m at ${Math.round(eff * 100)}% efficiency.</p>
     <div class="reward">${ic('coin')} ${fmt(amt)}</div>
     <button class="btn primary" onclick="closeModal()">Collect</button>`);
 }
+function statDefaults() {
+  const d = { gather: 0, earn: 0, field: {}, feed: 0, col: {}, lv: {}, ab: {}, crits: 0, best: 0, walk: 0, time: 0, brews: 0, tokens: 0, offline: 0, spent: 0, quests: 0, jobs: 0, recruited: 0, rerolls: 0, blessed: 0, levels: 0 };
+  for (const k in d) if (S.stats[k] == null) S.stats[k] = d[k];
+  if (!S.start) S.start = Date.now();
+}
+function spend(n) { S.rp -= n; S.stats.spent += n; }
 function boot() {
   S = load();
   const fresh = !S;
   if (!S) S = newSave();
+  statDefaults();
   buildWorld();
   player.x = S.px || BREW.x; player.y = S.py || BREW.y - 30;
   rebuildCrew();
