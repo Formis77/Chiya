@@ -4,10 +4,10 @@
    Everything is drawn facing right with feet at (0,0).
    ========================================================= */
 const TAU = Math.PI * 2;
-const OUT = 'rgba(22,26,42,.75)';
+const OUT = '#2b2233';
 
 function P(c) { c.beginPath(); }
-function fs(c, fill, lw = 1.4) { c.fillStyle = fill; c.fill(); c.lineWidth = lw; c.strokeStyle = OUT; c.stroke(); }
+function fs(c, fill, lw = 1.9) { c.fillStyle = fill; c.fill(); c.lineWidth = lw; c.strokeStyle = OUT; c.stroke(); }
 function circ(c, x, y, r, f, stroke = true) { P(c); c.arc(x, y, r, 0, TAU); stroke ? fs(c, f) : (c.fillStyle = f, c.fill()); }
 function ell(c, x, y, rx, ry, f, stroke = true, rot = 0) { P(c); c.ellipse(x, y, rx, ry, rot, 0, TAU); stroke ? fs(c, f) : (c.fillStyle = f, c.fill()); }
 function rr(c, x, y, w, h, r, f, stroke = true) { P(c); c.roundRect(x, y, w, h, r); stroke ? fs(c, f) : (c.fillStyle = f, c.fill()); }
@@ -35,33 +35,38 @@ function human(c, o, t, mv, act) {
   const bob = mv ? Math.abs(Math.sin(t * 11)) * 2 : Math.sin(t * 2.2) * .5;
   const leg = mv ? Math.sin(t * 11) * 3 : 0;
   const arm = mv ? Math.sin(t * 11) * 2.5 : act ? Math.sin(t * 18) * 3 : 0;
-  rr(c, -4.5 - leg * .4, -8, 4, 8.5, 2, o.pants || '#3b3f58');
-  rr(c, 0.5 + leg * .4, -8, 4, 8.5, 2, o.pants || '#3b3f58');
+  rr(c, -5 - leg * .4, -6.5, 4.4, 7, 2.2, o.pants || '#3b3f58');
+  rr(c, 0.6 + leg * .4, -6.5, 4.4, 7, 2.2, o.pants || '#3b3f58');
   c.save(); c.translate(0, -bob);
   if (o.back) o.back(c, t);
-  rr(c, -7, -21, 14, 15, 5.5, o.body);
-  if (o.trim) rr(c, -7, -11, 14, 3, 1.2, o.trim, false);
-  if (o.apron) rr(c, -1, -18, 7, 12, 2.5, '#ffffff');
-  circ(c, 0, -26.5, 7, o.skin || '#e0a878');
-  circ(c, 3.4, -27, 1.15, '#1d2233', false);
-  if (!o.noBlush) circ(c, 4.4, -24.4, 1.3, 'rgba(255,110,110,.35)', false);
+  rr(c, -6.8, -17, 13.6, 12.5, 5.5, o.body);
+  if (o.trim) rr(c, -6.8, -9.8, 13.6, 2.6, 1.2, o.trim, false);
+  if (o.apron) rr(c, -1, -15, 6.5, 10, 2.5, '#ffffff');
+  circ(c, 0, -24.5, 9, o.skin || '#e0a878');
+  ell(c, -3.6, -28.4, 2.6, 1.5, 'rgba(255,255,255,.38)', false, -.5);
+  ell(c, 2.4, -24.2, 1.3, 2, '#1d1a26', false);
+  ell(c, 6.2, -24.2, 1.3, 2, '#1d1a26', false);
+  circ(c, 2.7, -24.9, .45, '#ffffff', false); circ(c, 6.5, -24.9, .45, '#ffffff', false);
+  if (!o.noBlush) ell(c, 5.2, -20.7, 1.7, 1, 'rgba(255,110,110,.45)', false);
+  c.save(); c.translate(0, -24.5); c.scale(1.29, 1.29); c.translate(0, 26.5);
   (HATS[o.hat] || HATS.none)(c, o);
-  c.save(); c.translate(1, -17); c.rotate(arm * .08);
-  rr(c, -1.8, 0, 3.6, 8.5, 1.8, o.arm || o.body);
-  if (o.hand) { c.translate(0, 8); o.hand(c, t, act); }
+  c.restore();
+  c.save(); c.translate(1.8, -14.5); c.rotate(arm * .08);
+  rr(c, -1.8, 0, 3.6, 7.5, 1.8, o.arm || o.body);
+  if (o.hand) { c.translate(0, 7); o.hand(c, t, act); }
   c.restore();
   if (o.front) o.front(c, t);
   c.restore();
 }
 
 const ITEMSART = {
-  basket(c) { poly(c, [-14, -30, -4, -30, -5, -8, -13, -8], '#c8913e'); line(c, -13, -24, -5, -24, '#8a5a22', 1); line(c, -13, -17, -5, -17, '#8a5a22', 1); line(c, -9, -30, -9, -8, '#8a5a22', 1); },
+  basket(c) { poly(c, [-15, -27, -4, -27, -5, -6, -13, -6], '#d79d4a'); line(c, -14, -20, -5, -20, '#8a5a22', 1.2); line(c, -13.5, -13, -5, -13, '#8a5a22', 1.2); line(c, -9.5, -27, -9.2, -6, '#8a5a22', 1.2); },
   poles(c, t, act) { line(c, 0, 0, 7, 10, '#555', 1.6); },
   smallBasket(c) { rr(c, -3, -1, 7, 5, 2, '#c8913e'); circ(c, 0, -1.5, 2, '#5aa24a', false); },
   root(c) { ell(c, 1, 1, 3.4, 2.2, '#f0a24b'); },
-  gagri(c) { circ(c, 7, -22, 5.5, '#c8742b'); rr(c, 5, -29, 4, 3, 1, '#a65d1c'); },
+  gagri(c) { circ(c, 8, -12, 5, '#c8742b'); rr(c, 6.2, -18.5, 3.6, 3, 1, '#a65d1c'); ell(c, 6.5, -13.5, 1.5, 1, 'rgba(255,255,255,.4)', false); },
   camera(c) { rr(c, -2, -1, 7, 5, 1.5, '#2d3436'); circ(c, 2.5, 1.5, 1.6, '#74b9ff', false); },
-  rope(c) { P(c); c.arc(-5, -17, 4.5, 0, TAU); c.strokeStyle = '#f1c40f'; c.lineWidth = 2.2; c.stroke(); },
+  rope(c) { P(c); c.arc(-4, -11.5, 4.2, 0, TAU); c.strokeStyle = '#f1c40f'; c.lineWidth = 2.2; c.stroke(); },
   chili(c, t) { c.save(); c.rotate(-.6); ell(c, 3, 0, 4.5, 1.8, '#e74c3c'); line(c, -1, 0, -2.5, -1.5, '#27ae60', 1.4); c.restore(); },
   iceaxe(c, t, act) { c.save(); c.rotate(act ? -0.6 + Math.sin(t * 18) * .4 : -0.3); line(c, 0, 2, 0, -12, '#6c5ce7', 1.8); line(c, -4, -12, 5, -11, '#b2bec3', 2.2); c.restore(); },
   handwheel(c, t) { line(c, 0, 0, 0, -6, '#8a5a22', 1.4); c.save(); c.translate(0, -8); rr(c, -3, -3, 6, 6, 1.5, '#f5b51e'); line(c, -3, -1 + Math.sin(t * 9) * 1.5, 3, -1 + Math.sin(t * 9) * 1.5, '#c0392b', 1); c.restore(); },
@@ -278,12 +283,25 @@ function drawTeahouse(c, tier, t) {
 }
 
 /* ---------------- decor ---------------- */
+function drawTreeRound(c, s, col) {
+  rr(c, -3 * s, -14 * s, 6 * s, 15 * s, 2, '#8a5a3b');
+  const g = col || '#58a64a', hi = col ? '#ffd27a' : '#7cc560';
+  circ(c, -9 * s, -20 * s, 8.5 * s, g); circ(c, 9 * s, -20 * s, 8.5 * s, g); circ(c, 0, -29 * s, 11 * s, g);
+  circ(c, -4 * s, -32 * s, 4.6 * s, hi, false); circ(c, -11 * s, -22 * s, 3.2 * s, hi, false); circ(c, 6 * s, -22 * s, 2.6 * s, hi, false);
+}
+function drawBush(c, s) { circ(c, -6 * s, -4 * s, 6 * s, '#58a64a'); circ(c, 6 * s, -4 * s, 6 * s, '#58a64a'); circ(c, 0, -8 * s, 7 * s, '#58a64a'); circ(c, -2 * s, -10 * s, 2.8 * s, '#7cc560', false); }
+function drawDeadBush(c, s) { const b = '#8b6b55'; line(c, 0, 0, 0, -14 * s, OUT, 4); line(c, 0, 0, 0, -14 * s, b, 2); [[-7, -12], [6, -16], [-4, -20], [8, -8]].forEach(([x, y]) => { line(c, 0, y * .5 * s, x * s, y * s, OUT, 3.6); line(c, 0, y * .5 * s, x * s, y * s, b, 1.8); }); }
+
 function drawPine(c, s, snow) {
-  rr(c, -2.5 * s, -6 * s, 5 * s, 8 * s, 1.5, '#6d4c41');
-  const g = ['#1b5e20', '#2e7d32', '#388e3c'];
+  rr(c, -2.5 * s, -6 * s, 5 * s, 8 * s, 1.5, '#8a5a3b');
+  const g = ['#3f8a4a', '#4b9a52', '#5aab5c'];
   for (let i = 0; i < 3; i++) { const y = -6 * s - i * 9 * s, w = (16 - i * 4) * s; poly(c, [-w, y, w, y, 0, y - 16 * s], g[i]); if (snow) poly(c, [-w * .45, y - 9 * s, w * .45, y - 9 * s, 0, y - 16 * s], '#f5f8fc', false); }
 }
-function drawRock(c, s, snow) { poly(c, [-14 * s, 0, -10 * s, -10 * s, 2 * s, -14 * s, 13 * s, -6 * s, 14 * s, 0], '#8e9aa8'); poly(c, [-6 * s, -9 * s, 2 * s, -12 * s, 8 * s, -8 * s, 0, -5 * s], snow ? '#f5f8fc' : '#a4b0be', false); }
+function drawRock(c, s, snow) {
+  P(c); c.moveTo(-14 * s, 0); c.quadraticCurveTo(-15 * s, -11 * s, -4 * s, -14 * s); c.quadraticCurveTo(10 * s, -15 * s, 14 * s, -4 * s); c.lineTo(14 * s, 0); c.closePath(); fs(c, '#a3a7b4');
+  P(c); c.moveTo(-9 * s, -8 * s); c.quadraticCurveTo(-6 * s, -12.5 * s, 2 * s, -12 * s); c.quadraticCurveTo(-3 * s, -9 * s, -9 * s, -8 * s); c.fillStyle = snow ? '#f5f8fc' : '#c9ccd6'; c.fill();
+  line(c, -12 * s, -1.5 * s, 12 * s, -1.5 * s, 'rgba(0,0,0,.12)', 2.4 * s);
+}
 function drawChorten(c, t) {
   ell(c, 0, 2, 24, 7, 'rgba(0,0,0,.15)', false);
   rr(c, -20, -12, 40, 12, 2, '#f5f6fa'); rr(c, -15, -22, 30, 10, 2, '#f5f6fa');

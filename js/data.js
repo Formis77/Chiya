@@ -13,16 +13,16 @@ const RAR = {
 };
 
 const COL = {
-  spice:   { n: 'Spice',   c: '#ff6b4a', i: '🔥' },
-  ice:     { n: 'Ice',     c: '#4fc3ff', i: '❄️' },
-  cloud:   { n: 'Cloud',   c: '#eef2ff', i: '☁️' },
-  neutral: { n: 'Neutral', c: '#d8c3a0', i: '◌' }
+  spice:   { n: 'Spice',   c: '#ff6b4a', i: 'flame' },
+  ice:     { n: 'Ice',     c: '#4fc3ff', i: 'snow' },
+  cloud:   { n: 'Cloud',   c: '#eef2ff', i: 'cloud' },
+  neutral: { n: 'Neutral', c: '#d8c3a0', i: 'dot' }
 };
 
 const FOOD = {
-  momo:    { n: 'Momo',     i: '🥟', xp: 10 },
-  selroti: { n: 'Sel Roti', i: '🍩', xp: 40 },
-  dalbhat: { n: 'Dal Bhat', i: '🍛', xp: 200 }
+  momo:    { n: 'Momo',     i: 'momo', xp: 10 },
+  selroti: { n: 'Sel Roti', i: 'ring', xp: 40 },
+  dalbhat: { n: 'Dal Bhat', i: 'bowl', xp: 200 }
 };
 
 /* bp = blessed passive {stat, val%}
@@ -55,23 +55,23 @@ const CREW = {
 const CREW_IDS = Object.keys(CREW);
 
 const ABIL = {
-  spiceRush:   { n: 'Spice Rush',    i: '🌶️', tok: true,  d: 'Token: +50% Spice gathering for 15s.' },
-  random:      { n: 'Wild Card',     i: '🎲', tok: true,  d: 'Token: a random effect. Might be great. Might be a selfie.' },
-  haste:       { n: 'Haste',         i: '👟', tok: true,  d: 'Token: +20% move & crew speed for 10s. Stacks ×3.' },
-  burst:       { n: 'Chili Burst',   i: '💥', tok: true,  d: 'Token: fiery explosion collects every nearby tile ×3.' },
-  focus:       { n: 'Focus',         i: '🎯', tok: true,  d: 'Token: +20% crit chance for 12s. Crits ×3.' },
-  prayerWheel: { n: 'Prayer Wheel',  i: '☸️', tok: false, d: 'Auto: a spinning golden wheel. Gathering inside ×2 for 10s.' },
-  honey:       { n: 'Wild Honey',    i: '🍯', tok: true,  d: 'Token: instant rupees and a chance of food.' },
-  petalStorm:  { n: 'Petal Storm',   i: '🌺', tok: false, d: 'Auto: petals sweep the field and collect 30 tiles ×2.' },
-  frostMark:   { n: 'Frost Mark',    i: '❄️', tok: false, d: 'Auto: an icy mark. Tiles near marks ×2 per mark (max 5).' },
-  roar:        { n: 'Roar',          i: '🦁', tok: false, d: 'Auto: shockwave. Crew gather 50% faster for 10s.' },
-  caravan:     { n: 'Caravan Rush',  i: '🐂', tok: false, d: 'Auto: all yaks gather ×2 and move faster for 12s.' },
-  blessing:    { n: 'Blessing',      i: '✨', tok: true,  d: 'Token: +25% to everything for 15s.' },
-  footprints:  { n: 'Yeti Steps',    i: '👣', tok: false, d: 'Auto: six giant stomps across the field, each ×4.' },
-  dive:        { n: 'Danphe Dive',   i: '🔥', tok: false, d: 'Auto: a fiery dive collects a whole line ×4.' },
-  pounce:      { n: 'Shadow Pounce', i: '🐾', tok: false, d: 'Auto: 5 pounces, each collects an area ×3.' },
-  sniff:       { n: 'Sniff',         i: '🌼', tok: true,  d: 'Token: digs up a random item.' },
-  gust:        { n: 'Kite Gust',     i: '🪁', tok: false, d: 'Auto: wind sweeps a band of the field ×2.' }
+  spiceRush:   { n: 'Spice Rush',    i: 'chili', tok: true,  d: 'Token: +50% Spice gathering for 15s.' },
+  random:      { n: 'Wild Card',     i: 'dice', tok: true,  d: 'Token: a random effect. Might be great. Might be a selfie.' },
+  haste:       { n: 'Haste',         i: 'speed', tok: true,  d: 'Token: +20% move & crew speed for 10s. Stacks ×3.' },
+  burst:       { n: 'Chili Burst',   i: 'burst', tok: true,  d: 'Token: fiery explosion collects every nearby tile ×3.' },
+  focus:       { n: 'Focus',         i: 'focus', tok: true,  d: 'Token: +20% crit chance for 12s. Crits ×3.' },
+  prayerWheel: { n: 'Prayer Wheel',  i: 'wheel', tok: false, d: 'Auto: a spinning golden wheel. Gathering inside ×2 for 10s.' },
+  honey:       { n: 'Wild Honey',    i: 'honey', tok: true,  d: 'Token: instant rupees and a chance of food.' },
+  petalStorm:  { n: 'Petal Storm',   i: 'flower', tok: false, d: 'Auto: petals sweep the field and collect 30 tiles ×2.' },
+  frostMark:   { n: 'Frost Mark',    i: 'snow', tok: false, d: 'Auto: an icy mark. Tiles near marks ×2 per mark (max 5).' },
+  roar:        { n: 'Roar',          i: 'roar', tok: false, d: 'Auto: shockwave. Crew gather 50% faster for 10s.' },
+  caravan:     { n: 'Caravan Rush',  i: 'horns', tok: false, d: 'Auto: all yaks gather ×2 and move faster for 12s.' },
+  blessing:    { n: 'Blessing',      i: 'sparkle', tok: true,  d: 'Token: +25% to everything for 15s.' },
+  footprints:  { n: 'Yeti Steps',    i: 'foot', tok: false, d: 'Auto: six giant stomps across the field, each ×4.' },
+  dive:        { n: 'Danphe Dive',   i: 'feather', tok: false, d: 'Auto: a fiery dive collects a whole line ×4.' },
+  pounce:      { n: 'Shadow Pounce', i: 'claw', tok: false, d: 'Auto: 5 pounces, each collects an area ×3.' },
+  sniff:       { n: 'Sniff',         i: 'paw', tok: true,  d: 'Token: digs up a random item.' },
+  gust:        { n: 'Kite Gust',     i: 'wind', tok: false, d: 'Auto: wind sweeps a band of the field ×2.' }
 };
 
 /* Fields. x,y,w,h in world px. yield multiplies everything gathered there. */
@@ -96,30 +96,30 @@ const FIELD_ART = {
 };
 
 const TOOLS = [
-  { id: 'sickle', n: 'Sickle',       i: '🌙', cost: 0,     r: 30, amt: 2,  sw: .75, d: 'Humble but honest.' },
-  { id: 'rake',   n: 'Bamboo Rake',  i: '🎋', cost: 2e3,   r: 42, amt: 3,  sw: .7,  d: 'Wider sweep.' },
-  { id: 'axe',    n: 'Ice Axe',      i: '⛏️', cost: 3e4,   r: 46, amt: 6,  sw: .65, col: 'ice',   d: '+60% in Ice fields.' },
-  { id: 'scoop',  n: 'Chili Scoop',  i: '🥄', cost: 3e4,   r: 46, amt: 6,  sw: .65, col: 'spice', d: '+60% in Spice fields.' },
-  { id: 'shears', n: 'Tea Shears',   i: '✂️', cost: 3e4,   r: 46, amt: 6,  sw: .65, col: 'cloud', d: '+60% in Cloud fields.' },
-  { id: 'staff',  n: 'Prayer Staff', i: '🪄', cost: 4e5,   r: 62, amt: 12, sw: .6,  d: 'Blessed reach.' },
-  { id: 'claw',   n: 'Yeti Claw',    i: '🦴', cost: 8e6,   r: 72, amt: 28, sw: .55, d: 'Borrowed. Don\'t ask.' },
-  { id: 'wheel',  n: 'Spirit Wheel', i: '☸️', cost: 1.5e8, r: 92, amt: 60, sw: .5,  crit: .1, d: '+10% crit chance.' }
+  { id: 'sickle', n: 'Sickle',       i: 'sickle', cost: 0,     r: 30, amt: 2,  sw: .75, d: 'Humble but honest.' },
+  { id: 'rake',   n: 'Bamboo Rake',  i: 'rake', cost: 2e3,   r: 42, amt: 3,  sw: .7,  d: 'Wider sweep.' },
+  { id: 'axe',    n: 'Ice Axe',      i: 'axe', cost: 3e4,   r: 46, amt: 6,  sw: .65, col: 'ice',   d: '+60% in Ice fields.' },
+  { id: 'scoop',  n: 'Chili Scoop',  i: 'scoop', cost: 3e4,   r: 46, amt: 6,  sw: .65, col: 'spice', d: '+60% in Spice fields.' },
+  { id: 'shears', n: 'Tea Shears',   i: 'shears', cost: 3e4,   r: 46, amt: 6,  sw: .65, col: 'cloud', d: '+60% in Cloud fields.' },
+  { id: 'staff',  n: 'Prayer Staff', i: 'staff', cost: 4e5,   r: 62, amt: 12, sw: .6,  d: 'Blessed reach.' },
+  { id: 'claw',   n: 'Yeti Claw',    i: 'claw', cost: 8e6,   r: 72, amt: 28, sw: .55, d: 'Borrowed. Don\'t ask.' },
+  { id: 'wheel',  n: 'Spirit Wheel', i: 'wheel', cost: 1.5e8, r: 92, amt: 60, sw: .5,  crit: .1, d: '+10% crit chance.' }
 ];
 const DOKOS = [
-  { id: 'basket', n: 'Bamboo Basket',   i: '🧺', cost: 0,     cap: 200 },
-  { id: 'woven',  n: 'Woven Doko',      i: '🎒', cost: 1500,  cap: 900 },
-  { id: 'frame',  n: 'Porter Frame',    i: '🪜', cost: 2e4,   cap: 4000 },
-  { id: 'saddle', n: 'Yak Saddlebag',   i: '👜', cost: 2.5e5, cap: 18000 },
-  { id: 'exped',  n: 'Expedition Pack', i: '🎽', cost: 3e6,   cap: 8e4 },
-  { id: 'glacier',n: 'Glacier Pack',    i: '🧊', cost: 4e7,   cap: 3.5e5 },
-  { id: 'spirit', n: 'Spirit Satchel',  i: '🌀', cost: 6e8,   cap: 1.5e6 }
+  { id: 'basket', n: 'Bamboo Basket',   i: 'basket', cost: 0,     cap: 200 },
+  { id: 'woven',  n: 'Woven Doko',      i: 'basket', cost: 1500,  cap: 900 },
+  { id: 'frame',  n: 'Porter Frame',    i: 'backpack', cost: 2e4,   cap: 4000 },
+  { id: 'saddle', n: 'Yak Saddlebag',   i: 'backpack', cost: 2.5e5, cap: 18000 },
+  { id: 'exped',  n: 'Expedition Pack', i: 'backpack', cost: 3e6,   cap: 8e4 },
+  { id: 'glacier',n: 'Glacier Pack',    i: 'backpack', cost: 4e7,   cap: 3.5e5 },
+  { id: 'spirit', n: 'Spirit Satchel',  i: 'backpack', cost: 6e8,   cap: 1.5e6 }
 ];
 const BOOTS = [
-  { id: 'sandals', n: 'Sandals',      i: '🩴', cost: 0,   spd: 150 },
-  { id: 'runners', n: 'Trail Runners',i: '👟', cost: 3e3, spd: 175 },
-  { id: 'crampon', n: 'Crampons',     i: '🥾', cost: 8e4, spd: 200 },
-  { id: 'sherpa',  n: 'Sherpa Boots', i: '👢', cost: 2e6, spd: 230 },
-  { id: 'wind',    n: 'Wind Boots',   i: '🌬️', cost: 6e7, spd: 260 }
+  { id: 'sandals', n: 'Sandals',      i: 'boot', cost: 0,   spd: 150 },
+  { id: 'runners', n: 'Trail Runners',i: 'boot', cost: 3e3, spd: 175 },
+  { id: 'crampon', n: 'Crampons',     i: 'boot', cost: 8e4, spd: 200 },
+  { id: 'sherpa',  n: 'Sherpa Boots', i: 'boot', cost: 2e6, spd: 230 },
+  { id: 'wind',    n: 'Wind Boots',   i: 'boot', cost: 6e7, spd: 260 }
 ];
 const LODGE = [
   { n: 'No manager',      eff: .25, cost: 0 },
@@ -130,17 +130,17 @@ const LODGE = [
 ];
 
 const ITEMS = {
-  momo:        { n: 'Momo',          i: '🥟', d: 'Crew food. +10 bond.', price: 40 },
-  selroti:     { n: 'Sel Roti',      i: '🍩', d: 'Crew food. +40 bond.', price: 200 },
-  dalbhat:     { n: 'Dal Bhat',      i: '🍛', d: 'Crew food. +200 bond. Dal bhat power, 24 hour.', price: 1200 },
-  butterTea:   { n: 'Butter Tea',    i: '🫖', d: 'Haste ×3 for 30s.', price: 600, use: true },
-  spiceShot:   { n: 'Ginger Shot',   i: '🧉', d: '+50% Spice gathering for 60s.', price: 2500, use: true },
-  glacierShard:{ n: 'Glacier Shard', i: '💎', d: '+50% Ice gathering for 60s.', price: 2500, use: true },
-  yakCheese:   { n: 'Yak Cheese',    i: '🧀', d: '+50% Cloud gathering for 60s.', price: 2500, use: true },
-  incense:     { n: 'Incense',       i: '🪔', d: 'All ability cooldowns −50% for 60s.', price: 8000, use: true },
-  permit:      { n: 'Trekking Permit', i: '📜', d: 'Recruit a random crew member into an empty bed.' },
-  mysticWheel: { n: 'Mystic Wheel',  i: '🎡', d: 'Reroll a crew member. Never gives Commons.' },
-  goldenMomo:  { n: 'Golden Momo',   i: '🌟', d: 'Makes a crew member Blessed.', price: 2.5e5 }
+  momo:        { n: 'Momo',          i: 'momo', d: 'Crew food. +10 bond.', price: 40 },
+  selroti:     { n: 'Sel Roti',      i: 'ring', d: 'Crew food. +40 bond.', price: 200 },
+  dalbhat:     { n: 'Dal Bhat',      i: 'bowl', d: 'Crew food. +200 bond. Dal bhat power, 24 hour.', price: 1200 },
+  butterTea:   { n: 'Butter Tea',    i: 'cup', d: 'Haste ×3 for 30s.', price: 600, use: true },
+  spiceShot:   { n: 'Ginger Shot',   i: 'bottle', d: '+50% Spice gathering for 60s.', price: 2500, use: true },
+  glacierShard:{ n: 'Glacier Shard', i: 'crystal', d: '+50% Ice gathering for 60s.', price: 2500, use: true },
+  yakCheese:   { n: 'Yak Cheese',    i: 'cheese', d: '+50% Cloud gathering for 60s.', price: 2500, use: true },
+  incense:     { n: 'Incense',       i: 'incense', d: 'All ability cooldowns −50% for 60s.', price: 8000, use: true },
+  permit:      { n: 'Trekking Permit', i: 'ticket', d: 'Recruit a random crew member into an empty bed.' },
+  mysticWheel: { n: 'Mystic Wheel',  i: 'wheel', d: 'Reroll a crew member. Never gives Commons.' },
+  goldenMomo:  { n: 'Golden Momo',   i: 'star', d: 'Makes a crew member Blessed.', price: 2.5e5 }
 };
 
 const PERMIT_ODDS = { common: .45, rare: .38, epic: .13, legendary: .035, mythic: .005 };
@@ -149,26 +149,26 @@ const WHEEL_ODDS  = { rare: .45, epic: .37, legendary: .15, mythic: .03 };
 /* ---------------- synergies ---------------- */
 const YAKS = ['yakCalf', 'dzo', 'yakKing'];
 const SYN = [
-  { id: 'porterUnion', n: 'Porter Union',      i: '🧺', req: '5+ Porters',                              d: '+25% doko capacity. Porters gather ×1.5.', chk: k => (k.porter || 0) >= 5 },
-  { id: 'herd',        n: 'The Herd',          i: '🐃', req: '3+ yaks (Yak Calf, Dzo, Yak King)',       d: 'Yaks gather +40%. +10% doko capacity.',    chk: k => YAKS.reduce((s, y) => s + (k[y] || 0), 0) >= 3 },
-  { id: 'trailTeam',   n: 'Trail Team',        i: '🥾', req: 'Sherpa Guide + Trekker',                  d: 'Haste stacks up to ×5.',                  chk: k => k.sherpa && k.trekker },
-  { id: 'kitchen',     n: 'Kitchen Crew',      i: '🍲', req: 'Chili Cook + Ginger Farmer + Honey Hunter', d: 'Spice Rush and Chili Burst ×1.5 stronger.', chk: k => k.chiliCook && k.gingerFarmer && k.honeyHunter },
-  { id: 'teaMasters',  n: 'Tea Masters',       i: '🍵', req: 'Tea Picker + Water Carrier',              d: '+15% rupees from brewing.',               chk: k => k.teaPicker && k.waterCarrier },
-  { id: 'sacred',      n: 'Sacred Ground',     i: '☸️', req: 'Monk + Lama',                             d: 'Prayer Wheels last ×2 and are 50% bigger.', chk: k => k.monk && k.lama },
-  { id: 'frozenFocus', n: 'Frozen Focus',      i: '🧊', req: 'Ice Climber + Glacier Guide',             d: 'Crits ×4. Frost Marks stack to 8.',        chk: k => k.iceClimber && k.glacierGuide },
-  { id: 'bigCats',     n: 'Big Cats',          i: '🐾', req: 'Snow Lion + Snow Leopard Spirit',         d: 'Roar lasts ×2. +3 pounces.',               chk: k => k.snowLion && k.leopard },
-  { id: 'legends',     n: 'Mountain Legends',  i: '⛰️', req: 'Yeti + Golden Danphe + Snow Leopard Spirit', d: 'Mythic cooldowns −30%.',                chk: k => k.yeti && k.danphe && k.leopard },
-  { id: 'festival',    n: 'Festival Season',   i: '🪔', req: 'Tihar Dog + Kite Flyer',                  d: '+20% rupees from brewing.',               chk: k => k.tiharDog && k.kiteFlyer },
-  { id: 'lostFound',   n: 'Lost & Found',      i: '🧭', req: 'Lost Tourist + Sherpa Guide',             d: 'The Tourist never fails and is ×2 stronger.', chk: k => k.tourist && k.sherpa },
-  { id: 'rainbow',     n: 'Rainbow Lodge',     i: '🌈', req: 'A Legendary+ crew of each color: Spice, Ice and Cloud', d: '+15% to all gathering.', chk: (k, c) => ['spice', 'ice', 'cloud'].every(col => c.some(m => CREW[m.id].c === col && RAR[CREW[m.id].r].o >= 3 && RAR[CREW[m.id].r].o <= 4)) },
-  { id: 'fullHouse',   n: 'Full House',        i: '🛏️', req: 'Every bed filled (10+ beds)',             d: '+10% to all gathering.',                  chk: (k, c, beds) => beds >= 10 && c.length >= beds },
-  { id: 'blessedTrio', n: 'Blessed Trio',      i: '😇', req: '3+ Blessed crew',                         d: 'All Blessed passives ×1.5.',              chk: (k, c) => c.filter(m => m.bl).length >= 3 }
+  { id: 'porterUnion', n: 'Porter Union',      i: 'basket', req: '5+ Porters',                              d: '+25% doko capacity. Porters gather ×1.5.', chk: k => (k.porter || 0) >= 5 },
+  { id: 'herd',        n: 'The Herd',          i: 'horns', req: '3+ yaks (Yak Calf, Dzo, Yak King)',       d: 'Yaks gather +40%. +10% doko capacity.',    chk: k => YAKS.reduce((s, y) => s + (k[y] || 0), 0) >= 3 },
+  { id: 'trailTeam',   n: 'Trail Team',        i: 'boot', req: 'Sherpa Guide + Trekker',                  d: 'Haste stacks up to ×5.',                  chk: k => k.sherpa && k.trekker },
+  { id: 'kitchen',     n: 'Kitchen Crew',      i: 'pot', req: 'Chili Cook + Ginger Farmer + Honey Hunter', d: 'Spice Rush and Chili Burst ×1.5 stronger.', chk: k => k.chiliCook && k.gingerFarmer && k.honeyHunter },
+  { id: 'teaMasters',  n: 'Tea Masters',       i: 'cup', req: 'Tea Picker + Water Carrier',              d: '+15% rupees from brewing.',               chk: k => k.teaPicker && k.waterCarrier },
+  { id: 'sacred',      n: 'Sacred Ground',     i: 'wheel', req: 'Monk + Lama',                             d: 'Prayer Wheels last ×2 and are 50% bigger.', chk: k => k.monk && k.lama },
+  { id: 'frozenFocus', n: 'Frozen Focus',      i: 'crystal', req: 'Ice Climber + Glacier Guide',             d: 'Crits ×4. Frost Marks stack to 8.',        chk: k => k.iceClimber && k.glacierGuide },
+  { id: 'bigCats',     n: 'Big Cats',          i: 'paw', req: 'Snow Lion + Snow Leopard Spirit',         d: 'Roar lasts ×2. +3 pounces.',               chk: k => k.snowLion && k.leopard },
+  { id: 'legends',     n: 'Mountain Legends',  i: 'mountain', req: 'Yeti + Golden Danphe + Snow Leopard Spirit', d: 'Mythic cooldowns −30%.',                chk: k => k.yeti && k.danphe && k.leopard },
+  { id: 'festival',    n: 'Festival Season',   i: 'lantern', req: 'Tihar Dog + Kite Flyer',                  d: '+20% rupees from brewing.',               chk: k => k.tiharDog && k.kiteFlyer },
+  { id: 'lostFound',   n: 'Lost & Found',      i: 'compass', req: 'Lost Tourist + Sherpa Guide',             d: 'The Tourist never fails and is ×2 stronger.', chk: k => k.tourist && k.sherpa },
+  { id: 'rainbow',     n: 'Rainbow Lodge',     i: 'rainbow', req: 'A Legendary+ crew of each color: Spice, Ice and Cloud', d: '+15% to all gathering.', chk: (k, c) => ['spice', 'ice', 'cloud'].every(col => c.some(m => CREW[m.id].c === col && RAR[CREW[m.id].r].o >= 3 && RAR[CREW[m.id].r].o <= 4)) },
+  { id: 'fullHouse',   n: 'Full House',        i: 'bed', req: 'Every bed filled (10+ beds)',             d: '+10% to all gathering.',                  chk: (k, c, beds) => beds >= 10 && c.length >= beds },
+  { id: 'blessedTrio', n: 'Blessed Trio',      i: 'halo', req: '3+ Blessed crew',                         d: 'All Blessed passives ×1.5.',              chk: (k, c) => c.filter(m => m.bl).length >= 3 }
 ];
 
 const HIVE = {
-  spice: { n: 'Spice Teahouse', i: '🔥', d: 'Ability cooldowns −15%, +5% crit chance. Rewards active play.' },
-  ice:   { n: 'Ice Teahouse',   i: '❄️', d: '+30% rupees from brewing, +20% offline earnings. Great for idle days.' },
-  cloud: { n: 'Cloud Teahouse', i: '☁️', d: 'Your tool gathers ×1.5, +15% doko capacity. For hands-on farming.' }
+  spice: { n: 'Spice Teahouse', i: 'flame', d: 'Ability cooldowns −15%, +5% crit chance. Rewards active play.' },
+  ice:   { n: 'Ice Teahouse',   i: 'snow', d: '+30% rupees from brewing, +20% offline earnings. Great for idle days.' },
+  cloud: { n: 'Cloud Teahouse', i: 'cloud', d: 'Your tool gathers ×1.5, +15% doko capacity. For hands-on farming.' }
 };
 
 /* ---------------- quests (Didi) ---------------- */

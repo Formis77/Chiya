@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Chiya">
-<meta name="theme-color" content="#14182a">
+<meta name="theme-color" content="#fbf6ee">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="stylesheet" href="style.css">
@@ -17,25 +17,18 @@
 <canvas id="cv"></canvas>
 <div id="hud">
   <div class="hcard">
-    <div id="rp">₨ 0</div>
-    <div class="doko"><span>🧺</span><div class="dbar"><i id="dfill"></i></div><span id="dtxt"></span></div>
-    <div id="loc"></div>
+    <div class="money-row"><span id="rpi" class="hi"></span><span id="rp">0</span></div>
+    <div class="doko"><span id="dki" class="hi"></span><div class="dbar"><i id="dfill"></i></div><span id="dtxt"></span></div>
   </div>
+  <div id="loc"></div>
   <div id="buffs"></div>
-  <div id="quest"></div>
+  <button id="quest"></button>
 </div>
 <div id="toast"></div>
-<nav id="bar">
-  <button data-a="home"><span>🏠</span>Home</button>
-  <button data-a="map"><span>🗺️</span>Map</button>
-  <button data-a="crew"><span>👥</span>Crew</button>
-  <button data-a="shop"><span>🛒</span>Shop</button>
-  <button data-a="items"><span>🎒</span>Items</button>
-  <button data-a="quests"><span>📜</span>Quests</button>
-  <button data-a="codex"><span>📖</span>Codex</button>
-</nav>
+<nav id="bar"></nav>
 <div id="sheet"></div>
 <div id="modal"></div>
+<script src="js/icons.js"></script>
 <script src="js/data.js"></script>
 <script src="js/art.js"></script>
 <script src="js/game.js"></script>
