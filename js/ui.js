@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '3';
+const VERSION = '4';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -19,6 +19,7 @@ function uiInit() {
     else openPanel(a);
   });
   $('quest').addEventListener('click', () => openPanel('quests'));
+  $('talk').addEventListener('click', () => talk());
   uiTick(1);
 }
 
@@ -35,8 +36,8 @@ function uiTick(dt) {
   const BI = { haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   for (const k in B) bf.push(`<span class="chip">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></span>`);
   $('buffs').innerHTML = bf.join('');
-  const q = qProg();
-  $('quest').innerHTML = q ? `<div class="qt">${ic('flag')}<span>${QUESTS[S.quest].t}</span>${q.cur >= q.goal ? '<b class="ready">Claim</b>' : ''}</div><div class="qbar"><i style="width:${Math.min(100, q.cur / q.goal * 100)}%"></i></div>` : `<div class="qt">${ic('check')}<span>All quests done</span></div>`;
+  $('quest').innerHTML = questTracker();
+  if (nearNpc && Math.random() < .2) updateTalk();
   if (panel === 'shop' || panel === 'crew') refreshCosts();
 }
 
@@ -64,10 +65,10 @@ function showIntro() {
 function openPanel(name, tab) {
   if (panel === name && !tab) { closePanel(); return; }
   panel = name; panelTab = tab || panelTab;
-  $('sheet').classList.add('on');
+  $('sheet').classList.add('on'); document.body.classList.add('panel');
   renderPanel();
 }
-function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
+function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
   const fn = { crew: pCrew, shop: pShop, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings }[panel];
   if (!fn) return;
@@ -264,51 +265,86 @@ function useItem(k) {
   toast(`${ITEMS[k].n} active`, ITEMS[k].i); renderPanel();
 }
 
-/* ---------------- QUESTS ---------------- */
-function qProg() {
-  const q = QUESTS[S.quest]; if (!q) return null;
-  const [type, a, b] = q.g;
+/* ---------------- QUESTS (givers on the map) ---------------- */
+const curQuest = gid => QUESTS[gid][S.q[gid] || 0];
+function qProg(gid) {
+  const q = curQuest(gid); if (!q) return null;
+  const [type, a, b] = q.g, base = S.qb[gid] || 0;
   switch (type) {
-    case 'gather': return { cur: S.stats.gather - S.qBase, goal: a };
-    case 'earn': return { cur: S.stats.earn - S.qBase, goal: a };
-    case 'feed': return { cur: S.stats.feed - S.qBase, goal: a };
-    case 'field': return { cur: (S.stats.field[a] || 0) - S.qBase, goal: b };
+    case 'gather': return { cur: S.stats.gather - base, goal: a };
+    case 'earn': return { cur: S.stats.earn - base, goal: a };
+    case 'feed': return { cur: S.stats.feed - base, goal: a };
+    case 'field': return { cur: (S.stats.field[a] || 0) - base, goal: b };
     case 'crew': return { cur: S.crew.length, goal: a };
     case 'tool': return { cur: S.tools.includes(a) ? 1 : 0, goal: 1 };
     case 'level': return { cur: Math.max(...S.crew.map(m => m.lvl)), goal: a };
     case 'syn': return { cur: D.syn.size, goal: a };
     case 'blessed': return { cur: S.crew.filter(m => m.bl).length, goal: a };
+    case 'yaks': return { cur: S.crew.filter(m => YAKS.includes(m.id)).length, goal: a };
+    case 'has': return { cur: S.crew.some(m => m.id === a) ? 1 : 0, goal: 1 };
   }
 }
-function qBaseFor(i) {
-  const q = QUESTS[i]; if (!q) return 0;
+function qBaseNow(gid) {
+  const q = curQuest(gid); if (!q) return 0;
   const [type, a] = q.g;
   return type === 'gather' ? S.stats.gather : type === 'earn' ? S.stats.earn : type === 'feed' ? S.stats.feed : type === 'field' ? (S.stats.field[a] || 0) : 0;
 }
+function giverState(gid) { const p = qProg(gid); return !p ? 'done' : p.cur >= p.goal ? 'ready' : 'active'; }
 const rwHtml = rw => [rw.rp ? money(rw.rp) : '', ...Object.entries(rw.items || {}).map(([k, n]) => `<span class="rwi">${ic(ITEMS[k].i)}${ITEMS[k].n} x${n}</span>`), rw.crew ? `<span class="rwi">${ic('crew')}${CREW[rw.crew].n}</span>` : ''].filter(Boolean).join('');
 const rwText = rw => [rw.rp ? fmt(rw.rp) + ' rupees' : '', ...Object.entries(rw.items || {}).map(([k, n]) => `${ITEMS[k].n} x${n}`), rw.crew ? CREW[rw.crew].n : ''].filter(Boolean).join(', ');
+function trackedGiver() {
+  const ids = Object.keys(GIVERS);
+  return ids.find(g => giverState(g) === 'ready') || ids.find(g => giverState(g) === 'active');
+}
+function questTracker() {
+  const gid = trackedGiver();
+  if (!gid) return `<div class="qt">${ic('check')}<span>All quests done</span></div>`;
+  const q = curQuest(gid), p = qProg(gid), ready = p.cur >= p.goal;
+  return `<div class="qt"><img src="${npcPortrait(gid)}" alt=""><span><small>${GIVERS[gid].n}</small>${q.t}</span>${ready ? '<b class="ready">Claim</b>' : ''}</div><div class="qbar"><i style="width:${Math.min(100, p.cur / p.goal * 100)}%"></i></div>`;
+}
 function pQuests() {
-  let h = `<div class="ph"><h2>Didi's requests</h2></div>`;
-  const q = QUESTS[S.quest];
-  if (!q) return h + '<p>You did everything Didi ever asked. The mountain knows your name.</p>';
-  const p = qProg(), done = p.cur >= p.goal, needBed = q.rw.crew && S.crew.length >= S.beds;
-  h += `<div class="quest"><div class="qn">Quest ${S.quest + 1} of ${QUESTS.length}</div><h3>${q.t}</h3>
-    <div class="qbar big"><i style="width:${Math.min(100, p.cur / p.goal * 100)}%"></i></div><div class="mut small">${fmt(Math.min(p.cur, p.goal))} / ${fmt(p.goal)}</div>
-    <div class="rw">${ic('gift')}${rwHtml(q.rw)}</div>
-    <button class="btn primary" ${done && !needBed ? '' : 'disabled'} onclick="claimQuest()"><span>${needBed ? 'Needs a free bed' : done ? 'Claim reward' : 'In progress'}</span></button></div>`;
-  const nx = QUESTS.slice(S.quest + 1, S.quest + 4);
-  if (nx.length) h += `<h3 class="mut">Coming up</h3>` + nx.map(x => `<div class="item dim">${ib('lock', '#9aa0ad')}<div class="it"><b>${x.t}</b><span class="mut small">${rwText(x.rw)}</span></div></div>`).join('');
+  let h = `<div class="ph"><h2>Quests</h2></div><p class="mut small">Quest givers live on the mountain. Walk up to them to talk and claim rewards.</p>`;
+  for (const gid in GIVERS) {
+    const g = GIVERS[gid], q = curQuest(gid), p = qProg(gid), st = giverState(gid), n = S.q[gid] || 0;
+    h += `<div class="giver" style="--gc:${g.col}"><img src="${npcPortrait(gid)}" alt=""><div class="it">
+      <div class="dn"><b>${g.n}</b><span class="mut small">${g.role}</span></div>
+      ${q ? `<div class="small"><b>${q.t}</b></div><div class="qbar"><i style="width:${Math.min(100, p.cur / p.goal * 100)}%"></i></div>
+      <div class="mut small">${fmt(Math.min(p.cur, p.goal))} / ${fmt(p.goal)} · Quest ${n + 1} of ${QUESTS[gid].length}</div>` : '<div class="mut small">All done. Thank you!</div>'}
+      </div><button class="btn sm ${st === 'ready' ? 'primary' : ''}" onclick="goTo(${g.x},${g.y + 30})"><span>${st === 'ready' ? 'Claim' : 'Go'}</span></button></div>`;
+  }
   return h;
 }
-function claimQuest() {
-  const q = QUESTS[S.quest], p = qProg(); if (!q || p.cur < p.goal) return;
+function updateTalk() {
+  const t = $('talk');
+  if (!nearNpc) { t.classList.remove('on'); return; }
+  const g = GIVERS[nearNpc], st = giverState(nearNpc);
+  t.innerHTML = `<img src="${npcPortrait(nearNpc)}" alt=""><span><small>${g.role}</small>Talk to ${g.n}</span>${st === 'ready' ? `<b class="dotg"></b>` : ''}`;
+  t.classList.add('on');
+}
+function talk(gid) {
+  gid = gid || nearNpc; if (!gid) return;
+  const g = GIVERS[gid], q = curQuest(gid), p = qProg(gid);
+  let h = `<div class="npc-head" style="--gc:${g.col}"><img src="${npcPortrait(gid)}" alt=""></div><h2>${g.n}</h2><div class="mut small">${g.role}</div>`;
+  if (!q) { h += `<p class="say">"You have done everything I asked. The mountain smiles on you."</p><button class="btn primary" onclick="closeModal()"><span>Thank you</span></button>`; showModal(h); return; }
+  const done = p.cur >= p.goal, needBed = q.rw.crew && S.crew.length >= S.beds;
+  h += `<p class="say">"${(S.q[gid] || 0) === 0 ? g.hi + ' ' : ''}${done ? 'You did it! Here is your reward.' : 'Can you help me with something?'}"</p>
+    <div class="quest"><div class="qn">Quest ${(S.q[gid] || 0) + 1} of ${QUESTS[gid].length}</div><h3>${q.t}</h3>
+    <div class="qbar big"><i style="width:${Math.min(100, p.cur / p.goal * 100)}%"></i></div><div class="mut small">${fmt(Math.min(p.cur, p.goal))} / ${fmt(p.goal)}</div>
+    <div class="rw">${ic('gift')}${rwHtml(q.rw)}</div></div>
+    <button class="btn primary" ${done && !needBed ? '' : 'disabled'} onclick="claimQuest('${gid}')"><span>${needBed ? 'Needs a free bed' : done ? 'Claim reward' : 'On it'}</span></button>
+    ${done ? '' : `<button class="btn" onclick="closeModal()"><span>Close</span></button>`}`;
+  showModal(h);
+}
+function claimQuest(gid) {
+  const q = curQuest(gid), p = qProg(gid); if (!q || p.cur < p.goal) return;
   if (q.rw.crew && S.crew.length >= S.beds) return;
-  if (q.rw.rp) { S.rp += q.rw.rp; }
+  if (q.rw.rp) S.rp += q.rw.rp;
   for (const k in q.rw.items || {}) S.items[k] = (S.items[k] || 0) + q.rw.items[k];
-  S.quest++; S.qBase = qBaseFor(S.quest);
-  burst(player.x, player.y - 30, 40, { type: 'star', col: '#ffd24a', spd: 200, life: 1.2, size: 3 });
+  S.q[gid] = (S.q[gid] || 0) + 1; S.qb[gid] = qBaseNow(gid);
+  const g = GIVERS[gid]; burst(g.x, g.y - 40, 40, { type: 'star', col: '#ffd24a', spd: 200, life: 1.2, size: 3 });
+  closeModal(); updateTalk();
   if (q.rw.crew) { addCrew(q.rw.crew, false); return; }
-  toast(rwText(q.rw), 'gift'); save(); renderPanel();
+  toast(rwText(q.rw), 'gift'); save();
 }
 
 /* ---------------- CODEX ---------------- */

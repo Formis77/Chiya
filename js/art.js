@@ -28,7 +28,10 @@ const HATS = {
   lamaHat(c) { P(c); c.moveTo(-7, -29); c.quadraticCurveTo(-2, -42, 9, -38); c.quadraticCurveTo(3, -36, 7, -29); c.closePath(); fs(c, '#f5b51e'); },
   sunhat(c) { ell(c, 0, -30, 9.5, 2.6, '#f7f1e3'); P(c); c.arc(0, -30.5, 5.6, Math.PI, 0); fs(c, '#f7f1e3'); rr(c, 1, -27.5, 7, 2.6, 1.2, '#1e272e'); },
   bandana(c) { P(c); c.arc(0, -27, 7.3, Math.PI, 0); fs(c, '#8e44ad'); poly(c, [-7, -27, -12, -25, -10, -29], '#8e44ad'); },
-  bowl(c) { P(c); c.arc(0, -27.5, 7.4, Math.PI * 1.05, -0.05); fs(c, '#2d1e14'); }
+  bowl(c) { P(c); c.arc(0, -27.5, 7.4, Math.PI * 1.05, -0.05); fs(c, '#2d1e14'); },
+  bun(c) { circ(c, -6.5, -31, 3.6, '#2d1e14'); P(c); c.arc(0, -27, 7.5, Math.PI * 1.08, -0.15); fs(c, '#2d1e14'); rr(c, -9, -32.6, 5, 1.6, .8, '#e5484d', false); },
+  furhat(c) { circ(c, -6.5, -24, 3.5, '#c8a27a'); circ(c, 0, -30, 8.4, '#c8a27a'); for (let i = 0; i < 7; i++) circ(c, -7 + i * 2.4, -35.5 + Math.abs(i - 3) * .9, 1.8, '#e6cfae', false); rr(c, -8.5, -29.5, 17, 4, 2, '#a5814f'); },
+  braids(c) { P(c); c.arc(0, -27, 7.5, Math.PI * 1.05, -0.05); fs(c, '#1f1610'); line(c, -6, -24, -7.5, -14, OUT, 4.4); line(c, -6, -24, -7.5, -14, '#1f1610', 2.6); circ(c, -7.6, -13.5, 1.6, '#1abc9c'); rr(c, -5, -33.2, 10, 2, 1, '#e84393', false); circ(c, 0, -33.2, 1.4, '#1abc9c', false); }
 };
 
 function human(c, o, t, mv, act) {
@@ -92,6 +95,36 @@ const HUMANS = {
   lama:         { body: '#a52a2a', trim: '#f5b51e', hat: 'lamaHat', hand: ITEMSART.mala, skin: '#d29a6a', pants: '#a52a2a' },
   kiteFlyer:    { body: '#00b894', trim: '#fdcb6e', hat: 'bowl', hand: ITEMSART.kite, skin: '#d29a6a', pants: '#e17055' }
 };
+
+/* ---------------- quest givers ---------------- */
+const NPCART = {
+  didi: { body: '#ff8a3d', trim: '#c0392b', apron: true, hat: 'bun', skin: '#d29a6a', pants: '#7f3f2a',
+    hand(c, t) { c.save(); c.rotate(-.3); circ(c, 4, 1, 5, '#d4d8de'); rr(c, 1, -5, 6, 2.5, 1.2, '#b0b6be'); P(c); c.moveTo(8, 0); c.lineTo(13, -4); c.strokeStyle = OUT; c.lineWidth = 3; c.stroke(); c.strokeStyle = '#d4d8de'; c.lineWidth = 1.6; c.stroke(); c.restore(); } },
+  pemba: { body: '#e5484d', trim: '#f5c518', hat: 'furhat', skin: '#b9784c', pants: '#3b3f58',
+    front(c) { P(c); c.moveTo(-1, -21); c.quadraticCurveTo(3, -11, 8, -20); c.quadraticCurveTo(8, -24, 4, -22); c.closePath(); fs(c, '#f2f2f2', 1.6); },
+    hand(c) { line(c, 2, 8, 2, -26, OUT, 4.4); line(c, 2, 8, 2, -26, '#8a5a3b', 2.6); circ(c, 2, -27, 2.8, '#c8a27a'); } },
+  dolma: { body: '#16a085', trim: '#e84393', hat: 'braids', skin: '#c98c5f', pants: '#5b3a6b',
+    hand(c) { P(c); c.moveTo(1, 9); c.lineTo(1, -18); c.quadraticCurveTo(1, -25, 6, -24); c.quadraticCurveTo(9, -23, 8, -19); c.strokeStyle = OUT; c.lineWidth = 4; c.lineCap = 'round'; c.stroke(); c.strokeStyle = '#a77b4f'; c.lineWidth = 2.2; c.stroke(); } },
+  norbu: { body: '#8e2a2a', trim: '#f39c12', hat: 'lamaHat', skin: '#d29a6a', pants: '#8e2a2a',
+    front(c) { P(c); c.arc(1, -13, 5, .2, Math.PI - .2); c.strokeStyle = '#f5c518'; c.lineWidth = 1.8; c.setLineDash([1.6, 1.2]); c.stroke(); c.setLineDash([]); },
+    hand(c, t) { line(c, 0, 0, 0, -8, '#8a5a3b', 1.6); c.save(); c.translate(0, -11); c.rotate(Math.sin(t * 6) * .2); rr(c, -4, -4, 8, 8, 2, '#f5b51e'); line(c, -4, -1, 4, -1, '#c0392b', 1.2); line(c, -4, 2, 4, 2, '#c0392b', 1.2); c.restore(); } }
+};
+function drawNpc(c, id, t) {
+  if (id === 'yeti') {
+    ANIMALS.yeti(c, t, false, false);
+    P(c); c.ellipse(4, -18, 9, 3.5, -.1, 0, TAU); fs(c, '#e5484d', 1.6); rr(c, -6, -18, 4, 10, 2, '#e5484d');
+    for (let i = 0; i < 6; i++) circ(c, -4 + i * 3, -14 + Math.sin(i) * 1, 1.3, i % 2 ? '#1abc9c' : '#f5c518', false);
+    return;
+  }
+  human(c, NPCART[id], t, false, false);
+}
+const NPC_PORTRAIT = {};
+function npcPortrait(id) {
+  if (NPC_PORTRAIT[id]) return NPC_PORTRAIT[id];
+  const s = 120, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const c = cv.getContext('2d'); c.translate(s / 2, s * .9); c.scale(id === 'yeti' ? 2.4 : 2.9, id === 'yeti' ? 2.4 : 2.9); drawNpc(c, id, .5);
+  return (NPC_PORTRAIT[id] = cv.toDataURL());
+}
 
 /* ---------------- animals & spirits ---------------- */
 function yak(c, t, mv, act, o) {

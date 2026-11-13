@@ -1,7 +1,7 @@
 :root{--paper:#fffaf3;--card:#ffffff;--soft:#f6efe4;--line:#ece2d3;--ink:#2b2233;--mut:#8c8296;--acc:#ff8a3d;--acc2:#ff6a2b;--good:#3fae6b;--bad:#ef4d5f;--gold:#f0b429;--spice:#f26b4a;--ice:#4fb6e6;--cloud:#c9d0f2;--neutral:#d8c3a0;--sh:0 6px 24px rgba(43,34,51,.12),0 1px 3px rgba(43,34,51,.08)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;background:#e2cfa3;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","SF Pro Text",system-ui,sans-serif;-webkit-user-select:none;user-select:none;overscroll-behavior:none;touch-action:none}
-canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;touch-action:none}
+canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;height:100lvh;display:block;touch-action:none}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation;padding:0}
 .ic{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;vertical-align:-.2em}
 .ib{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--c);flex-shrink:0}
@@ -46,7 +46,7 @@ p{margin:6px 0}
 #bar button.on{color:var(--acc2);background:#fff1e3}
 #bar button:active{transform:scale(.93)}
 /* toast */
-#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translate(-50%,16px);opacity:0;background:var(--ink);color:#fff;padding:10px 15px;border-radius:15px;font-size:13.5px;font-weight:700;transition:.25s;z-index:8;max-width:88vw;display:flex;align-items:center;gap:8px;pointer-events:none;box-shadow:var(--sh)}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 158px);transform:translate(-50%,16px);opacity:0;background:var(--ink);color:#fff;padding:10px 15px;border-radius:15px;font-size:13.5px;font-weight:700;transition:.25s;z-index:8;max-width:88vw;display:flex;align-items:center;gap:8px;pointer-events:none;box-shadow:var(--sh)}
 #toast .ic{color:#ffc35e}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 /* sheet */
@@ -160,3 +160,20 @@ p{margin:6px 0}
 #gear{pointer-events:auto;width:34px;height:34px;border-radius:11px;background:var(--soft);color:var(--mut);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 #gear .ic{width:19px;height:19px}
 .btn.danger{background:var(--bad);border-color:transparent;color:#fff}
+#talk{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom) + 92px);z-index:6;display:flex;align-items:center;gap:9px;background:var(--card);border-radius:20px;padding:6px 14px 6px 6px;box-shadow:var(--sh);transform:translateY(20px) scale(.9);opacity:0;pointer-events:none;transition:.22s cubic-bezier(.2,1.4,.4,1);text-align:left;font-weight:800;font-size:14px}
+#talk.on{opacity:1;transform:none;pointer-events:auto}
+#talk img{width:44px;height:44px;border-radius:14px;background:var(--soft)}
+#talk small{display:block;font-size:11px;color:var(--mut);font-weight:700}
+#talk .dotg{width:10px;height:10px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px #e6f6ec}
+#quest .qt img{width:26px;height:26px;border-radius:8px;background:var(--soft)}
+#quest .qt small{display:block;font-size:10px;color:var(--mut)}
+.giver{display:flex;align-items:center;gap:11px;padding:10px;border-radius:18px;background:var(--card);margin-bottom:8px}
+.giver img{width:58px;height:58px;border-radius:16px;background:color-mix(in srgb,var(--gc) 16%,#fff);flex-shrink:0}
+.giver .qbar{margin:6px 0 3px}
+.npc-head{width:96px;height:96px;margin:0 auto;border-radius:30px;background:color-mix(in srgb,var(--gc) 18%,#fff);display:flex;align-items:center;justify-content:center}
+.npc-head img{width:96px;height:96px}
+.say{font-size:15px;font-style:italic;color:var(--ink);margin:12px 4px}
+.mcard .quest{text-align:left;background:var(--card)}
+#sheet:not(.on){visibility:hidden;transition:transform .3s cubic-bezier(.2,.9,.3,1),visibility 0s .3s}
+#toast:not(.on){visibility:hidden;transition:.25s,visibility 0s .25s}
+body.panel #talk{opacity:0;pointer-events:none}

@@ -167,29 +167,53 @@ const HIVE = {
   cloud: { n: 'Cloud Teahouse', i: 'cloud', d: 'Your tool gathers ×1.5, +15% doko capacity. For hands-on farming.' }
 };
 
-/* ---------------- quests (Didi) ---------------- */
-const QUESTS = [
-  { t: 'Gather 100 ingredients',               g: ['gather', 100],               rw: { items: { momo: 5 }, rp: 100 } },
-  { t: 'Brew tea worth ₨500',                  g: ['earn', 500],                 rw: { items: { permit: 1 } } },
-  { t: 'Have 4 crew',                          g: ['crew', 4],                   rw: { rp: 300, items: { butterTea: 2 } } },
-  { t: 'Feed your crew 5 times',               g: ['feed', 5],                   rw: { items: { selroti: 3 } } },
-  { t: 'Buy the Bamboo Rake',                  g: ['tool', 'rake'],              rw: { rp: 1000 } },
-  { t: 'Gather 1,500 in Ginger Terraces',      g: ['field', 'ginger', 1500],     rw: { items: { spiceShot: 2, permit: 1 } } },
-  { t: 'Have 5 crew',                          g: ['crew', 5],                   rw: { items: { mysticWheel: 1 } } },
-  { t: 'Brew tea worth ₨15,000',               g: ['earn', 15000],               rw: { items: { dalbhat: 3 } } },
-  { t: 'Gather 10,000 in Rhododendron Forest', g: ['field', 'rhodo', 10000],     rw: { items: { permit: 2 } } },
-  { t: 'Get a crew member to level 5',         g: ['level', 5],                  rw: { rp: 5000, items: { selroti: 5 } } },
-  { t: 'Have 10 crew',                         g: ['crew', 10],                  rw: { crew: 'tiharDog' } },
-  { t: 'Activate 2 synergies',                 g: ['syn', 2],                    rw: { items: { incense: 2, mysticWheel: 1 } } },
-  { t: 'Brew tea worth ₨300,000',              g: ['earn', 3e5],                 rw: { items: { goldenMomo: 1 } } },
-  { t: 'Gather 100,000 in Juniper Ridge',      g: ['field', 'juniper', 1e5],     rw: { items: { mysticWheel: 3 } } },
-  { t: 'Have 15 crew',                         g: ['crew', 15],                  rw: { crew: 'kiteFlyer' } },
-  { t: 'Get a crew member to level 10',        g: ['level', 10],                 rw: { items: { dalbhat: 15 } } },
-  { t: 'Activate 4 synergies',                 g: ['syn', 4],                    rw: { items: { goldenMomo: 1, incense: 3 } } },
-  { t: 'Brew tea worth ₨20,000,000',           g: ['earn', 2e7],                 rw: { items: { mysticWheel: 5, dalbhat: 25 } } },
-  { t: 'Have 25 crew',                         g: ['crew', 25],                  rw: { items: { permit: 3, goldenMomo: 1 } } },
-  { t: 'Gather 2,000,000 in Summit Snowfield', g: ['field', 'summit', 2e6],      rw: { items: { goldenMomo: 2 } } },
-  { t: 'Have 3 Blessed crew',                  g: ['blessed', 3],                rw: { items: { mysticWheel: 10 } } },
-  { t: 'Brew tea worth ₨1,000,000,000',        g: ['earn', 1e9],                 rw: { items: { goldenMomo: 3 } } },
-  { t: 'Fill 50 beds',                         g: ['crew', 50],                  rw: { rp: 1e10 } }
-];
+/* ---------------- quest givers (on the map) ---------------- */
+const GIVERS = {
+  didi:  { n: 'Didi',        role: 'Teahouse owner',       x: 790,  y: 3085, col: '#ff8a3d', hi: 'Namaste! The kettle never sleeps, and neither should you.' },
+  pemba: { n: 'Old Pemba',   role: 'Retired Sherpa',        x: 1085, y: 2475, col: '#2ea4dc', hi: 'Forty summits, little one. Let me teach you about crews.' },
+  dolma: { n: 'Dolma',       role: 'Yak herder',            x: 1065, y: 1700, col: '#3fae6b', hi: 'My yaks know every flower on this mountain.' },
+  norbu: { n: 'Lama Norbu',  role: 'Keeper of the chorten', x: 965,  y: 1075, col: '#9b6ef3', hi: 'Harmony between your crew is the real summit.' },
+  yeti:  { n: 'Grandpa Yeti',role: 'Guardian of the peak',  x: 860,  y: 545,  col: '#4fb6e6', hi: 'Hrrm. Few climb this high. Fewer bring tea.' }
+};
+const QUESTS = {
+  didi: [
+    { t: 'Gather 100 ingredients',               g: ['gather', 100],              rw: { items: { momo: 5 }, rp: 100 } },
+    { t: 'Brew tea worth 500 rupees',            g: ['earn', 500],                rw: { items: { permit: 1 } } },
+    { t: 'Have 4 crew',                          g: ['crew', 4],                  rw: { rp: 300, items: { butterTea: 2 } } },
+    { t: 'Feed your crew 5 times',               g: ['feed', 5],                  rw: { items: { selroti: 3 } } },
+    { t: 'Buy the Bamboo Rake',                  g: ['tool', 'rake'],             rw: { rp: 1000 } },
+    { t: 'Gather 1,500 in Ginger Terraces',      g: ['field', 'ginger', 1500],    rw: { items: { spiceShot: 2, permit: 1 } } },
+    { t: 'Have 5 crew',                          g: ['crew', 5],                  rw: { items: { mysticWheel: 1 } } },
+    { t: 'Brew tea worth 15,000 rupees',         g: ['earn', 15000],              rw: { items: { dalbhat: 3 } } },
+    { t: 'Brew tea worth 300,000 rupees',        g: ['earn', 3e5],                rw: { items: { goldenMomo: 1 } } },
+    { t: 'Brew tea worth 20M rupees',            g: ['earn', 2e7],                rw: { items: { mysticWheel: 5, dalbhat: 25 } } },
+    { t: 'Brew tea worth 1B rupees',             g: ['earn', 1e9],                rw: { items: { goldenMomo: 3 } } }
+  ],
+  pemba: [
+    { t: 'Gather 8,000 in Rhododendron Forest',  g: ['field', 'rhodo', 8000],     rw: { items: { permit: 2 } } },
+    { t: 'Get a crew member to level 5',         g: ['level', 5],                 rw: { rp: 5000, items: { selroti: 5 } } },
+    { t: 'Have 10 crew',                         g: ['crew', 10],                 rw: { crew: 'tiharDog' } },
+    { t: 'Get a crew member to level 10',        g: ['level', 10],                rw: { items: { dalbhat: 15 } } },
+    { t: 'Have 15 crew',                         g: ['crew', 15],                 rw: { crew: 'kiteFlyer' } },
+    { t: 'Have 25 crew',                         g: ['crew', 25],                 rw: { items: { permit: 3, goldenMomo: 1 } } },
+    { t: 'Fill 50 beds',                         g: ['crew', 50],                 rw: { rp: 1e10 } }
+  ],
+  dolma: [
+    { t: 'Gather 5,000 in Yak Meadow',           g: ['field', 'meadow', 5000],    rw: { items: { yakCheese: 3, momo: 10 } } },
+    { t: 'Have 2 yaks in your crew',             g: ['yaks', 2],                  rw: { items: { selroti: 10 } } },
+    { t: 'Gather 100,000 in Juniper Ridge',      g: ['field', 'juniper', 1e5],    rw: { items: { mysticWheel: 3 } } },
+    { t: 'Gather 1M in Prayer Flag Pass',        g: ['field', 'flags', 1e6],      rw: { items: { goldenMomo: 1 } } }
+  ],
+  norbu: [
+    { t: 'Activate 2 synergies',                 g: ['syn', 2],                   rw: { items: { incense: 2, mysticWheel: 1 } } },
+    { t: 'Activate 4 synergies',                 g: ['syn', 4],                   rw: { items: { goldenMomo: 1, incense: 3 } } },
+    { t: 'Have 3 Blessed crew',                  g: ['blessed', 3],               rw: { items: { mysticWheel: 10 } } },
+    { t: 'Activate 8 synergies',                 g: ['syn', 8],                   rw: { items: { goldenMomo: 2 } } }
+  ],
+  yeti: [
+    { t: 'Have 30 crew',                         g: ['crew', 30],                 rw: { items: { glacierShard: 5, incense: 5 } } },
+    { t: 'Gather 2M in Summit Snowfield',        g: ['field', 'summit', 2e6],     rw: { items: { goldenMomo: 2 } } },
+    { t: 'Have a Yeti in your crew',             g: ['has', 'yeti'],              rw: { items: { mysticWheel: 15 } } },
+    { t: 'Activate 12 synergies',                g: ['syn', 12],                  rw: { items: { goldenMomo: 5 } } }
+  ]
+};
