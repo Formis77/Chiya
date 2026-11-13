@@ -24,6 +24,7 @@ const player = { x: BREW.x, y: BREW.y - 30, face: 1, mv: false, swing: 0, swingT
 const cam = { x: 0, y: 0, shake: 0 };
 const joy = { on: false, id: null, ox: 0, oy: 0, x: 0, y: 0, kx: 0, ky: 0 };
 let now = 0, brewing = false, fullWarnT = 0, nearNpc = null;
+const NPCS = () => Object.assign({}, GIVERS, REPEAT);
 
 /* ---------------- save ---------------- */
 const mk = (id, bl) => ({ id, lvl: 1, xp: 0, bl: !!bl });
@@ -71,12 +72,33 @@ function buildWorld() {
   // decor
   DECOR = [];
   const inField = (x, y, m) => FIELDS.some(f => x > f.x - m && x < f.x + f.w + m && y > f.yy - m && y < f.yy + f.h + m);
+  // smooth, wandering trail: add bendy midpoints, then Chaikin-smooth and sample
+  let pts = [PATH[0]];
+  for (let i = 1; i < PATH.length; i++) {
+    const [x0, y0] = PATH[i - 1], [x1, y1] = PATH[i], L = Math.hypot(x1 - x0, y1 - y0), nx = -(y1 - y0) / L, ny = (x1 - x0) / L;
+    if (L > 200) for (const u of [.33, .66]) { const o = (r() - .5) * 70; pts.push([x0 + (x1 - x0) * u + nx * o, y0 + (y1 - y0) * u + ny * o]); }
+    pts.push(PATH[i]);
+  }
+  for (let it = 0; it < 4; it++) { const n = [pts[0]]; for (let i = 0; i < pts.length - 1; i++) { const [a, b] = pts[i], [c2, d] = pts[i + 1]; n.push([a * .75 + c2 * .25, b * .75 + d * .25], [a * .25 + c2 * .75, b * .25 + d * .75]); } n.push(pts[pts.length - 1]); pts = n; }
+  TRAIL = []; STONES = [];
+  let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], L = Math.hypot(x1 - x0, y1 - y0);
+    for (let d = 0; d < L; d += 7) {
+      acc += 7; const x = x0 + (x1 - x0) * d / L, y = y0 + (y1 - y0) * d / L;
+      const rr = 12 + Math.sin(acc * .013) * 3 + Math.sin(acc * .041) * 2;
+      const t = { x: x + (r() - .5) * 2, y: y + (r() - .5) * 2, r: rr, spot: r() < .12, sx: (r() - .5) * 10, sy: (r() - .5) * 8 };
+      TRAIL.push(t);
+      if (r() < .07) { const a = r() * TAU, rd = rr + 6 + r() * 8; STONES.push({ x: x + Math.cos(a) * rd, y: y + Math.sin(a) * rd * .8, r: 2 + r() * 3, c: r() < .5 ? '#b9b2a6' : '#a8a093' }); }
+    }
+  }
+  PATHPTS = pts;
   const inMount = (x, y, m = 0) => y > PEAK.y + 40 && Math.abs(x - PEAK.x) < mountHW(y) - m;
-  const nearPath = (x, y, m) => PATH.some((p, i) => i && segDist(x, y, PATH[i - 1], p) < m);
+  const nearPath = (x, y, m) => { for (let i = 0; i < TRAIL.length; i += 2) { const t = TRAIL[i]; if (Math.abs(t.x - x) < m && Math.abs(t.y - y) < m && Math.hypot(t.x - x, t.y - y) < m) return true; } return false; };
   const nearPlaza = (x, y) => Math.hypot((x - PLAZA.x) / 290, (y - PLAZA.y) / 170) < 1;
   for (let i = 0; i < 3000 && DECOR.length < 320; i++) {
     const x = r() * WORLD.w, y = 80 + r() * (WORLD.h);
-    if (inField(x, y, 34) || nearPath(x, y, 46) || nearPlaza(x, y) || Object.values(GIVERS).some(g => Math.hypot(x - g.x, y - g.y) < 60)) continue;
+    if (inField(x, y, 34) || nearPath(x, y, 46) || nearPlaza(x, y) || Object.values(NPCS()).some(g => Math.hypot(x - g.x, y - g.y) < 60)) continue;
     const z = zoneAt(y), inside = inMount(x, y, 20), roll = r();
     if (!inside && y < 2300) { if (roll < .25) DECOR.push({ type: 'cloud', x, y, s: .8 + r() * .8 }); continue; }
     const type = !inside ? (roll < .55 ? 'tree' : roll < .8 ? 'pine' : 'bush')
@@ -93,11 +115,6 @@ function buildWorld() {
     const z = inMount(x, y) ? zoneAt(y) : 0, roll = r();
     SCATTER.push({ x, y, z, k: roll, t: z >= 4 ? 'spark' : z === 3 ? 'pebble' : z === 2 ? (roll < .5 ? 'pebble' : 'tuft') : (roll < .7 ? 'tuft' : 'flower') });
   }
-  STONES = [];
-  for (let i = 1; i < PATH.length; i++) {
-    const [x0, y0] = PATH[i - 1], [x1, y1] = PATH[i], L = Math.hypot(x1 - x0, y1 - y0), nx = -(y1 - y0) / L, ny = (x1 - x0) / L;
-    for (let d = 14; d < L - 10; d += 24) { const side = (Math.floor(d / 24) % 2 ? 1 : -1) * 4 * r(); STONES.push({ x: x0 + (x1 - x0) * d / L + nx * side, y: y0 + (y1 - y0) * d / L + ny * side, r: 5 + r() * 3 }); }
-  }
   // mountain outline
   MOUNT = new Path2D();
   const L = [], R = [];
@@ -113,7 +130,7 @@ function buildWorld() {
   DECOR.push({ type: 'chorten', x: 470, y: 2920 }, { type: 'chorten', x: 600, y: 1700 }, { type: 'chorten', x: 640, y: 1160 }, { type: 'chorten', x: 600, y: 620 }, { type: 'flagpole', x: PEAK.x, y: PEAK.y + 30 });
   FLAGS = [[440, 2240, 720, 2250], [480, 1790, 740, 1800], [640, 1320, 840, 1330], [620, 790, 740, 780], [560, 215, 860, 215]];
 }
-let DECOR = [], FLAGS = [], SCATTER = [], BANDS = [], MOUNT = null, SHADE = null, STONES = [];
+let DECOR = [], FLAGS = [], SCATTER = [], BANDS = [], MOUNT = null, SHADE = null, STONES = [], TRAIL = [], PATHPTS = [];
 const ZONES = [
   { y: 3300, n: 'Foothills',    m: '2,800 m', col: '#86c763', lip: '#6aab50' },
   { y: 2160, n: 'Pine Forest',  m: '3,600 m', col: '#62a854', lip: '#4b8c43' },
@@ -489,7 +506,7 @@ function update(dt) {
   } else if (pf >= 0 && !fieldOpen(pf) && now - fullWarnT > 4) { fullWarnT = now; toast(`${FIELDS[pf].n} needs ${FIELDS[pf].gate} crew`, 'lock'); }
   // quest givers nearby
   let nn = null, nd = 75;
-  for (const id in GIVERS) { const g = GIVERS[id], d = dist(player.x, player.y, g.x, g.y); if (d < nd) { nd = d; nn = id; } }
+  const all = NPCS(); for (const id in all) { const g = all[id], d = dist(player.x, player.y, g.x, g.y); if (d < nd) { nd = d; nn = id; } }
   if (nn !== nearNpc) { nearNpc = nn; updateTalk(); }
   // brewing
   brewing = false;
@@ -512,7 +529,7 @@ function update(dt) {
     const tk = E.tokens[i]; tk.age += dt;
     if (tk.age > tk.life) { E.tokens.splice(i, 1); continue; }
     const d = dist(tk.x, tk.y, player.x, player.y - 10);
-    if (d < 30) { E.tokens.splice(i, 1); takeToken(tk); }
+    if (d < 30) { E.tokens.splice(i, 1); takeToken(tk); S.stats.tokens = (S.stats.tokens || 0) + 1; }
     else if (d < 70) { tk.x += (player.x - tk.x) * dt * 3; tk.y += (player.y - 10 - tk.y) * dt * 3; }
   }
   // tiles regen
@@ -564,7 +581,7 @@ function render() {
   cam.tx = player.x + (PLAZA.x + 10 - player.x) * pw;
   cam.sx = cam.sx == null ? cam.tx : cam.sx + (cam.tx - cam.sx) * .12;
   cam.x = clamp(cam.sx - VIEW_W / 2, 0, WORLD.w - VIEW_W);
-  cam.y = clamp(player.y - viewH * .56, 0, Math.max(0, WORLD.h - viewH));
+  cam.y = clamp(player.y - viewH * .56, -150, WORLD.h - viewH + 120);
   const sx = (Math.random() - .5) * cam.shake, sy = (Math.random() - .5) * cam.shake;
   c.setTransform(scale, 0, 0, scale, (-cam.x + sx) * scale, (-cam.y + sy) * scale);
   const vx0 = cam.x - 60, vy0 = cam.y - 60, vx1 = cam.x + VIEW_W + 60, vy1 = cam.y + viewH + 80;
@@ -599,12 +616,12 @@ function render() {
   // plaza at the foot
   ell(c, PLAZA.x, PLAZA.y, 250, 100, '#e2cfa3'); ell(c, PLAZA.x, PLAZA.y, 232, 88, '#ecdcb5', false);
   for (let i = 0; i < 26; i++) { const a = i / 26 * TAU; ell(c, PLAZA.x + Math.cos(a) * 190, PLAZA.y + Math.sin(a) * 70, 11, 5.5, 'rgba(255,255,255,.35)', false); }
-  // dirt trail with stepping stones
-  c.lineCap = 'round'; c.lineJoin = 'round';
-  const trail = (w, col) => { P(c); PATH.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.strokeStyle = col; c.lineWidth = w; c.stroke(); };
-  trail(38, 'rgba(120,88,52,.25)'); trail(32, '#c9a26e'); trail(20, '#d4b07c');
-  for (let i = 1; i < PATH.length - 1; i++) { const [x, y] = PATH[i]; if (vis(x, y, 60)) { circ(c, x, y, 34, '#c9a26e', false); circ(c, x, y, 26, '#d4b07c', false); } }
-  for (const st of STONES) if (vis(st.x, st.y, 10)) { ell(c, st.x, st.y + 1.5, st.r, st.r * .7, 'rgba(90,64,38,.3)', false); ell(c, st.x, st.y, st.r, st.r * .7, '#ead2a2', false); P(c); c.ellipse(st.x, st.y, st.r, st.r * .7, 0, 0, TAU); c.strokeStyle = 'rgba(120,88,52,.45)'; c.lineWidth = 1.2; c.stroke(); }
+  // natural dirt trail
+  for (const t of TRAIL) if (vis(t.x, t.y, 30)) circ(c, t.x, t.y + 2, t.r + 4, 'rgba(110,80,45,.22)', false);
+  for (const t of TRAIL) if (vis(t.x, t.y, 30)) circ(c, t.x, t.y, t.r + 2, '#bf9862', false);
+  for (const t of TRAIL) if (vis(t.x, t.y, 30)) circ(c, t.x, t.y, t.r, '#d0ab76', false);
+  for (const t of TRAIL) if (t.spot && vis(t.x, t.y, 30)) ell(c, t.x + t.sx, t.y + t.sy, t.r * .45, t.r * .3, '#dcbb8a', false);
+  for (const st of STONES) if (vis(st.x, st.y, 10)) { ell(c, st.x, st.y + 1.2, st.r, st.r * .7, 'rgba(90,64,38,.3)', false); ell(c, st.x, st.y, st.r, st.r * .7, st.c, false); }
 
   // fields
   FIELDS.forEach((f, fi) => {
@@ -645,7 +662,7 @@ function render() {
   const objs = [];
   for (const d of DECOR) if (vis(d.x, d.y, 60)) objs.push({ y: d.y, f: () => { c.save(); c.translate(d.x, d.y); ({ pine: () => drawPine(c, d.s, d.snow), rock: () => drawRock(c, d.s, d.snow), tree: () => drawTreeRound(c, d.s), autumn: () => drawTreeRound(c, d.s, '#f2a33a'), bush: () => drawBush(c, d.s), dead: () => drawDeadBush(c, d.s), chorten: () => drawChorten(c, now), flagpole: () => drawSummitFlag(c, now), cloud: () => drawCloud(c, d.s) })[d.type](); c.restore(); } });
   if (vis(HOUSE.x, HOUSE.y, 200)) objs.push({ y: HOUSE.y, f: () => { c.save(); c.translate(HOUSE.x, HOUSE.y); drawTeahouse(c, teaTier(), now); c.restore(); } });
-  for (const id in GIVERS) { const g = GIVERS[id]; if (vis(g.x, g.y, 80)) objs.push({ y: g.y, f: () => drawGiver(c, id, g) }); }
+  const allN = NPCS(); for (const id in allN) { const g = allN[id]; if (vis(g.x, g.y, 80)) objs.push({ y: g.y, f: () => drawGiver(c, id, g) }); }
   if (vis(STALL.x, STALL.y, 120)) objs.push({ y: STALL.y, f: () => { c.save(); c.translate(STALL.x, STALL.y); drawStall(c, now, brewing); c.restore(); } });
   for (const e of E.crew) if (vis(e.x, e.y, 40)) objs.push({ y: e.y, f: () => drawCrewEnt(c, e) });
   objs.push({ y: player.y, f: () => {
@@ -712,22 +729,21 @@ function render() {
 }
 
 function drawGiver(c, id, g) {
-  const near = nearNpc === id, st = giverState(id), bob = Math.sin(now * 2 + g.x) * 1.2;
+  const near = nearNpc === id, st = giverState(id), bob = Math.sin(now * 2 + g.x) * 1.2, locked = st === 'locked';
   c.save(); c.translate(g.x, g.y);
   ell(c, 0, 2, 26, 9, 'rgba(0,0,0,.15)', false);
   P(c); c.ellipse(0, 2, 24, 8.5, 0, 0, TAU); c.fillStyle = g.col; c.globalAlpha = .28; c.fill(); c.globalAlpha = 1; c.strokeStyle = g.col; c.lineWidth = 2.4; c.stroke();
   if (near) { P(c); c.ellipse(0, 2, 30 + Math.sin(now * 5) * 2, 11, 0, 0, TAU); c.strokeStyle = '#ffffff'; c.lineWidth = 2; c.stroke(); }
-  c.save(); c.translate(0, -bob * .3); c.scale((player.x > g.x ? 1 : -1) * 1.35, 1.35); drawNpc(c, id, now); c.restore();
+  c.save(); if (locked) c.globalAlpha = .45; c.translate(0, -bob * .3); c.scale((player.x > g.x ? 1 : -1) * 1.35, 1.35); drawNpc(c, id, now); c.restore();
   const top = id === 'yeti' ? -62 : -58;
-  c.font = '800 10px -apple-system,system-ui,sans-serif'; const tw = c.measureText(g.n).width + 14;
-  P(c); c.roundRect(-tw / 2, top - 6, tw, 17, 8.5); fs(c, '#ffffff', 1.8);
-  c.fillStyle = OUT; c.textAlign = 'center'; c.fillText(g.n, 0, top + 6);
-  if (st !== 'done') {
-    const my = top - 24 + Math.sin(now * 4) * 3;
-    circ(c, 0, my, 11, st === 'ready' ? '#3fae6b' : '#ffb020');
-    if (st === 'ready') drawIcon(c, 'check', 0, my, 13, '#ffffff', 3);
-    else { c.fillStyle = '#ffffff'; c.font = '900 14px -apple-system,system-ui,sans-serif'; c.fillText('!', 0, my + 5); }
-  }
+  const label = locked ? `${g.n} · ${g.gate} crew` : g.n;
+  c.font = '800 10px -apple-system,system-ui,sans-serif'; const tw = c.measureText(label).width + 14;
+  P(c); c.roundRect(-tw / 2, top - 6, tw, 17, 8.5); fs(c, locked ? '#e9e4ec' : '#ffffff', 1.8);
+  c.fillStyle = locked ? '#8c8296' : OUT; c.textAlign = 'center'; c.fillText(label, 0, top + 6);
+  const my = top - 24 + (locked ? 0 : Math.sin(now * 4) * 3);
+  if (locked) { circ(c, 0, my, 11, '#ffffff'); drawIcon(c, 'lock', 0, my, 13, '#8c8296', 2.6); }
+  else if (st === 'ready') { circ(c, 0, my, 11, '#3fae6b'); drawIcon(c, 'check', 0, my, 13, '#ffffff', 3); }
+  else if (st === 'active') { circ(c, 0, my, 11, g.rep ? '#2ea4dc' : '#ffb020'); c.fillStyle = '#ffffff'; c.font = '900 14px -apple-system,system-ui,sans-serif'; c.fillText(g.rep ? '?' : '!', 0, my + 5); }
   c.restore();
 }
 function drawCrewEnt(c, e) {

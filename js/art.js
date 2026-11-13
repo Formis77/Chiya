@@ -98,6 +98,9 @@ const HUMANS = {
 
 /* ---------------- quest givers ---------------- */
 const NPCART = {
+  ang: { body: '#8d6e4f', trim: '#5d4037', hat: 'headband', back(c) { poly(c, [-17, -32, -4, -32, -5, -6, -15, -6], '#d79d4a'); line(c, -16, -24, -5, -24, '#8a5a22', 1.2); line(c, -15.5, -15, -5, -15, '#8a5a22', 1.2); rr(c, -16, -40, 12, 8, 2, '#4f8bd6'); }, skin: '#b9784c', pants: '#3b3f58' },
+  maya: { body: '#ffd166', trim: '#e84393', hat: 'sunhat', skin: '#f3c6a5', pants: '#4f8bd6', back(c) { rr(c, -14, -24, 9, 16, 3, '#e84393'); }, hand: ITEMSART.camera },
+  raju: { body: '#2e86c1', trim: '#e0a43c', hat: 'topi', skin: '#c98c5f', pants: '#5d4037', back(c) { rr(c, -18, -30, 13, 24, 3, '#a0522d'); rr(c, -19, -34, 15, 6, 2, '#e0a43c'); circ(c, -11.5, -18, 2, '#e5484d', false); } },
   didi: { body: '#ff8a3d', trim: '#c0392b', apron: true, hat: 'bun', skin: '#d29a6a', pants: '#7f3f2a',
     hand(c, t) { c.save(); c.rotate(-.3); circ(c, 4, 1, 5, '#d4d8de'); rr(c, 1, -5, 6, 2.5, 1.2, '#b0b6be'); P(c); c.moveTo(8, 0); c.lineTo(13, -4); c.strokeStyle = OUT; c.lineWidth = 3; c.stroke(); c.strokeStyle = '#d4d8de'; c.lineWidth = 1.6; c.stroke(); c.restore(); } },
   pemba: { body: '#e5484d', trim: '#f5c518', hat: 'furhat', skin: '#b9784c', pants: '#3b3f58',

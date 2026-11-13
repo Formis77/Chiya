@@ -119,7 +119,7 @@ const BOOTS = [
 ];
 const LODGE = [
   { n: 'No manager',      eff: .25, cost: 0 },
-  { n: 'Didi\'s cousin',  eff: .35, cost: 1e4 },
+  { n: 'Mansoon\'s cousin',  eff: .35, cost: 1e4 },
   { n: 'Lodge Manager',   eff: .45, cost: 2e5 },
   { n: 'Head of Lodge',   eff: .60, cost: 5e6 },
   { n: 'Mountain Tycoon', eff: .75, cost: 1e8 }
@@ -169,12 +169,24 @@ const HIVE = {
 
 /* ---------------- quest givers (on the map) ---------------- */
 const GIVERS = {
-  didi:  { n: 'Didi',        role: 'Teahouse owner',       x: 790,  y: 3085, col: '#ff8a3d', hi: 'Namaste! The kettle never sleeps, and neither should you.' },
-  pemba: { n: 'Old Pemba',   role: 'Retired Sherpa',        x: 1085, y: 2475, col: '#2ea4dc', hi: 'Forty summits, little one. Let me teach you about crews.' },
-  dolma: { n: 'Dolma',       role: 'Yak herder',            x: 1065, y: 1700, col: '#3fae6b', hi: 'My yaks know every flower on this mountain.' },
-  norbu: { n: 'Lama Norbu',  role: 'Keeper of the chorten', x: 965,  y: 1075, col: '#9b6ef3', hi: 'Harmony between your crew is the real summit.' },
-  yeti:  { n: 'Grandpa Yeti',role: 'Guardian of the peak',  x: 860,  y: 545,  col: '#4fb6e6', hi: 'Hrrm. Few climb this high. Fewer bring tea.' }
+  didi:  { n: 'Mansoon',     role: 'Teahouse owner',       x: 790,  y: 3085, col: '#ff8a3d', gate: 0, hi: 'Namaste! The kettle never sleeps, and neither should you.' },
+  pemba: { n: 'Old Pemba',   role: 'Retired Sherpa',        x: 1085, y: 2475, col: '#2ea4dc', gate: 0, hi: 'Forty summits, little one. Let me teach you about crews.' },
+  dolma: { n: 'Dolma',       role: 'Yak herder',            x: 1065, y: 1700, col: '#3fae6b', gate: 5, hi: 'My yaks know every flower on this mountain.' },
+  norbu: { n: 'Lama Norbu',  role: 'Keeper of the chorten', x: 965,  y: 1075, col: '#9b6ef3', gate: 10, hi: 'Harmony between your crew is the real summit.' },
+  yeti:  { n: 'Grandpa Yeti',role: 'Guardian of the peak',  x: 860,  y: 545,  col: '#4fb6e6', gate: 30, hi: 'Hrrm. Few climb this high. Fewer bring tea.' }
 };
+/* repeatable odd-job givers: small item rewards, never progression-breaking */
+const REPEAT = {
+  ang:  { n: 'Ang',  role: 'Porter for hire', x: 470, y: 3080, col: '#c8913e', gate: 0,  rep: true, hi: 'Got a small job if you have a minute.',
+          rw: () => pick([{ momo: ri(5, 10) }, { selroti: ri(2, 4) }, { momo: ri(3, 6), selroti: 1 }, { dalbhat: 1 }]) },
+  maya: { n: 'Maya', role: 'Backpacker',      x: 250, y: 2120, col: '#e84393', gate: 5,  rep: true, hi: 'This view is unreal! Help me out?',
+          rw: () => pick([{ butterTea: ri(1, 2) }, { spiceShot: 1 }, { glacierShard: 1 }, { yakCheese: 1 }, { butterTea: 1, momo: 4 }, { incense: 1 }]) },
+  raju: { n: 'Raju', role: 'Travelling trader', x: 330, y: 1450, col: '#e0a43c', gate: 10, rep: true, hi: 'Fine goods from Kathmandu, for a fair favour.',
+          rw: () => Math.random() < .08 ? { mysticWheel: 1 } : pick([{ dalbhat: ri(2, 4) }, { incense: 1, selroti: 3 }, { dalbhat: 2, butterTea: 1 }]) }
+};
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const REPEAT_CD = 4 * 60 * 1000;
+
 const QUESTS = {
   didi: [
     { t: 'Gather 100 ingredients',               g: ['gather', 100],              rw: { items: { momo: 5 }, rp: 100 } },
