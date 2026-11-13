@@ -563,6 +563,11 @@ function update(dt) {
 const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 let DPR = 1, scale = 1, viewH = 800, bgGrad = null;
 function resize() {
+  // iOS home-screen apps with a translucent status bar report a viewport that is
+  // shorter than the screen by the status bar height; stretch everything over the gap.
+  const portrait = innerHeight > innerWidth, sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+  const gap = (navigator.standalone || matchMedia('(display-mode: standalone)').matches) ? Math.max(0, Math.min(80, sh - innerHeight)) : 0;
+  document.documentElement.style.setProperty('--gap', gap + 'px');
   DPR = Math.min(2.5, window.devicePixelRatio || 1);
   const rc = cv.getBoundingClientRect(), w = rc.width || innerWidth, h = rc.height || innerHeight;
   cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);

@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '5';
+const VERSION = '6';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
