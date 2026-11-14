@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '9';
+const VERSION = '10';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -22,7 +22,7 @@ function uiInit() {
   $('quest').addEventListener('click', () => openPanel('quests'));
   $('talk').addEventListener('click', () => talk());
   $('place').addEventListener('click', () => placeSprinkler());
-  $('buffs').addEventListener('pointerdown', ev => { const b = ev.target.closest('[data-b]'); if (b) { ev.preventDefault(); buffTip(b.dataset.b); } });
+  $('buffs').addEventListener('pointerdown', ev => { const b = ev.target.closest('[data-b]'), p = ev.target.closest('[data-p]'); if (b) { ev.preventDefault(); buffTip(b.dataset.b); } else if (p) { ev.preventDefault(); pasTip(p.dataset.p); } });
   uiTick(1);
 }
 
@@ -38,6 +38,7 @@ function uiTick(dt) {
   const bf = [];
   const BI = { haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   for (const k in B) bf.push(`<button class="chip" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></button>`);
+  for (const g of equippedGear()) if (g.pas) { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
   $('quest').innerHTML = questTracker();
   const pf = fieldAt(player.x, player.y), canPlace = S.spr.n > 0 && pf >= 0 && fieldOpen(pf) && !panel;
@@ -86,7 +87,7 @@ const rarBadge = r => `<span class="rb" style="--rc:${RAR[r].c}">${RAR[r].n}</sp
 const colBadge = c => `<span class="cb cb-${c}">${ic(COL[c].i)}${COL[c].n}</span>`;
 function afford(cost) { return S.rp >= cost; }
 function refreshCosts() {
-  document.querySelectorAll('[data-cost]').forEach(b => { b.disabled = !afford(+b.dataset.cost) && !b.dataset.free; });
+  document.querySelectorAll('[data-cost]').forEach(b => { if (b.closest('.gear')) return; b.disabled = !afford(+b.dataset.cost) && !b.dataset.free; });
   const r = document.getElementById('sheetRp'); if (r) r.textContent = fmt(S.rp);
 }
 
@@ -205,14 +206,19 @@ function bless(i) {
 
 /* ---------------- SHOP ---------------- */
 function pShop() {
-  const t = panelTab && ['tools', 'dokos', 'boots', 'sprinklers', 'supplies', 'lodge'].includes(panelTab) ? panelTab : 'tools';
-  let h = `<div class="ph"><h2>Bazaar</h2><span class="pill">${ic('coin')}<span id="sheetRp">${fmt(S.rp)}</span></span></div>` + tabs([['tools', 'Tools'], ['dokos', 'Dokos'], ['boots', 'Boots'], ['sprinklers', 'Sprinklers'], ['supplies', 'Supplies'], ['lodge', 'Lodge']], t);
+  const t = panelTab && ['tools', 'hats', 'charms', 'dokos', 'boots', 'sprinklers', 'supplies', 'lodge'].includes(panelTab) ? panelTab : 'tools';
+  let h = `<div class="ph"><h2>Bazaar</h2><span class="pill">${ic('coin')}<span id="sheetRp">${fmt(S.rp)}</span></span></div>` + tabs([['tools', 'Tools'], ['hats', 'Hats'], ['charms', 'Charms'], ['dokos', 'Dokos'], ['boots', 'Boots'], ['sprinklers', 'Sprinklers'], ['supplies', 'Supplies'], ['lodge', 'Lodge']], t);
   const gear = (list, owned, cur, key, stat) => list.map(it => {
-    const own = owned.includes(it.id), eq = cur === it.id;
-    return `<div class="item ${eq ? 'eq' : ''}">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n}</b><span class="mut small">${stat(it)}</span></div>
-      ${eq ? '<span class="tag">Equipped</span>' : own ? `<button class="btn sm" onclick="equip('${key}','${it.id}')"><span>Equip</span></button>` : `<button class="btn sm primary" data-cost="${it.cost}" ${afford(it.cost) ? '' : 'disabled'} onclick="buyGear('${key}','${it.id}')">${money(it.cost)}</button>`}</div>`;
+    const own = owned.includes(it.id), eq = cur === it.id, ok = canAfford(it);
+    const pas = it.pas ? `<div class="pas">${ic('sparkle')}<span><b>${PASSIVES[it.pas].n}.</b> ${PASSIVES[it.pas].d}</span></div>` : '';
+    const req = !own && it.req ? `<div class="req">${Object.entries(it.req).map(([k, n]) => `<span class="${(S.items[k] || 0) >= n ? 'ok' : 'no'}">${ic(ITEMS[k].i)}${Math.min(S.items[k] || 0, n)}/${n} ${ITEMS[k].n}</span>`).join('')}</div>` : '';
+    return `<div class="item gear ${eq ? 'eq' : ''}">${ib(it.i, it.col ? TOKEN_COL[it.col] : icol(it.i))}<div class="it"><b>${it.n}</b><span class="mut small">${stat(it)}</span>${pas}${req}</div>
+      ${eq ? (key === 'hat' || key === 'charm' ? `<button class="btn sm" onclick="equip('${key}',null)"><span>Remove</span></button>` : '<span class="tag">Equipped</span>') : own ? `<button class="btn sm" onclick="equip('${key}','${it.id}')"><span>Equip</span></button>` : `<button class="btn sm primary" data-cost="${it.cost}" ${ok ? '' : 'disabled'} onclick="buyGear('${key}','${it.id}')">${money(it.cost)}</button>`}</div>`;
   }).join('');
-  if (t === 'tools') h += gear(TOOLS, S.tools, S.tool, 'tool', it => `Reach ${it.r} · ${it.amt} per tile · every ${it.sw}s${it.col ? ` · +60% ${COL[it.col].n}` : ''}${it.crit ? ' · +10% crit' : ''}`);
+  const stl = it => Object.entries(it.st || {}).map(([k, v]) => `+${Math.round(v * 100)}% ${STATN2[k]}`).join(' · ');
+  if (t === 'tools') h += gear(TOOLS, S.tools, S.tool, 'tool', it => [`Reach ${it.r}`, `${it.amt} per tile`, `every ${it.sw}s`, it.col ? `+${Math.round((it.cb || .6) * 100)}% ${COL[it.col].n}` : '', it.crit ? '+10% crit' : '', stl(it)].filter(Boolean).join(' · '));
+  if (t === 'hats') h += `<p class="mut small">Hats boost your gathering. Crowns and masks have passives that charge as your crew's abilities fire.</p>` + gear(HEADGEAR, S.hats, S.hat, 'hat', stl);
+  if (t === 'charms') h += `<p class="mut small">Charms add bonuses and passives. Materials drop while you gather in each field.</p>` + gear(CHARMS, S.charms, S.charm, 'charm', stl);
   if (t === 'dokos') h += gear(DOKOS, S.dokos, S.dokoId, 'doko', it => `Holds ${fmt(it.cap)}`);
   if (t === 'boots') h += gear(BOOTS, S.bootsOwned, S.boots, 'boots', it => `Speed ${it.spd}`);
   if (t === 'sprinklers') {
@@ -240,14 +246,17 @@ function pShop() {
   }
   return h;
 }
+const STATN2 = { cap: 'capacity', gather: 'all gathering', spice: 'Spice', ice: 'Ice', cloud: 'Cloud', brew: 'brewing', speed: 'speed', crit: 'crit', offline: 'offline', tool: 'tool', cdr: 'faster abilities', yak: 'yak gathering' };
+const canAfford = it => S.rp >= it.cost && Object.entries(it.req || {}).every(([k, n]) => (S.items[k] || 0) >= n);
 function buyGear(key, id) {
-  const list = { tool: TOOLS, doko: DOKOS, boots: BOOTS }[key], it = list.find(x => x.id === id);
-  if (S.rp < it.cost) return;
+  const list = { tool: TOOLS, doko: DOKOS, boots: BOOTS, hat: HEADGEAR, charm: CHARMS }[key], it = list.find(x => x.id === id);
+  if (!canAfford(it)) return;
   spend(it.cost);
-  ({ tool: S.tools, doko: S.dokos, boots: S.bootsOwned })[key].push(id);
-  equip(key, id); toast(`${it.n} bought`, it.i); save();
+  for (const k in it.req || {}) S.items[k] -= it.req[k];
+  ({ tool: S.tools, doko: S.dokos, boots: S.bootsOwned, hat: S.hats, charm: S.charms })[key].push(id);
+  equip(key, id); toast(`${it.n} crafted`, it.i); save();
 }
-function equip(key, id) { if (key === 'tool') S.tool = id; if (key === 'doko') S.dokoId = id; if (key === 'boots') S.boots = id; renderPanel(); }
+function equip(key, id) { if (key === 'tool') S.tool = id; if (key === 'doko') S.dokoId = id; if (key === 'boots') S.boots = id; if (key === 'hat') S.hat = id; if (key === 'charm') S.charm = id; recompute(); renderPanel(); }
 function buyItem(k, cost, n = 1) {
   if (S.rp < cost) return; spend(cost); S.items[k] = (S.items[k] || 0) + n;
   if (k === 'permit') S.recruits++; if (k === 'mysticWheel') S.wheels++;
@@ -262,7 +271,7 @@ function pItems() {
   if (!keys.length) return h + '<p class="mut">Empty. Buy supplies in the Bazaar.</p>';
   h += keys.map(k => {
     const it = ITEMS[k];
-    const action = it.use ? `<button class="btn sm primary" onclick="useItem('${k}')"><span>Use</span></button>` : FOOD[k] ? `<button class="btn sm" onclick="openPanel('crew')"><span>Feed</span></button>` : k === 'permit' ? `<button class="btn sm" onclick="doRecruit()"><span>Recruit</span></button>` : `<button class="btn sm" onclick="openPanel('crew')"><span>Crew</span></button>`;
+    const action = it.mat ? '<span class="tag dim">Material</span>' : it.use ? `<button class="btn sm primary" onclick="useItem('${k}')"><span>Use</span></button>` : FOOD[k] ? `<button class="btn sm" onclick="openPanel('crew')"><span>Feed</span></button>` : k === 'permit' ? `<button class="btn sm" onclick="doRecruit()"><span>Recruit</span></button>` : `<button class="btn sm" onclick="openPanel('crew')"><span>Crew</span></button>`;
     return `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k]}</span></b><span class="mut small">${it.d}</span></div>${action}</div>`;
   }).join('');
   return h;
@@ -534,4 +543,10 @@ function buffTip(k) {
   const b = BUFFS[k], t = $('tip'); if (!b || !B[k]) return;
   t.innerHTML = `${ib(b.i, '#ff8a3d')}<div><b>${b.n}${B[k].st > 1 ? ' x' + B[k].st : ''}</b><span>${b.d}</span><small>${Math.ceil(B[k].t)}s left</small></div>`;
   t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 3200);
+}
+
+function pasTip(id) {
+  const p = PASSIVES[id], t = $('tip');
+  t.innerHTML = `${ib('sparkle', '#9b6ef3')}<div><b>${p.n}</b><span>${p.d}</span><small>${S.pas[id] || 0} / ${p.need} charged${p.col !== 'any' ? ' · counts ' + COL[p.col].n + ' crew abilities' : ' · counts every ability'}</small></div>`;
+  t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 3600);
 }
