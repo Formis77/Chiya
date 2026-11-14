@@ -3,9 +3,9 @@
    CHIYA — HUD, panels, shop, crew management, codex, quests
    ========================================================= */
 const $ = id => document.getElementById(id);
-let panel = null, panelTab = null, uiT = 0, crewSel = null;
+let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '8';
+const VERSION = '9';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -21,6 +21,8 @@ function uiInit() {
   });
   $('quest').addEventListener('click', () => openPanel('quests'));
   $('talk').addEventListener('click', () => talk());
+  $('place').addEventListener('click', () => placeSprinkler());
+  $('buffs').addEventListener('pointerdown', ev => { const b = ev.target.closest('[data-b]'); if (b) { ev.preventDefault(); buffTip(b.dataset.b); } });
   uiTick(1);
 }
 
@@ -32,12 +34,15 @@ function uiTick(dt) {
   $('dfill').className = f >= 1 ? 'full' : '';
   $('dtxt').textContent = `${fmt(S.doko)} / ${fmt(cap)}`;
   const fi = fieldAt(player.x, player.y);
-  $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>x${FIELDS[fi].y}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
+  $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>Lv ${FIELDS[fi].lv[0]}${FIELDS[fi].lv[1] > FIELDS[fi].lv[0] ? "-" + FIELDS[fi].lv[1] : ""}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
   const bf = [];
   const BI = { haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
-  for (const k in B) bf.push(`<span class="chip">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></span>`);
-  $('buffs').innerHTML = bf.join('');
+  for (const k in B) bf.push(`<button class="chip" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></button>`);
+  const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
   $('quest').innerHTML = questTracker();
+  const pf = fieldAt(player.x, player.y), canPlace = S.spr.n > 0 && pf >= 0 && fieldOpen(pf) && !panel;
+  $('place').classList.toggle('on', canPlace);
+  if (canPlace) $('place').innerHTML = `${ic('drop')}<span><small>${SPRINKLERS[S.spr.lv].n}</small>Place ${S.spr.placed.length}/${S.spr.n}</span>`;
   if (nearNpc && Math.random() < .2) updateTalk();
   if (panel === 'shop' || panel === 'crew') refreshCosts();
 }
@@ -200,8 +205,8 @@ function bless(i) {
 
 /* ---------------- SHOP ---------------- */
 function pShop() {
-  const t = panelTab && ['tools', 'dokos', 'boots', 'supplies', 'lodge'].includes(panelTab) ? panelTab : 'tools';
-  let h = `<div class="ph"><h2>Bazaar</h2><span class="pill">${ic('coin')}<span id="sheetRp">${fmt(S.rp)}</span></span></div>` + tabs([['tools', 'Tools'], ['dokos', 'Dokos'], ['boots', 'Boots'], ['supplies', 'Supplies'], ['lodge', 'Lodge']], t);
+  const t = panelTab && ['tools', 'dokos', 'boots', 'sprinklers', 'supplies', 'lodge'].includes(panelTab) ? panelTab : 'tools';
+  let h = `<div class="ph"><h2>Bazaar</h2><span class="pill">${ic('coin')}<span id="sheetRp">${fmt(S.rp)}</span></span></div>` + tabs([['tools', 'Tools'], ['dokos', 'Dokos'], ['boots', 'Boots'], ['sprinklers', 'Sprinklers'], ['supplies', 'Supplies'], ['lodge', 'Lodge']], t);
   const gear = (list, owned, cur, key, stat) => list.map(it => {
     const own = owned.includes(it.id), eq = cur === it.id;
     return `<div class="item ${eq ? 'eq' : ''}">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n}</b><span class="mut small">${stat(it)}</span></div>
@@ -210,6 +215,14 @@ function pShop() {
   if (t === 'tools') h += gear(TOOLS, S.tools, S.tool, 'tool', it => `Reach ${it.r} · ${it.amt} per tile · every ${it.sw}s${it.col ? ` · +60% ${COL[it.col].n}` : ''}${it.crit ? ' · +10% crit' : ''}`);
   if (t === 'dokos') h += gear(DOKOS, S.dokos, S.dokoId, 'doko', it => `Holds ${fmt(it.cap)}`);
   if (t === 'boots') h += gear(BOOTS, S.bootsOwned, S.boots, 'boots', it => `Speed ${it.spd}`);
+  if (t === 'sprinklers') {
+    const sp = S.spr, cur = SPRINKLERS[sp.lv], nx = SPRINKLERS[sp.lv + 1];
+    h += `<p class="mut small">Sprinklers water a circle of flowers: they regrow faster and give more when gathered. Stand in a field and tap <b>Place</b> to set one down. Placing more than you own moves the oldest one.</p>`;
+    h += `<div class="item eq">${ib('drop', '#2ea4dc')}<div class="it"><b>${cur.n}</b><span class="mut small">Radius ${cur.r} · x${cur.wet} gathering · x${cur.rg} regrowth</span></div><span class="tag">${sp.placed.length}/${sp.n} placed</span></div>`;
+    h += `<div class="item">${ib('plus', '#3fae6b')}<div class="it"><b>Extra sprinkler</b><span class="mut small">${sp.n >= SPR_MAX ? 'Maximum reached' : `Own ${sp.n} of ${SPR_MAX}. Price triples each time.`}</span></div>${sp.n >= SPR_MAX ? '<span class="tag dim">Max</span>' : `<button class="btn sm primary" data-cost="${sprCountCost(sp.n)}" onclick="buySprinkler()">${money(sprCountCost(sp.n))}</button>`}</div>`;
+    h += `<div class="item">${ib('up', '#9b6ef3')}<div class="it"><b>${nx ? 'Upgrade to ' + nx.n : 'Fully upgraded'}</b><span class="mut small">${nx ? `Radius ${nx.r} · x${nx.wet} gathering · x${nx.rg} regrowth` : 'The best sprinklers on the mountain.'}</span></div>${nx ? `<button class="btn sm primary" data-cost="${sprLevelCost(sp.lv)}" onclick="upgradeSprinkler()">${money(sprLevelCost(sp.lv))}</button>` : ''}</div>`;
+    if (sp.placed.length) h += `<button class="btn" onclick="S.spr.placed=[];refreshWet();save();renderPanel()"><span>Pick up all sprinklers</span></button>`;
+  }
   if (t === 'supplies') {
     h += `<div class="item">${ib('ticket', icol('ticket'))}<div class="it"><b>Trekking Permit</b><span class="mut small">Recruit a crew member. Price rises.</span></div><button class="btn sm primary" data-cost="${permitCost()}" onclick="buyItem('permit',${permitCost()})">${money(permitCost())}</button></div>`;
     h += `<div class="item">${ib('wheel', icol('wheel'))}<div class="it"><b>Mystic Wheel</b><span class="mut small">Reroll a crew member. No Commons.</span></div><button class="btn sm primary" data-cost="${wheelCost()}" onclick="buyItem('mysticWheel',${wheelCost()})">${money(wheelCost())}</button></div>`;
@@ -219,7 +232,7 @@ function pShop() {
     }
   }
   if (t === 'lodge') {
-    h += `<p class="mut small">Your lodge manager keeps the teahouse running while the app is closed. Offline earnings are based on your recent income, up to 12 hours.</p>`;
+    h += `<p class="mut small">Your lodge manager keeps the teahouse running while the app is closed. Offline earnings are based on your recent income, up to 8 hours.</p>`;
     LODGE.forEach((l, i) => {
       h += `<div class="item ${S.lodge === i ? 'eq' : ''}">${ib('key', icol('key'))}<div class="it"><b>${l.n}</b><span class="mut small">${Math.round(l.eff * 100)}% offline efficiency</span></div>${S.lodge >= i ? '<span class="tag">' + (S.lodge === i ? 'Current' : 'Done') + '</span>' : S.lodge === i - 1 ? `<button class="btn sm primary" data-cost="${l.cost}" onclick="buyLodge(${i})">${money(l.cost)}</button>` : '<span class="tag dim">Locked</span>'}</div>`;
     });
@@ -512,4 +525,13 @@ function pStats() {
     ${tile('flag', '#2ea4dc', 'Story quests', fmt(st.quests))}
     ${tile('gift', '#c8913e', 'Odd jobs', fmt(st.jobs))}</div>`;
   return h;
+}
+
+function buySprinkler() { const c = sprCountCost(S.spr.n); if (S.rp < c || S.spr.n >= SPR_MAX) return; spend(c); S.spr.n++; toast(`Sprinkler ${S.spr.n} bought. Stand in a field and tap Place`, 'drop'); save(); renderPanel(); }
+function upgradeSprinkler() { const c = sprLevelCost(S.spr.lv); if (S.rp < c || !SPRINKLERS[S.spr.lv + 1]) return; spend(c); S.spr.lv++; refreshWet(); toast(`Upgraded to ${SPRINKLERS[S.spr.lv].n}`, 'drop'); save(); renderPanel(); }
+let tipT = null;
+function buffTip(k) {
+  const b = BUFFS[k], t = $('tip'); if (!b || !B[k]) return;
+  t.innerHTML = `${ib(b.i, '#ff8a3d')}<div><b>${b.n}${B[k].st > 1 ? ' x' + B[k].st : ''}</b><span>${b.d}</span><small>${Math.ceil(B[k].t)}s left</small></div>`;
+  t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 3200);
 }

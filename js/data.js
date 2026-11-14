@@ -79,15 +79,15 @@ const ABIL = {
 const TILE = 40;
 const LVM = [0, 1, 3, 9, 27, 81];          // ingredients per flower level
 const FIELDS = [
-  { id: 'tea',     n: 'Tea Garden',          c: 'cloud', y: 1,   gate: 0,  lv: [1, 1], w: { cloud: .7, spice: .15, ice: .15 }, x: 790, yy: 2640, w_: 300, h: 200 },
-  { id: 'ginger',  n: 'Ginger Terraces',     c: 'spice', y: 1,   gate: 0,  lv: [1, 1], w: { spice: .7, cloud: .2, ice: .1 },  x: 150, yy: 2420, w_: 290, h: 200 },
-  { id: 'glacier', n: 'Glacier Spring',      c: 'ice',   y: 1,   gate: 0,  lv: [1, 1], w: { ice: .7, cloud: .2, spice: .1 },  x: 470, yy: 2290, w_: 250, h: 160 },
-  { id: 'rhodo',   n: 'Rhododendron Forest', c: 'spice', y: 1.5, gate: 5,  lv: [1, 2], w: { spice: .6, cloud: .25, ice: .15 }, x: 170, yy: 1800, w_: 300, h: 220 },
-  { id: 'meadow',  n: 'Yak Meadow',          c: 'cloud', y: 1.5, gate: 5,  lv: [1, 2], w: { cloud: .6, ice: .2, spice: .2 },  x: 760, yy: 1880, w_: 330, h: 200 },
-  { id: 'juniper', n: 'Juniper Ridge',       c: 'ice',   y: 2,   gate: 10, lv: [2, 3], w: { ice: .6, cloud: .25, spice: .15 }, x: 860, yy: 1330, w_: 260, h: 220 },
-  { id: 'saffron', n: 'Saffron Cliffs',      c: 'mix',   y: 3,   gate: 15, lv: [2, 3], w: { spice: .4, ice: .3, cloud: .3 },  x: 330, yy: 1020, w_: 260, h: 200 },
+  { id: 'tea',     n: 'Tea Garden',          c: 'cloud', y: 1,   gate: 0,  lv: [1, 1], w: { cloud: .7, spice: .15, ice: .15 }, x: 760, yy: 2610, w_: 380, h: 250 },
+  { id: 'ginger',  n: 'Ginger Terraces',     c: 'spice', y: 1,   gate: 0,  lv: [1, 1], w: { spice: .7, cloud: .2, ice: .1 },  x: 110, yy: 2390, w_: 380, h: 250 },
+  { id: 'glacier', n: 'Glacier Spring',      c: 'ice',   y: 1,   gate: 0,  lv: [1, 1], w: { ice: .7, cloud: .2, spice: .1 },  x: 530, yy: 2340, w_: 260, h: 170 },
+  { id: 'rhodo',   n: 'Rhododendron Forest', c: 'spice', y: 1.5, gate: 5,  lv: [1, 2], w: { spice: .6, cloud: .25, ice: .15 }, x: 170, yy: 1710, w_: 340, h: 250 },
+  { id: 'meadow',  n: 'Yak Meadow',          c: 'cloud', y: 1.5, gate: 5,  lv: [1, 2], w: { cloud: .6, ice: .2, spice: .2 },  x: 750, yy: 1910, w_: 420, h: 250 },
+  { id: 'juniper', n: 'Juniper Ridge',       c: 'ice',   y: 2,   gate: 10, lv: [2, 3], w: { ice: .6, cloud: .25, spice: .15 }, x: 820, yy: 1310, w_: 340, h: 290 },
+  { id: 'saffron', n: 'Saffron Cliffs',      c: 'mix',   y: 3,   gate: 15, lv: [2, 3], w: { spice: .4, ice: .3, cloud: .3 },  x: 310, yy: 990, w_: 340, h: 250 },
   { id: 'flags',   n: 'Prayer Flag Pass',    c: 'cloud', y: 4,   gate: 22, lv: [3, 4], w: { cloud: .55, ice: .25, spice: .2 }, x: 740, yy: 800,  w_: 240, h: 170 },
-  { id: 'summit',  n: 'Summit Snowfield',    c: 'mix',   y: 6,   gate: 30, lv: [3, 5], w: { spice: .34, ice: .33, cloud: .33 }, x: 520, yy: 225, w_: 360, h: 165 }
+  { id: 'summit',  n: 'Summit Snowfield',    c: 'mix',   y: 6,   gate: 30, lv: [3, 5], w: { spice: .34, ice: .33, cloud: .33 }, x: 520, yy: 230, w_: 360, h: 170 }
 ];
 FIELDS.forEach(f => { f.cw = f.w; f.w = f.w_; delete f.w_; });
 
@@ -118,12 +118,38 @@ const BOOTS = [
   { id: 'wind',    n: 'Wind Boots',   i: 'boot', cost: 6e7, spd: 260 }
 ];
 const LODGE = [
-  { n: 'No manager',      eff: .25, cost: 0 },
-  { n: 'Mansoon\'s cousin',  eff: .35, cost: 1e4 },
-  { n: 'Lodge Manager',   eff: .45, cost: 2e5 },
-  { n: 'Head of Lodge',   eff: .60, cost: 5e6 },
-  { n: 'Mountain Tycoon', eff: .75, cost: 1e8 }
+  { n: 'No manager',      eff: .10, cost: 0 },
+  { n: 'Mansoon\'s cousin',  eff: .15, cost: 1e4 },
+  { n: 'Lodge Manager',   eff: .22, cost: 2e5 },
+  { n: 'Head of Lodge',   eff: .30, cost: 5e6 },
+  { n: 'Mountain Tycoon', eff: .40, cost: 1e8 }
 ];
+
+/* sprinklers: water a circle of flowers (faster regrowth + gathering bonus) */
+const SPRINKLERS = [
+  { n: 'Bamboo Sprinkler',  r: 70,  wet: 1.2,  rg: 2 },
+  { n: 'Copper Sprinkler',  r: 85,  wet: 1.3,  rg: 2.5 },
+  { n: 'Silver Sprinkler',  r: 100, wet: 1.45, rg: 3 },
+  { n: 'Golden Sprinkler',  r: 115, wet: 1.6,  rg: 3.5 },
+  { n: 'Glacier Sprinkler', r: 130, wet: 1.8,  rg: 4 },
+  { n: 'Spirit Sprinkler',  r: 150, wet: 2.0,  rg: 5 }
+];
+const SPR_MAX = 8;
+const sprCountCost = n => Math.round(3000 * Math.pow(3, n));
+const sprLevelCost = l => Math.round(20000 * Math.pow(6, l));
+
+const BUFFS = {
+  haste:      { n: 'Haste',        i: 'speed',   d: 'You and your crew move 20% faster per stack.' },
+  spiceRush:  { n: 'Spice Rush',   i: 'chili',   d: '+50% gathering from Spice (red) flowers.' },
+  focus:      { n: 'Focus',        i: 'focus',   d: '+20% crit chance, and crits give x3.' },
+  roar:       { n: 'Roar',         i: 'roar',    d: 'Your crew gather 50% faster.' },
+  caravan:    { n: 'Caravan Rush', i: 'horns',   d: 'Yaks gather x2 and move faster.' },
+  blessing:   { n: 'Blessing',     i: 'sparkle', d: '+25% to all gathering and brewing.' },
+  shot_spice: { n: 'Ginger Shot',  i: 'bottle',  d: '+50% Spice gathering.' },
+  shot_ice:   { n: 'Glacier Shard',i: 'crystal', d: '+50% Ice gathering.' },
+  shot_cloud: { n: 'Yak Cheese',   i: 'cheese',  d: '+50% Cloud gathering.' },
+  incense:    { n: 'Incense',      i: 'incense', d: 'Ability cooldowns run twice as fast.' }
+};
 
 const ITEMS = {
   momo:        { n: 'Momo',          i: 'momo', d: 'Crew food. +10 bond.', price: 40 },
@@ -139,8 +165,8 @@ const ITEMS = {
   goldenMomo:  { n: 'Golden Momo',   i: 'star', d: 'Makes a crew member Blessed.', price: 2.5e5 }
 };
 
-const PERMIT_ODDS = { common: .45, rare: .38, epic: .13, legendary: .035, mythic: .005 };
-const WHEEL_ODDS  = { rare: .45, epic: .37, legendary: .15, mythic: .03 };
+const PERMIT_ODDS = { common: .46, rare: .38, epic: .13, legendary: .0285, mythic: .0015 };
+const WHEEL_ODDS  = { rare: .48, epic: .38, legendary: .13, mythic: .01 };
 
 /* ---------------- synergies ---------------- */
 const YAKS = ['yakCalf', 'dzo', 'yakKing'];

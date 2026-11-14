@@ -33,7 +33,7 @@ function newSave() {
     v: 1, rp: 0, doko: 0, beds: 5, crew: [mk('porter'), mk('porter')],
     items: { momo: 5, permit: 1 },
     tool: 'sickle', tools: ['sickle'], dokoId: 'basket', dokos: ['basket'], boots: 'sandals', bootsOwned: ['sandals'],
-    lodge: 0, recruits: 0, wheels: 0, q: { didi: 0, pemba: 0, dolma: 0, norbu: 0, yeti: 0 }, qb: {},
+    lodge: 0, recruits: 0, wheels: 0, spr: { n: 0, lv: 0, placed: [] }, q: { didi: 0, pemba: 0, dolma: 0, norbu: 0, yeti: 0 }, qb: {},
     stats: { gather: 0, earn: 0, field: {}, feed: 0 }, found: { porter: true },
     last: Date.now(), rate: 0, px: BREW.x, py: BREW.y - 30
   };
@@ -140,7 +140,7 @@ const ZONES = [
 ];
 const zoneAt = y => { let z = 0; for (let i = 1; i < ZONES.length; i++) if (y < ZONES[i].y) z = i; return z; };
 function segDist(x, y, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy; const u = clamp(((x - a[0]) * dx + (y - a[1]) * dy) / l, 0, 1); return Math.hypot(x - a[0] - u * dx, y - a[1] - u * dy); }
-const PATH = [[PLAZA.x - 60, PLAZA.y - 10], [470, 2930], [360, 2760], [1030, 2420], [370, 2080], [1000, 1740], [420, 1420], [900, 1120], [500, 840], [800, 580], [700, 400], [700, 300]];
+const PATH = [[PLAZA.x - 60, PLAZA.y - 10], [470, 2930], [360, 2760], [1030, 2420], [370, 2080], [1000, 1740], [420, 1420], [900, 1120], [500, 840], [800, 580], [700, 420]];
 const BRANCH = [];
 
 function fieldAt(x, y) { for (let i = 0; i < FIELDS.length; i++) { const f = FIELDS[i]; if (x > f.x && x < f.x + f.w && y > f.yy && y < f.yy + f.h) return i; } return -1; }
@@ -207,7 +207,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   const tv = t.v; t.v = Math.max(0, tv - .22);
   let amt = base * FIELDS[t.f].y * LVM[t.lv] * (.35 + .65 * tv) * extra;
   const match = srcCol === t.col ? 1.5 : srcCol === 'neutral' ? 1.15 : 1;
-  amt *= match * gMult(t.col, isTool) * zoneMult(t.x, t.y);
+  amt *= match * gMult(t.col, isTool) * zoneMult(t.x, t.y) * (t.wet || 1);
   let crit = false;
   if (Math.random() < critChance()) { amt *= critMul(); crit = true; S.stats.crits++; }
   const add = Math.min(space, amt);
@@ -537,7 +537,8 @@ function update(dt) {
     else if (d < 70) { tk.x += (player.x - tk.x) * dt * 3; tk.y += (player.y - 10 - tk.y) * dt * 3; }
   }
   // tiles regen
-  for (const arr of TILES) for (const t of arr) if (t.v < 1) t.v = Math.min(1, t.v + dt * .045);
+  for (const arr of TILES) for (const t of arr) if (t.v < 1) t.v = Math.min(1, t.v + dt * .045 * (t.rg || 1));
+  if (S.spr.placed.length && Math.random() < dt * 8) { const sp = pick(S.spr.placed), a = rand(0, TAU), d = rand(10, SPRINKLERS[S.spr.lv].r); E.parts.push({ type: 'snow', x: sp.x + Math.cos(a) * d * .3, y: sp.y - 18, vx: Math.cos(a) * d * 1.6, vy: Math.sin(a) * d * 1.1 - 40, g: 160, life: .6, max: .6, size: 1.8, col: 'rgba(120,200,255,.9)' }); }
   // projectiles
   for (let i = E.proj.length - 1; i >= 0; i--) {
     const p = E.proj[i]; p.t += dt / p.dur; const u = Math.min(1, p.t);
@@ -661,6 +662,12 @@ function render() {
     c.fillStyle = '#fff7e6'; c.textAlign = 'left'; c.fillText(label, f.x + 37, f.yy - 9.5);
   });
 
+  // sprinkler zones
+  for (const sp of S.spr.placed) {
+    const r = SPRINKLERS[S.spr.lv].r; if (!vis(sp.x, sp.y, r)) continue;
+    circ(c, sp.x, sp.y, r, 'rgba(90,180,240,.13)', false);
+    P(c); c.arc(sp.x, sp.y, r, 0, TAU); c.setLineDash([6, 7]); c.lineDashOffset = now * 10; c.strokeStyle = 'rgba(80,170,235,.65)'; c.lineWidth = 2; c.stroke(); c.setLineDash([]);
+  }
   // ground decals
   for (const d of E.decals) drawDecalGround(c, d);
   // sell spot
@@ -672,6 +679,7 @@ function render() {
   for (const d of DECOR) if (vis(d.x, d.y, 60)) objs.push({ y: d.y, f: () => { c.save(); c.translate(d.x, d.y); ({ pine: () => drawPine(c, d.s, d.snow), rock: () => drawRock(c, d.s, d.snow), tree: () => drawTreeRound(c, d.s), autumn: () => drawTreeRound(c, d.s, '#f2a33a'), bush: () => drawBush(c, d.s), dead: () => drawDeadBush(c, d.s), chorten: () => drawChorten(c, now), flagpole: () => drawSummitFlag(c, now), cloud: () => drawCloud(c, d.s) })[d.type](); c.restore(); } });
   if (vis(HOUSE.x, HOUSE.y, 200)) objs.push({ y: HOUSE.y, f: () => { c.save(); c.translate(HOUSE.x, HOUSE.y); drawTeahouse(c, teaTier(), now); c.restore(); } });
   const allN = NPCS(); for (const id in allN) { const g = allN[id]; if (vis(g.x, g.y, 80)) objs.push({ y: g.y, f: () => drawGiver(c, id, g) }); }
+  for (const sp of S.spr.placed) if (vis(sp.x, sp.y, 60)) objs.push({ y: sp.y, f: () => drawSprinkler(c, sp) });
   if (vis(STALL.x, STALL.y, 120)) objs.push({ y: STALL.y, f: () => { c.save(); c.translate(STALL.x, STALL.y); drawStall(c, now, brewing); c.restore(); } });
   for (const e of E.crew) if (vis(e.x, e.y, 40)) objs.push({ y: e.y, f: () => drawCrewEnt(c, e) });
   objs.push({ y: player.y, f: () => {
@@ -737,6 +745,17 @@ function render() {
   }
 }
 
+function drawSprinkler(c, sp) {
+  const lv = S.spr.lv, col = ['#8fbf5a', '#d9864a', '#c9d2dc', '#f0c040', '#7fd3ff', '#b98af5'][lv];
+  c.save(); c.translate(sp.x, sp.y);
+  ell(c, 0, 1, 9, 3.5, 'rgba(0,0,0,.2)', false);
+  line(c, 0, 0, 0, -16, OUT, 5); line(c, 0, 0, 0, -16, '#7a828c', 3);
+  c.save(); c.translate(0, -18); c.rotate(now * 4);
+  rr(c, -9, -2.5, 18, 5, 2.5, col); circ(c, 0, 0, 3.6, '#ffffff');
+  c.restore();
+  for (let k = 0; k < 2; k++) { const a = now * 4 + k * Math.PI; P(c); c.arc(0, -18, 14, a - .3, a + .3); c.strokeStyle = 'rgba(120,200,255,.7)'; c.lineWidth = 2; c.stroke(); }
+  c.restore();
+}
 function drawGiver(c, id, g) {
   const near = nearNpc === id, st = giverState(id), bob = Math.sin(now * 2 + g.x) * 1.2, locked = st === 'locked';
   c.save(); c.translate(g.x, g.y);
@@ -911,7 +930,7 @@ function frame(t) {
   requestAnimationFrame(frame);
 }
 function offlineEarnings() {
-  const secs = Math.min(12 * 3600, (Date.now() - S.last) / 1000);
+  const secs = Math.min(8 * 3600, (Date.now() - S.last) / 1000);
   if (secs < 90 || !S.rate) return;
   const eff = LODGE[S.lodge].eff * (D.hive === 'ice' ? 1.2 : 1) * (1 + bp('offline'));
   const amt = S.rate * secs * eff;
@@ -922,6 +941,24 @@ function offlineEarnings() {
     <p class="mut">Your crew kept brewing for ${h ? h + 'h ' : ''}${m}m at ${Math.round(eff * 100)}% efficiency.</p>
     <div class="reward">${ic('coin')} ${fmt(amt)}</div>
     <button class="btn primary" onclick="closeModal()">Collect</button>`);
+}
+function refreshWet() {
+  const sp = SPRINKLERS[S.spr.lv];
+  for (const arr of TILES) for (const t of arr) { t.wet = 1; t.rg = 1; }
+  for (const p of S.spr.placed) for (const t of TILES[p.f] || []) if (dist(t.x, t.y, p.x, p.y) < sp.r) { t.wet = sp.wet; t.rg = sp.rg; }
+}
+function placeSprinkler() {
+  const fi = fieldAt(player.x, player.y);
+  if (fi < 0 || !fieldOpen(fi) || !S.spr.n) return;
+  const P2 = S.spr.placed;
+  const near = P2.findIndex(p => dist(p.x, p.y, player.x, player.y) < 40);
+  if (near >= 0) P2.splice(near, 1);
+  else if (P2.length >= S.spr.n) P2.shift();
+  P2.push({ f: fi, x: Math.round(player.x), y: Math.round(player.y) });
+  refreshWet(); save();
+  ring(player.x, player.y, SPRINKLERS[S.spr.lv].r, '#6cc4ff', .7, 4);
+  burst(player.x, player.y - 10, 24, { type: 'snow', col: '#bfe6ff', spd: 160, life: .8, size: 2.4, g: 120 });
+  toast(`${SPRINKLERS[S.spr.lv].n} placed (${P2.length}/${S.spr.n})`, 'drop');
 }
 function statDefaults() {
   const d = { gather: 0, earn: 0, field: {}, feed: 0, col: {}, lv: {}, ab: {}, crits: 0, best: 0, walk: 0, time: 0, brews: 0, tokens: 0, offline: 0, spent: 0, quests: 0, jobs: 0, recruited: 0, rerolls: 0, blessed: 0, levels: 0 };
@@ -934,9 +971,10 @@ function boot() {
   const fresh = !S;
   if (!S) S = newSave();
   statDefaults();
+  if (!S.spr) S.spr = { n: 0, lv: 0, placed: [] };
   buildWorld();
   player.x = S.px || BREW.x; player.y = S.py || BREW.y - 30;
-  rebuildCrew();
+  rebuildCrew(); refreshWet();
   E.crew.forEach(e => { e.x = player.x + rand(-50, 50); e.y = player.y + rand(-30, 30); });
   resize(); addEventListener('resize', resize);
   uiInit();
