@@ -5,6 +5,7 @@
 const WORLD = { w: 2200, h: 5600 };
 const PLAZA = { x: 1100, y: 5420 };
 const HOUSE = { x: PLAZA.x + 70, y: PLAZA.y - 50 };
+const HLANT = { x: 0, y: 0 };
 const STALL = { x: PLAZA.x - 85, y: PLAZA.y - 10 };
 const BREW = { x: PLAZA.x - 85, y: PLAZA.y + 35, r: 46 };
 const PEAK = { x: 1100, y: 380 };
@@ -32,7 +33,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 let S = null;                 // persistent save
 let D = { k: {}, syn: new Set(), hive: null, bp: {}, cnt: {} };   // derived values
 const B = {};                 // active buffs  id -> {t, st}
-const E = { crew: [], tokens: [], parts: [], decals: [], timers: [], proj: [], pops: [] };
+const E = { balloons: [], crew: [], tokens: [], parts: [], decals: [], timers: [], proj: [], pops: [] };
 const player = { x: BREW.x, y: BREW.y - 30, face: 1, mv: false, swing: 0, swingT: 0, auto: null, anim: 0 };
 const cam = { x: 0, y: 0, shake: 0 };
 const joy = { on: false, id: null, ox: 0, oy: 0, x: 0, y: 0, kx: 0, ky: 0 };
@@ -173,10 +174,17 @@ const doko = () => DOKOS.find(d => d.id === S.dokoId);
 const equippedGear = () => [tool(), doko(), HEADGEAR.find(h => h.id === S.hat)].filter(Boolean);
 const mpas = id => !!(S.mandala && S.mandala.pas.includes(id));
 const lvlMult = m => (1 + .1 * (m.lvl - 1)) * (m.bl ? 1.25 : 1);
+const inIceField = () => { const fi = fieldAt(player.x, player.y); return fi >= 0 && FIELDS[fi].c === 'ice'; };
+/* Ice Swell (like Bubble Bloat): up to x6 Ice-field capacity and brewing speed, growing with its remaining time (max 1 hour) */
+const swellMul = () => B.swell ? 1 + 5 * Math.min(1, B.swell.t / 3600) : 1;
+/* Lantern Blessing (like Balloon Blessing): stacks from the teahouse lantern, x4 capacity and x2.5 teahouse brewing at 100 */
+const BLESS_MAX = 2e10;
+const blessStacks = p => Math.max(1, Math.min(100, Math.floor(100 * Math.sqrt(p / BLESS_MAX))));
 function capMax() {
   let m = 1 + bp('cap') + (D.syn.has('rainbow') ? .15 : 0) + (D.syn.has('porterUnion') ? .25 : 0) + (D.syn.has('herd') ? .1 : 0) + (D.hive === 'cloud' ? .15 : 0) + .05 * (D.k.dzo || 0);
-  if (B.chill) m *= 1 + B.chill.st * (mpas('glacierStar') ? .015 : .01);
   if (B.nimbusb) m *= 1 + B.nimbusb.st * .02;
+  if (inIceField()) m *= (mpas('glacierStar') ? 1.25 : 1) * swellMul();
+  if (B.lbless) m *= 1 + 3 * B.lbless.st / 100;
   return Math.floor(doko().cap * m);
 }
 function moveSpeed() { return BOOTS.find(b => b.id === S.boots).spd * (1 + bp('speed')) * (1 + .2 * (B.haste ? B.haste.st : 0)) * (B.bear ? 1.2 : 1); }
@@ -191,12 +199,13 @@ function gMult(col, isTool) {
   if (B.spirit) add += 1;
   if (B.kukur) add += .5;
   if (B.heat && col === 'spice') add += Math.floor(B.heat.st) * .01;
-  if (B.chill && col === 'ice') add += B.chill.st * (mpas('glacierStar') ? .015 : .01);
+  if (B.chill && col === 'ice') add += B.chill.st * .01;
   if (isTool) add += bp('tool') + (D.hive === 'cloud' ? .5 : 0);
   let m = 1 + add;
   if (B['shot_' + col]) m *= 1.25;
   if (B.gtea) m *= 1.15;
   if (B.love) m *= 1.5;
+  if (B.popstar && col === 'ice') m *= 2 + Math.min(2.5, B.popstar.st * .01);
   if (B.inspire) m *= 1 + B.inspire.st;
   if (isTool && B.bear) m *= 2;
   if (isTool && B.cloudburst) m *= 2;
@@ -245,7 +254,7 @@ function effLv(t) {
 function collect(t, base, srcCol, extra = 1, isTool = false) {
   if (!fieldOpen(t.f) || t.v < .04) return 0;
   const space = capMax() - S.doko;
-  if (space <= 0) { fullWarn(); return 0; }
+  if (space <= 0 && !E.balloons.some(bl => !bl.home && bl.fi === t.f && bl.held < bl.cap && dist(t.x, t.y, bl.x, bl.y) < 120)) { fullWarn(); return 0; }
   const tv = t.v; t.v = Math.max(0, tv - .22);
   let amt = base * FIELDS[t.f].y * LVM[effLv(t)] * (.35 + .65 * tv) * extra;
   const match = srcCol === t.col ? 1.5 : srcCol === 'neutral' ? 1.15 : 1;
@@ -260,11 +269,11 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   if (E.litF && E.litF[t.f]) amt *= 1.5;
   amt *= fieldBonus(t.f);
   const inTea = E.decals.some(d => d.kind === 'teamark' && dist(t.x, t.y, d.x, d.y) < d.r);
-  const conv = sup ? 1 : Math.min(.8, bp('conv') + (B.darkheat ? B.darkheat.st * .005 : 0) + (kilnFlame ? .15 : 0) + (B.masala ? .08 : 0) + (D.syn.has('fullHouse') ? .05 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
+  const conv = sup ? 1 : Math.min(.8, bp('conv') + (B.popstar && t.col === 'ice' ? .1 : 0) + (B.darkheat ? B.darkheat.st * .005 : 0) + (kilnFlame ? .15 : 0) + (B.masala ? .08 : 0) + (D.syn.has('fullHouse') ? .05 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
   if (conv > 0) { const inst = amt * conv, val = inst * brewValue(); S.rp += val; S.stats.earn += val; amt -= inst;
     if (sup) { S.stats.gather += inst; S.stats.col[t.col] = (S.stats.col[t.col] || 0) + inst; const fd = FIELDS[t.f].id; S.stats.field[fd] = (S.stats.field[fd] || 0) + inst; } }
-  if (D.k.skyLantern) { const room = Math.max(0, capMax() * 3 - (S.balloon || 0)), toB = Math.min(room, amt * .12); S.balloon = (S.balloon || 0) + toB; amt -= toB; }
-  const add = Math.min(space, amt);
+  if (E.balloons.length) for (const bl of E.balloons) { if (bl.home || bl.fi !== t.f || dist(t.x, t.y, bl.x, bl.y) > 120) continue; const toB = Math.min(bl.cap - bl.held, amt * .75); if (toB > 0) { bl.held += toB; amt -= toB; } break; }
+  const add = Math.max(0, Math.min(space, amt));
   S.doko += add; S.stats.gather += add;
   if (sup) { burst(t.x, t.y - 10, 8, { type: 'star', col: '#c06bff', spd: 120, life: .6, size: 2.6 }); }
   const st = S.stats; st.col[t.col] = (st.col[t.col] || 0) + add; st.lv[t.lv] = (st.lv[t.lv] || 0) + add;
@@ -388,12 +397,24 @@ function takeToken(tk) {
   const src = a === 'pounce' ? tk.e : { x: tk.x, y: tk.y, m: tk.e.m, face: 1 };
   FX[a](src, tk.fi, tk);
   if (a === 'inspire') return;
+  if (a === 'iceBoost' && mpas('glacierStar') && !B.popstar && Date.now() > (S.popCd || 0) && (S.blueN = (S.blueN || 0) + 1) >= 30) {
+    S.blueN = 0; S.popCd = Date.now() + 45000 + 60000; B.popstar = { t: 45, st: 0 }; addTimed('swell', 120, 3600);
+    ring(player.x, player.y, 140, '#bfefff', .7, 8); burst(player.x, player.y - 40, 50, { type: 'snow', col: '#e3f6ff', spd: 240, life: 1.2, size: 3 }); shake(8);
+    toast('Glacier Star! x2 Ice and +10% Ice conversion for 45s. Pop bubbles to grow it', 'snow'); }
   if ((a === 'spiceBoost' || a === 'iceBoost' || a === 'cloudBoost') && mpas('guidingStar') && ++S.guideN >= 250) {
     S.guideN = 0; const open = FIELDS.map((f, i) => i).filter(fieldOpen); S.pilgrim = { f: pick(open), until: Date.now() + 6e5 };
     toast(`Wayfinder Star: ${FIELDS[S.pilgrim.f].n} gathers x2.5 for 10 min`, 'star'); }
   abilityFired(CREW[tk.e.m.id].c);
 }
 const FX = {
+  inflate(e, fi) {
+    if (fi < 0) return; const uid = e.m.uid || (e.m.uid = Math.random().toString(36).slice(2, 9));
+    const mine = E.balloons.find(b2 => b2.owner === uid && !b2.home);
+    if (mine) { if (mine.inf < 10) { mine.inf++; mine.cap += capMax() / 6; ring(mine.x, mine.y - 40, 40, '#bfe6ff', .4, 4); } return; }
+    const f = FIELDS[fi], life = 20 + 2 * (e.m.lvl || 1);
+    E.balloons.push({ owner: uid, fi, x: e.x, y: e.y, tx: e.x, ty: e.y, cap: capMax() / 6, held: 0, inf: 0, t: life, life, home: false, ph: rand(0, TAU) });
+    burst(e.x, e.y - 40, 14, { type: 'star', col: '#bfe6ff', spd: 100, life: .6, size: 2.4 });
+  },
   inspire() { if (!B.inspire) B.inspire = { t: 5, st: 1 }; else B.inspire.t = 5; ring(player.x, player.y, 80, '#7ee08a', .5, 5); },
   spiceBoost(e, fi, tk) { if (tk && fi >= 0) addFlame(fi, tk.x, tk.y, crewAmount(e)); addBuff('boost_spice', 15, 10); ring(player.x, player.y, 70, '#ff6b4a', .5, 5); burst(player.x, player.y - 10, 16, { type: 'ember', col: '#ff7b3a', spd: 140, life: .8, size: 2.6, g: -60 }); },
   iceBoost(e, fi, tk) { if (tk && fi >= 0) for (let k = 0; k < 2; k++) spawnBubble(fi, tk.x + rand(-60, 60), tk.y + rand(-40, 40), crewAmount(e)); addBuff('boost_ice', 15, 10); ring(player.x, player.y, 70, '#4fb6e6', .5, 5); burst(player.x, player.y - 10, 16, { type: 'snow', col: '#d6f3ff', spd: 140, life: .8, size: 2.4 }); },
@@ -680,6 +701,7 @@ function update(dt) {
       E.decals.splice(i, 1); let sum = 0; const fz = frostAt(d.x, d.y), vault = doko().pas === 'deepfreeze';
       tilesNear(d.fi, d.x, d.y, fz ? 78 : 52).forEach(t => sum += collect(t, d.base, 'ice', t.col === 'ice' ? 2.5 : 1.5));
       for (let k = 0; k < (fz && vault ? 2 : 1); k++) addBuff('chill', vault ? 60 : 30, vault ? 40 : 20);
+      if (B.popstar && d.mine !== false) { B.popstar.st++; addTimed('swell', 8, 3600); }
       burst(d.x, d.y - 10, 14, { type: 'snow', col: '#bfe6ff', spd: 120, life: .6, size: 2.4 }); ring(d.x, d.y, 52, '#9be7ff', .35, 3);
       if (sum) pop(d.x, d.y - 26, '+' + fmt(sum), '#bfefff');
     }
@@ -710,17 +732,44 @@ function update(dt) {
     kilnT += dt;
     if (kilnT >= 20) { kilnT = 0; const conv = S.doko * .06, val = conv * brewValue(); S.doko -= conv; S.rp += val; S.stats.earn += val; pop(player.x, player.y - 70, 'Kiln +' + fmt(val), '#ffb347', true); burst(player.x, player.y - 30, 20, { type: 'ember', col: '#ff8a3d', spd: 140, life: .8, size: 3, g: -60 }); }
   }
+  // sky lantern balloons
+  for (let i = E.balloons.length - 1; i >= 0; i--) {
+    const bl = E.balloons[i];
+    if (!bl.home) {
+      bl.t -= dt; const f = FIELDS[bl.fi];
+      if (dist(bl.x, bl.y, bl.tx, bl.ty) < 8) { bl.tx = rand(f.x + 60, f.x + f.w - 60); bl.ty = rand(f.yy + 60, f.yy + f.h - 40); }
+      const dx = bl.tx - bl.x, dy = bl.ty - bl.y, L = Math.hypot(dx, dy) || 1; bl.x += dx / L * 26 * dt; bl.y += dy / L * 26 * dt;
+      if (bl.t <= 0 || bl.held >= bl.cap) { bl.home = true; if (bl.held <= 0) E.balloons.splice(i, 1); }
+    } else {
+      const hx = HLANT.x, hy = HLANT.y, dx = hx - bl.x, dy = hy - bl.y, L = Math.hypot(dx, dy);
+      if (L < 20) { S.hiveBal = (S.hiveBal || 0) + bl.held; S.hiveBalTot = (S.hiveBalTot || 0) + bl.held; E.balloons.splice(i, 1); pop(hx, hy - 60, '+' + fmt(bl.held), '#bfe6ff', true); continue; }
+      bl.x += dx / L * Math.min(L, 320 * dt); bl.y += dy / L * Math.min(L, 320 * dt);
+    }
+  }
+  // Glacier Star ending: bubbles over the field, more for every bubble popped
+  if (B.popstar) lastPopSt = B.popstar.st;
+  else if (popWas) { const pf2 = fieldAt(player.x, player.y); if (pf2 >= 0) { const n = Math.min(40, 6 + Math.floor(lastPopSt / 3)), f = FIELDS[pf2]; for (let k = 0; k < n; k++) later(k * .05, () => spawnBubble(pf2, rand(f.x + 30, f.x + f.w - 30), rand(f.yy + 30, f.yy + f.h - 30), 8 * (1 + S.crew.length * .05))); toast(`Glacier Star faded into ${n} bubbles`, 'snow'); } }
+  popWas = !!B.popstar;
   // brewing
   brewing = false;
-  if (dist(player.x, player.y, BREW.x, BREW.y) < BREW.r && S.doko > 0) {
+  if (dist(player.x, player.y, BREW.x, BREW.y) < BREW.r && (S.doko > 0 || (S.hiveBal || 0) > 0)) {
     let crewBrew = 0; E.crew.forEach(e => { if (e.st === 'home') crewBrew += CREW[e.m.id].brew * lvlMult(e.m); });
-    const rate = Math.max(25 + crewBrew, capMax() / 9) * (B.blessing ? 1.25 : 1);
-    const conv = Math.min(S.doko, rate * dt);
-    S.doko -= conv; if (S.doko < .01) S.doko = 0;
-    const val = conv * brewValue(); S.rp += val; S.stats.earn += val; brewing = true;
+    const rate = Math.max(25 + crewBrew, capMax() / 9) * (B.blessing ? 1.25 : 1) * swellMul(), honey = B.lbless ? 1 + 1.5 * B.lbless.st / 100 : 1;
+    if (S.doko > 0) {
+      const conv = Math.min(S.doko, rate * dt);
+      S.doko -= conv; if (S.doko < .01) S.doko = 0;
+      const val = conv * brewValue() * honey; S.rp += val; S.stats.earn += val;
+    } else {
+      const conv = Math.min(S.hiveBal, Math.max(rate, S.hiveBal / 20) * dt);
+      S.hiveBal -= conv; const val = conv * brewValue() * honey; S.rp += val; S.stats.earn += val;
+      if (S.hiveBal < 1) { S.hiveBal = 0; const st = blessStacks(S.hiveBalTot); S.hiveBalTot = 0;
+        if (!B.lbless || st > B.lbless.st) { B.lbless = { t: 3600, st }; toast(`The teahouse lantern granted you x${st} Lantern Blessing!`, 'diya'); }
+        else { B.lbless.t = 3600; toast('The teahouse lantern refreshed your Lantern Blessing!', 'diya'); }
+        burst(HLANT.x, HLANT.y - 40, 40, { type: 'star', col: '#ffd27a', spd: 200, life: 1.1, size: 3 }); }
+    }
+    brewing = true;
     if (Math.random() < .5) E.parts.push({ type: 'coin', x: BREW.x + rand(-30, 30), y: BREW.y - rand(0, 20), vx: rand(-20, 20), vy: -rand(60, 120), g: 60, life: 1, max: 1, size: 3.4, col: '#ffd24a' });
-    if (S.doko === 0) {
-      if (S.balloon > 1) { const bv = S.balloon * brewValue() * 1.5; S.rp += bv; S.stats.earn += bv; pop(BREW.x, BREW.y - 90, 'Balloon +' + fmt(bv), '#ffd27a', true); burst(BREW.x, BREW.y - 60, 40, { type: 'coin', col: '#ffd24a', spd: 200, life: 1, size: 3.4, g: 120 }); S.balloon = 0; }
+    if (S.doko === 0 && !S.hiveBal) {
       toast('All brewed. Back to the fields', 'cup'); S.stats.brews++;
     }
   }
@@ -942,7 +991,6 @@ function render() {
     c.restore();
     const fillF = Math.min(1, S.doko / capMax());
     if (S.mandala) { const tc = MANDALA_TIERS.find(q => q.id === S.mandala.tier).col, a = now * 2.2, ox = player.x + Math.cos(a) * 20, oy = player.y - 22 - (player.h || 0) + Math.sin(a) * 7; c.save(); c.translate(ox, oy); c.rotate(now * 3); for (let k = 0; k < 6; k++) { c.rotate(TAU / 6); ell(c, 4, 0, 3.4, 1.8, tc, false); } circ(c, 0, 0, 2.6, '#ffffff'); c.restore(); }
-    if (D.k.skyLantern && S.balloon > 0) { const bf = Math.min(1, S.balloon / (capMax() * 3)), br = 8 + bf * 16, bx = player.x - 22, by = player.y - 70 - (player.h || 0) + Math.sin(now * 2) * 3; line(c, player.x - 6, player.y - 30 - (player.h || 0), bx, by + br, 'rgba(43,34,51,.5)', 1); circ(c, bx, by, br, '#ff8a3d'); ell(c, bx - br * .35, by - br * .35, br * .3, br * .2, 'rgba(255,255,255,.6)', false, -.6); }
     if (player.h) return;
     rr(c, player.x - 14, player.y + 7, 28, 4, 2, 'rgba(0,0,0,.35)', false);
     rr(c, player.x - 14, player.y + 7, 28 * fillF, 4, 2, fillF >= 1 ? '#ff5a6e' : '#ffd24a', false);
@@ -981,6 +1029,9 @@ function render() {
   for (const p of E.parts) drawPart(c, p);
   // top decals (rays, flash, focus)
   for (const d of E.decals) drawDecalTop(c, d);
+  for (const bl of E.balloons) if (vis(bl.x, bl.y, 120)) drawSkyBalloon(c, bl);
+  if (B.popstar) { const gx = player.x, gy = player.y - 110 - (player.h || 0) + Math.sin(now * 2) * 4, gr = 18 + Math.min(14, B.popstar.st * .06); c.save(); c.globalAlpha = .35 + Math.sin(now * 6) * .1; circ(c, gx, gy, gr * 2, '#bfefff', false); c.restore(); drawStarShape(c, gx, gy, gr, now * 1.5, '#d6f3ff'); drawStarShape(c, gx, gy, gr * .5, -now * 2, '#4fb6e6'); }
+  if ((S.hiveBal > 0 || E.balloons.some(b2 => b2.home)) && vis(HLANT.x, HLANT.y, 160)) drawHiveLantern(c);
   if (mpas('starSaw') && B.saw && fieldAt(player.x, player.y) >= 0) { const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; c.save(); c.globalAlpha = .28 + Math.sin(now * 10) * .08; circ(c, sx, sy, 42, '#ffb347', false); c.globalAlpha = .5; line(c, player.x, player.y - 30, sx, sy - 6, '#ffcf5a', 3); c.restore(); drawStarShape(c, sx, sy - 6, 20, now * 16, '#ffd24a'); drawStarShape(c, sx, sy - 6, 9, -now * 20, '#ff8a3d'); }
   // popups
   c.textAlign = 'center';
@@ -1399,7 +1450,7 @@ function dropMat(fi) {
   burst(player.x, player.y - 30, 8, { type: 'star', col: '#d6b4ff', spd: 80, life: .7, size: 2 });
 }
 const abNameT = {};
-let sawAcc = 0, sawPopT = 0, heatT = 0, combo = { n: 0, t: -99 }, bullHits = 0, sawT = 0, showerT = 0;
+let lastPopSt = 0, popWas = false, sawAcc = 0, sawPopT = 0, heatT = 0, combo = { n: 0, t: -99 }, bullHits = 0, sawT = 0, showerT = 0;
 function spawnBubble(fi, x, y, base) {
   if (fi < 0 || E.decals.filter(d => d.kind === 'bubble').length > 40) return;
   const f = FIELDS[fi];
@@ -1417,7 +1468,6 @@ function butterBomb(fi) {
 const pseudo = id => ({ x: player.x, y: player.y, m: { id, lvl: 10, bl: false }, face: player.face, anim: 0 });
 function abilityFired(col) {
   const pf = fieldAt(player.x, player.y);
-  if (col === 'ice' && mpas('glacierStar') && pf >= 0) spawnBubble(pf, player.x + rand(-90, 90), player.y + rand(-60, 60), 8 * (1 + S.crew.length * .05));
   if (col === 'cloud' && doko().pas === 'nimbus') addBuff('nimbusb', 60, 30);
   for (const g of equippedGear()) {
     if (!g.pas) continue;
@@ -1478,6 +1528,9 @@ function boot() {
   if (S.mandala && S.mandala.pas.length) { const ps = [...new Set(S.mandala.pas.map(p => OLD_STAR[p] || p).filter(p => MANDALA_PAS[p]))]; const mains = ps.filter(p => MANDALA_PAS[p].main), sides = ps.filter(p => !MANDALA_PAS[p].main); S.mandala.pas = mains.length && sides.length ? [mains[0], sides[0]] : mains.length > 1 ? [mains[0], pick(['guidingStar', 'starSaw', 'starShower'])] : ps.slice(0, 1); }
   if (S.butter == null) S.butter = 0;
   if (S.guideN == null) S.guideN = 0;
+  for (const k of ['hiveBal', 'hiveBalTot', 'blueN', 'popCd']) if (S[k] == null) S[k] = 0;
+  if (S.balloon) { S.hiveBal += S.balloon; S.balloon = 0; }
+  HLANT.x = BREW.x + 95; HLANT.y = BREW.y - 30;
   if (S.mv3 !== 1) { S.mv3 = 1; S.items.marigold = Math.ceil((S.items.marigold || 0) / 37); }
   if (S.bv !== 2) { S.bv = 2; S.beds = Math.max(25, S.beds || 0);
     S.perm = {}; for (let i = 0; i < Math.min(S.q.prof || 0, Q_PROF.length); i++) for (const k in Q_PROF[i].rw.perm) S.perm[k] = (S.perm[k] || 0) + Q_PROF[i].rw.perm[k];

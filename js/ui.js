@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '30';
+const VERSION = '31';
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -42,10 +42,10 @@ function uiTick(dt) {
   const fi = fieldAt(player.x, player.y);
   $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>Lv ${FIELDS[fi].lv[0]}${FIELDS[fi].lv[1] > FIELDS[fi].lv[0] ? "-" + FIELDS[fi].lv[1] : ""}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
   const bf = [];
-  const BI = { inspire: 'sparkle', saw: 'star', precision: 'focus', darkheat: 'flame', kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
+  const BI = { popstar: 'snow', swell: 'drop', lbless: 'diya', inspire: 'sparkle', saw: 'star', precision: 'focus', darkheat: 'flame', kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   { const fl = frostAt(player.x, player.y); if (fl) bf.push(`<button class="chip frostc" data-b="frostmark">${ic('snow')}<b>x${FROST_MUL[fl]}</b></button>`); }
   if (S.sawN > 0 && now - (S.sawLast || -99) <= 20) bf.push(`<button class="chip" data-b="sawcount">${ic('marigold')}<b>${S.sawN}/3</b></button>`); else if (S.sawN) S.sawN = 0;
-  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
+  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'popstar' ? '<i>x' + (2 + Math.min(2.5, B[k].st * .01)).toFixed(2) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'swell' ? '<i>x' + swellMul().toFixed(1) + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : k === 'lbless' ? '<i>x' + B[k].st + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
   $('quest').innerHTML = questTracker();
@@ -891,7 +891,7 @@ function buyTihar(i) {
 const TEST_BUILDS = {
   spice: { crew: { danphe: 10, gurkha: 9, rhodoSpirit: 8, chiliCook: 6, gingerFarmer: 3, fireKid: 2, littleMonk: 4, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, monk: 1 },
            tool: 'talon', doko: 'kiln', hat: 'emberCrown', stars: ['blazingStar', 'starSaw'], lines: [['spice', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'ember' },
-  ice:   { crew: { naga: 9, yeti: 9, skyLantern: 4, iceClimber: 7, iceFisher: 4, glacierGuide: 3, littleMonk: 4, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, monk: 3 },
+  ice:   { crew: { naga: 7, yeti: 7, skyLantern: 10, iceClimber: 5, iceFisher: 5, glacierGuide: 3, littleMonk: 4, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, monk: 2 },
            tool: 'scythe', doko: 'vault', hat: 'frostCrown', stars: ['glacierStar', 'starShower'], lines: [['ice', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'frost' },
   cloud: { crew: { leopard: 9, mistYak: 9, snowLion: 4, littleMonk: 6, woolSpinner: 5, yakKing: 3, teaMaster: 2, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, teaPicker: 5 },
            tool: 'fan', doko: 'nimbus', hat: 'cloudCrown', stars: ['butterStar', 'starShower'], lines: [['cloud', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'flags' }
@@ -906,7 +906,7 @@ function buildTestSave(col) {
   s2.spr = { n: SPR_MAX, lv: SPRINKLERS.length - 1, placed: [] };
   s2.items = {}; for (const k in ITEMS) s2.items[k] = 500; s2.hotbar = ['marigold', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
   s2.found = {}; for (const id of CREW_IDS) s2.found[id] = true;
-  s2.q = { didi: 48, pemba: 99, dolma: 99, norbu: 99, yeti: 99, prof: 0 }; s2.qv = 2; s2.bv = 2; s2.perm = {}; s2.fperm = {}; s2.badges = {}; s2.sprouts = [];
+  s2.q = { didi: 48, pemba: 99, dolma: 99, norbu: 99, yeti: 99, prof: 0 }; s2.qv = 2; s2.bv = 2; s2.hiveBal = 0; s2.hiveBalTot = 0; s2.blueN = 0; s2.popCd = 0; s2.perm = {}; s2.fperm = {}; s2.badges = {}; s2.sprouts = [];
   const f = FIELDS.find(x => x.id === b.field); s2.px = f.x + f.w / 2; s2.py = f.yy + f.h / 2; s2.mapv = 2;
   return s2;
 }

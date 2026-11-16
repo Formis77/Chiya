@@ -346,6 +346,29 @@ function drawTiharStall(c, t) {
   c.fillStyle = OUT; c.textAlign = 'left'; c.fillText('Tihar Stall', -tw / 2 + 23, -103);
 }
 
+/* ---------------- sky lantern balloons ---------------- */
+function drawSkyBalloon(c, bl) {
+  const f = Math.min(1, bl.held / bl.cap), r = 16 + f * 10, bob = Math.sin(now * 2 + bl.ph) * 4, y = bl.y - 80 + bob;
+  if (!bl.home) { c.save(); c.globalAlpha = .07; circ(c, bl.x, bl.y, 120, '#2a6f9a', false); c.restore(); line(c, bl.x, bl.y, bl.x, y + r, 'rgba(43,34,51,.35)', 1.2); }
+  P(c); c.moveTo(bl.x - r * .7, y + r * .9); c.quadraticCurveTo(bl.x - r * 1.05, y - r * .2, bl.x, y - r); c.quadraticCurveTo(bl.x + r * 1.05, y - r * .2, bl.x + r * .7, y + r * .9); c.closePath(); fs(c, '#ffdca8', 2);
+  c.save(); P(c); c.moveTo(bl.x - r * .7, y + r * .9); c.quadraticCurveTo(bl.x - r * 1.05, y - r * .2, bl.x, y - r); c.quadraticCurveTo(bl.x + r * 1.05, y - r * .2, bl.x + r * .7, y + r * .9); c.closePath(); c.clip();
+  c.fillStyle = '#4fb6e6'; c.fillRect(bl.x - r * 1.2, y + r * .9 - f * r * 1.9, r * 2.4, f * r * 1.9); c.restore();
+  rr(c, bl.x - r * .45, y + r * .85, r * .9, 5, 2, '#a0522d');
+  c.save(); c.globalAlpha = .5 + Math.sin(now * 8 + bl.ph) * .2; circ(c, bl.x, y + r * .7, 4, '#ffd24a', false); c.restore();
+  if (!bl.home) { const u = bl.t / bl.life; rr(c, bl.x - 16, y - r - 12, 32, 5, 2.5, '#ffffff', true); rr(c, bl.x - 15, y - r - 11, 30 * u, 3, 1.5, '#4fb6e6', false); }
+}
+function drawHiveLantern(c) {
+  const x = HLANT.x, y = HLANT.y, p = S.hiveBal, r = 18 + Math.min(26, Math.log10(1 + p) * 2.4), bob = Math.sin(now * 1.6) * 3, ty = y - 120 + bob;
+  line(c, x, y - 10, x, ty + r, 'rgba(43,34,51,.4)', 1.4);
+  P(c); c.moveTo(x - r * .7, ty + r * .9); c.quadraticCurveTo(x - r * 1.05, ty - r * .2, x, ty - r); c.quadraticCurveTo(x + r * 1.05, ty - r * .2, x + r * .7, ty + r * .9); c.closePath(); fs(c, '#ffd27a', 2.4);
+  c.save(); c.globalAlpha = .45; circ(c, x, ty + r * .2, r * .6, '#fff4c8', false); c.restore();
+  rr(c, x - r * .45, ty + r * .85, r * .9, 6, 2, '#a0522d');
+  c.font = '900 10px -apple-system,system-ui,sans-serif'; const tx2 = fmt(p), tw = c.measureText(tx2).width + 26;
+  P(c); c.roundRect(x - tw / 2, ty - r - 26, tw, 20, 10); fs(c, '#ffffff', 1.6);
+  drawIcon(c, 'diya', x - tw / 2 + 11, ty - r - 16, 10, '#ff9f1a', 2.2);
+  c.fillStyle = OUT; c.textAlign = 'left'; c.fillText(tx2, x - tw / 2 + 19, ty - r - 12);
+}
+
 /* ---------------- blender ---------------- */
 function drawBlender(c, t) {
   ell(c, 0, 4, 50, 12, 'rgba(0,0,0,.15)', false);
