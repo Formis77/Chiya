@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '21';
+const VERSION = '22';
 const NAV = [['home', 'home', 'Home'], ['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['gear', 'backpack', 'Gear'], ['map', 'map', 'Map'], ['badges', 'badge', 'Badges'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -41,7 +41,7 @@ function uiTick(dt) {
   const fi = fieldAt(player.x, player.y);
   $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>Lv ${FIELDS[fi].lv[0]}${FIELDS[fi].lv[1] > FIELDS[fi].lv[0] ? "-" + FIELDS[fi].lv[1] : ""}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
   const bf = [];
-  const BI = { heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
+  const BI = { kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   { const fl = frostAt(player.x, player.y); if (fl) bf.push(`<button class="chip frostc" data-b="frostmark">${ic('snow')}<b>x${FROST_MUL[fl]}</b></button>`); }
   for (const k in B) bf.push(`<button class="chip" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
@@ -843,16 +843,17 @@ function claimBadge(id) {
 function pTihar() {
   const clk = (S.nightClock || 0) % NIGHT_EVERY, night = isNight(), left = night ? NIGHT_EVERY - clk : NIGHT_EVERY - NIGHT_LEN - clk;
   let h = `<div class="ph"><h2>Tihar Stall</h2><span class="pill">${ic('marigold')}${fmt(S.items.marigold || 0)}</span></div>
-    <p class="mut small">The festival of lights runs until the end of January. Marigolds drop while you and your crew gather, and sprouts can drop them too. Every few minutes the mountain goes dark for a Diyo Night: walk into the floating lamps to collect lots of marigolds.</p>
+    <p class="mut small">Every 15 minutes the mountain goes dark for a Diyo Night. Every open field gets 3 unlit diyas: gather right next to one to light it. Higher fields need more but pay far more marigolds, and lighting all three in a field gives +50% gathering there until morning. Some nights a stray dog wanders into a field: gather near it until it trusts you to earn a Kukur Tilak. Five tilaks and 1,500 marigolds buy the Marigold Garland for the Tihar Dog.</p>
+    <div class="item gear">${ib('paw', '#e5484d')}<div class="it"><b>Kukur Tilak ${S.items.tilak || 0}/${TILAK_NEED}</b><span class="mut small">${E.stray && E.stray.on ? `A stray is in ${FIELDS[E.stray.fi].n} right now` : 'Strays show up on about 2 nights in 5'}</span></div></div>
     <div class="item gear">${ib('diya', '#ff9f1a')}<div class="it"><b>${night ? 'Diyo Night is on' : 'Next Diyo Night'}</b><span class="mut small">${night ? `Ends in ${mmss(left * 1000)}` : `Starts in ${mmss(left * 1000)}`}</span></div></div><h3>Festival goods</h3>`;
-  h += TIHAR_SHOP.map((g, i) => { const it = ITEMS[g.k], ok = (S.items.marigold || 0) >= g.p;
+  h += TIHAR_SHOP.map((g, i) => { const it = ITEMS[g.k], ok = (S.items.marigold || 0) >= g.p && (S.items.tilak || 0) >= (g.tilak || 0);
     return `<div class="item gear">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[g.k] || 0}</span> ${info('it', g.k)}</b></div>
-      <button class="btn sm ${ok ? 'primary' : ''}" ${ok ? '' : 'disabled'} onclick="buyTihar(${i})">${ic('marigold')}<span>${fmt(g.p)}</span></button></div>`; }).join('');
+      <button class="btn sm ${ok ? 'primary' : ''}" ${ok ? '' : 'disabled'} onclick="buyTihar(${i})">${ic('marigold')}<span>${fmt(g.p)}${g.tilak ? ' + ' + g.tilak + ' tilak' : ''}</span></button></div>`; }).join('');
   return h;
 }
 function buyTihar(i) {
-  const g = TIHAR_SHOP[i]; if ((S.items.marigold || 0) < g.p) return;
-  S.items.marigold -= g.p; S.items[g.k] = (S.items[g.k] || 0) + 1;
+  const g = TIHAR_SHOP[i]; if ((S.items.marigold || 0) < g.p || (S.items.tilak || 0) < (g.tilak || 0)) return;
+  S.items.marigold -= g.p; if (g.tilak) S.items.tilak -= g.tilak; S.items[g.k] = (S.items[g.k] || 0) + 1;
   if (g.k === 'mysticWheel') S.wheels++;
   toast(`+1 ${ITEMS[g.k].n}`, ITEMS[g.k].i); save(); renderPanel();
 }

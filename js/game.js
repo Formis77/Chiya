@@ -189,6 +189,7 @@ function gMult(col, isTool) {
   if (B.wildfire && col === 'spice') add += 1;
   if (B.polar && col === 'ice') add += 1;
   if (B.spirit) add += 1;
+  if (B.kukur) add += .5;
   if (B.heat && col === 'spice') add += B.heat.st * .02;
   if (B.chill && col === 'ice') add += B.chill.st * (mpas('glacierStar') ? .015 : .01);
   if (isTool) add += bp('tool') + (D.hive === 'cloud' ? .5 : 0);
@@ -250,6 +251,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   const gooHit = lastGoo;
   if (Math.random() < critChance()) { amt *= critMul(); crit = true; S.stats.crits++; if (t.col === 'spice' && Math.random() < .25 && E.decals.some(d => d.kind === 'flame' && dist(t.x, t.y, d.x, d.y) < d.r)) addFlame(t.f, t.x + rand(-30, 30), t.y + rand(-20, 20), base); }
   if (S.pilgrim && t.f === S.pilgrim.f) amt *= 1.5;
+  if (E.litF && E.litF[t.f]) amt *= 1.5;
   amt *= fieldBonus(t.f);
   const inTea = E.decals.some(d => d.kind === 'teamark' && dist(t.x, t.y, d.x, d.y) < d.r);
   const conv = Math.min(.8, bp('conv') + (kilnFlame ? .15 : 0) + (B.masala ? .08 : 0) + (D.syn.has('fullHouse') ? .05 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
@@ -261,6 +263,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   if (add > (st.best || 0)) st.best = add;
   const fid = FIELDS[t.f].id; S.stats.field[fid] = (S.stats.field[fid] || 0) + add;
   if (S.sprouts.length && add > 0) sproutHit(t, add);
+  if (wasNight && add > 0) nightHit(t, add);
   if (gooHit && add > 0 && mpas('butterStar') && !B.butterbomb && ++S.butter >= 150) { S.butter = 0; butterBomb(t.f); }
   leafBurst(t, crit ? 5 : 2);
   if (crit) burst(t.x, t.y - 10, 5, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.2 });
@@ -330,10 +333,10 @@ function updCrew(e, i, dt) {
   }
   if (working) {
     if (e.st === 'gather') {
-      e.act = true; e.mv = false; e.t -= dt * (B.roar ? 1.5 : 1);
+      e.act = true; e.mv = false; e.t -= dt * (B.roar ? 1.5 : 1) * (D.k.tiharDog ? 1 + .1 * Math.min(3, D.k.tiharDog) : 1);
       if (e.t <= 0) {
         const got = collect(e.tile, crewAmount(e, e.tile), def.c);
-        if (got > 0) { pop(e.x, e.y - 34, '+' + fmt(got), COL[def.c].c); if (Math.random() < .004) dropMat(e.tile.f); if (tiharOn() && Math.random() < .006) giveMari(1, e.x, e.y); }
+        if (got > 0) { pop(e.x, e.y - 34, '+' + fmt(got), COL[def.c].c); if (Math.random() < .004) dropMat(e.tile.f); }
         e.st = 'idle';
       }
       return;
@@ -449,10 +452,12 @@ const FX = {
     burst(player.x, player.y - 20, 30, { type: 'star', col: '#fff1a8', spd: 90, life: 1.4, size: 2.6, g: -40 });
   },
   sniff(e) {
-    const r = Math.random();
-    const it = r < .38 ? 'momo' : r < .62 ? 'selroti' : r < .74 ? 'dalbhat' : r < .84 ? 'butterTea' : r < .91 ? 'incense' : r < .96 ? 'mysticWheel' : r < .995 ? 'permit' : 'goldenMomo';
-    S.items[it] = (S.items[it] || 0) + 1;
-    toast(`The Tihar Dog dug up ${ITEMS[it].n}`, ITEMS[it].i);
+    addBuff('kukur', 15);
+    const got = [];
+    for (let k = ri(1, 3); k > 0; k--) { const r = Math.random();
+      const it = r < .3 ? 'momo' : r < .5 ? 'selroti' : r < .62 ? 'dalbhat' : r < .7 ? pick(['spiceShot', 'glacierShard', 'yakCheese']) : r < .8 ? 'butterTea' : r < .88 ? 'incense' : r < .95 ? 'mysticWheel' : r < .995 ? 'permit' : 'goldenMomo';
+      S.items[it] = (S.items[it] || 0) + 1; got.push(ITEMS[it].n); }
+    toast(`Kukur Puja! The dog dug up ${got.join(', ')}`, 'paw');
     burst(player.x, player.y - 6, 18, { type: 'petal', col: '#ffa502', spd: 140, life: 1.2, size: 4, g: 120 });
     burst(player.x, player.y, 10, { type: 'smoke', col: 'rgba(120,90,60,.4)', spd: 60, life: .8, size: 7 });
   },
@@ -600,15 +605,14 @@ function update(dt) {
   if (tiharOn()) {
     S.nightClock = (S.nightClock || 0) + dt;
     const nt = isNight();
-    if (nt && !wasNight) { toast('Diyo Night! Collect the glowing lamps for marigolds', 'diya'); E.diyas = []; }
-    if (!nt && wasNight) E.diyas = [];
+    if (nt && !wasNight) startNight();
+    if (!nt && wasNight) endNight();
     wasNight = nt;
-    if (nt) {
-      E.diyas = E.diyas || [];
-      diyaT -= dt; if (diyaT <= 0 && E.diyas.length < 12) { diyaT = .7; const a = rand(0, TAU), r = rand(90, 300); E.diyas.push({ x: clamp(player.x + Math.cos(a) * r, 30, WORLD.w - 30), y: clamp(player.y + Math.sin(a) * r * .8, ZONES[0].top + 60, WORLD.h - 30), age: 0, life: 22, ph: rand(0, TAU) }); }
-      for (let i = E.diyas.length - 1; i >= 0; i--) { const d = E.diyas[i]; d.age += dt; d.y += Math.sin(now * 2 + d.ph) * .15;
-        if (d.age > d.life) { E.diyas.splice(i, 1); continue; }
-        if (dist(player.x, player.y, d.x, d.y) < 34) { E.diyas.splice(i, 1); giveMari(Math.random() < .3 ? 3 : 2, d.x, d.y); burst(d.x, d.y - 10, 14, { type: 'star', col: '#ffcf5a', spd: 110, life: .7, size: 2.4 }); } }
+    if (nt && E.stray) {
+      const st = E.stray;
+      if (!st.on) { st.wait -= dt; if (st.wait <= 0) { st.on = true; toast(`A stray dog wandered into ${FIELDS[st.fi].n}. Gather near it to win its trust`, 'paw'); } }
+      else { st.hop -= dt; const f = FIELDS[st.fi]; if (st.hop <= 0) { st.hop = rand(4, 7); st.tx = rand(f.x + 50, f.x + f.w - 50); st.ty = rand(f.yy + 50, f.yy + f.h - 40); }
+        const dx = st.tx - st.x, dy = st.ty - st.y, d2 = Math.hypot(dx, dy); st.mv = d2 > 4; if (st.mv) { st.x += dx / d2 * Math.min(d2, 150 * dt); st.y += dy / d2 * Math.min(d2, 150 * dt); st.face = dx > 0 ? 1 : -1; } st.anim += dt; }
     }
   }
   if (Math.abs(ix) > .1) player.face = ix > 0 ? 1 : -1;
@@ -624,7 +628,6 @@ function update(dt) {
     const reach = tl.r * (B.cloudburst ? 1.5 : 1) * (B.bear ? 1.3 : 1);
     for (const t of TILES[pf]) if (dist(t.x, t.y, cx, cy) < reach) sum += collect(t, tl.amt * (tl.col === t.col ? 1 + (tl.cb || .6) : 1), 'neutral', 1, true);
     if (sum > 0 && Math.random() < .03) dropMat(pf);
-    if (sum > 0 && tiharOn() && Math.random() < .05) giveMari(1, player.x, player.y);
     E.decals.push({ kind: 'swoosh', x: cx, y: cy, r: reach, face: player.face, age: 0, dur: .22 });
     if (sum) pop(player.x, player.y - 48, '+' + fmt(sum), '#ffffff');
   } else if (pf >= 0 && !fieldOpen(pf) && now - fullWarnT > 4) { fullWarnT = now; toast(`${FIELDS[pf].n} needs ${FIELDS[pf].gate} crew`, 'lock'); }
@@ -908,7 +911,9 @@ function render() {
       g.addColorStop(0, 'rgba(14,16,48,0)'); g.addColorStop(.22, `rgba(14,16,48,${.55 * dk})`); g.addColorStop(1, `rgba(8,8,30,${.84 * dk})`);
       c.fillStyle = g; c.fillRect(0, 0, W, H);
       c.setTransform(scale, 0, 0, scale, (-cam.x + sx) * scale, (-cam.y + sy) * scale);
-      for (const d of E.diyas || []) if (vis(d.x, d.y, 40)) drawDiya(c, d);
+      for (const d of E.diyas || []) if (vis(d.x, d.y, 60)) drawDiya(c, d);
+      if (E.stray && E.stray.on && vis(E.stray.x, E.stray.y, 60)) { const st = E.stray; c.save(); c.translate(st.x, st.y); ell(c, 0, 2, 16, 5, 'rgba(0,0,0,.25)', false); c.scale(st.face * 1.3, 1.3); drawCrewArt(c, 'tiharDog', st.anim, st.mv, false); c.restore();
+        const u = st.trust / st.need; rr(c, st.x - 26, st.y - 52, 52, 8, 4, '#ffffff', true); rr(c, st.x - 24.5, st.y - 50.5, 49 * u, 5, 2.5, '#ff6b8a', false); drawIcon(c, 'heart', st.x - 34, st.y - 48, 11, '#ff6b8a', 2.4); }
     }
   }
   // joystick (screen space)
@@ -1197,6 +1202,38 @@ function placeSprinkler() {
 function addFlame(fi, x, y, base) {
   if (fieldAt(x, y) !== fi || E.decals.filter(d => d.kind === 'flame').length > 40) return;
   E.decals.push({ kind: 'flame', x, y, r: 44, age: 0, dur: mpas('blazingStar') ? 12 : 6, fi, base, tick: 0 });
+}
+/* Diyo Night: every open field gets 3 unlit diyas. Gathering near one lights it (needs a lot).
+   Light all three for a field-wide bonus. Sometimes a stray dog shows up to befriend. */
+function startNight() {
+  const cap = capMax(); E.diyas = []; E.litF = {};
+  FIELDS.forEach((f, fi) => { if (!fieldOpen(fi)) return; for (let k = 0; k < 3; k++) E.diyas.push({ fi, x: f.x + f.w * (.22 + k * .28), y: f.yy + f.h * (k === 1 ? .3 : .7), need: cap * (.25 + f.z * .1), prog: 0, lit: false, ph: rand(0, TAU) }); });
+  E.stray = Math.random() < STRAY_CHANCE ? (() => { const open = FIELDS.map((f, i) => i).filter(fieldOpen), fi = pick(open), f = FIELDS[fi]; return { fi, x: f.x + f.w / 2, y: f.yy + f.h / 2, tx: f.x + f.w / 2, ty: f.yy + f.h / 2, need: cap * (.8 + f.z * .15), trust: 0, wait: rand(10, 60), on: false, hop: 0, face: 1, anim: 0 }; })() : null;
+  toast('Diyo Night! Gather next to the diyas in any field to light them', 'diya');
+}
+function endNight() {
+  if (E.stray && E.stray.on) toast('The stray dog wandered off into the dark', 'paw');
+  E.diyas = []; E.stray = null; delete B.litfield; E.litF = {};
+}
+function nightHit(t, add) {
+  for (const d of E.diyas) {
+    if (d.lit || d.fi !== t.f || Math.abs(t.x - d.x) > 130 || Math.abs(t.y - d.y) > 110) continue;
+    d.prog += add;
+    if (d.prog >= d.need) {
+      d.lit = true; const z = FIELDS[d.fi].z, n = ri(6, 10) * (1 + z);
+      giveMari(n, d.x, d.y); burst(d.x, d.y - 14, 26, { type: 'star', col: '#ffcf5a', spd: 140, life: .9, size: 2.6 }); ring(d.x, d.y, 70, '#ffb347', .5, 5);
+      if (E.diyas.filter(q => q.fi === d.fi).every(q => q.lit)) { E.litF[d.fi] = true; const bonus = 25 * (1 + z); giveMari(bonus, d.x, d.y - 30); toast(`${FIELDS[d.fi].n} is fully lit: +50% here until morning`, 'diya'); shake(6); }
+    }
+  }
+  const st = E.stray;
+  if (st && st.on && t.f === st.fi && Math.abs(t.x - st.x) < 170 && Math.abs(t.y - st.y) < 140) {
+    st.trust += add;
+    if (st.trust >= st.need) {
+      const z = FIELDS[st.fi].z; S.items.tilak = (S.items.tilak || 0) + 1; giveMari(40 * (1 + z), st.x, st.y);
+      burst(st.x, st.y - 20, 40, { type: 'heart', col: '#ff6b8a', spd: 120, life: 1.4, size: 4, g: -40 });
+      toast(`The stray trusts you! Kukur Tilak ${S.items.tilak}/${TILAK_NEED}`, 'paw'); E.stray = null; save();
+    }
+  }
 }
 function giveMari(n, x, y) {
   S.items.marigold = (S.items.marigold || 0) + n; S.stats.marigolds = (S.stats.marigolds || 0) + n;

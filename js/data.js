@@ -60,7 +60,7 @@ const CREW = {
   skyLantern:   { n: 'Sky Lantern',         r: 'mythic',    c: 'ice',     spd: 120, amt: 11, gt: 2.4, brew: 14, fav: 'momo',    bp: ['cap', 40],    tags: ['spirit'], pas: 'Fills a floating balloon with 12% of everything you gather (outside your doko). The balloon is brewed at x1.5 when you sell.', d: 'Drifts above the teahouse on festival nights.' },
   mistYak:      { n: 'Mist Yak',            r: 'mythic',    c: 'cloud',   spd: 95,  amt: 15, gt: 2.6, brew: 16, fav: 'selroti', bp: ['cloud', 40],  tags: ['yak'], ab: 'mist', cd: 22, d: 'Walks out of the clouds and leaves them behind.' },
   bear:         { n: 'Himalayan Bear',      r: 'event',     c: 'neutral', spd: 105, amt: 8,  gt: 2.6, brew: 10, fav: 'momo',    bp: ['tool', 25],   tags: ['beast'], ab: 'bearMorph', cd: 30, d: 'Big, black, and very fond of honey.' },
-  tiharDog:     { n: 'Tihar Dog',           r: 'event',     c: 'neutral', spd: 120, amt: 6,  gt: 2.6, brew: 8,  fav: 'momo',    bp: ['offline', 15],tags: ['dog'],   ab: 'sniff', cd: 40, d: 'Honored with marigolds on Kukur Tihar. Good boy.' },
+  tiharDog:     { n: 'Tihar Dog',           r: 'event',     c: 'neutral', spd: 155, amt: 14, gt: 2.2, brew: 12, fav: 'momo',    bp: ['crit', 10],   tags: ['dog'],   ab: 'sniff', cd: 24, pas: 'Loyal: every crew member in your field gathers 10% faster while the Tihar Dog works with them.', d: 'Honored with marigolds on Kukur Tihar. A very good, very hard-working boy.' },
   kiteFlyer:    { n: 'Kite Flyer',          r: 'event',     c: 'neutral', spd: 100, amt: 6,  gt: 2.8, brew: 8,  fav: 'selroti', bp: ['tool', 25],   tags: ['human'], ab: 'gust', cd: 22, d: 'Dashain kite season, all year round.' }
 };
 const CREW_IDS = Object.keys(CREW);
@@ -81,7 +81,7 @@ const ABIL = {
   footprints:  { n: 'Yeti Steps',    i: 'foot', tok: true,  d: 'Bubble. Six giant footprints stomp in a line starting from it. Each stomp gathers every flower within 72 range at x3. Every stomp leaves a bubble behind.' },
   dive:        { n: 'Danphe Dive',   i: 'feather', tok: true,  d: 'Bubble. The Danphe dives in a straight line through the bubble across the whole field, gathering every flower within 40 of its path at x3.' },
   pounce:      { n: 'Shadow Pounce', i: 'claw', tok: true,  d: 'Bubble. The Snow Leopard pounces to 5 random flowers in the field (8 with Big Cats). Each landing gathers everything within 62 range at x2.5. Every landing leaves butter.' },
-  sniff:       { n: 'Sniff',         i: 'paw', tok: true,  d: 'Bubble. Digs up a random item: food (most often), Butter Tea, Incense, and rarely a Mystic Wheel, Permit or Golden Momo.' },
+  sniff:       { n: 'Kukur Puja',    i: 'paw', tok: true,  d: 'Bubble. The whole crew is honored: +50% to all gathering for 15s. The dog also digs up 1 to 3 items: food, extracts, Incense, and rarely a Mystic Wheel, Permit or Golden Momo.' },
   spiceBoost:  { n: 'Spice Boost',   i: 'flame',  tok: true,  d: 'Bubble. Spice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also leaves a flame where the bubble lay.' },
   iceBoost:    { n: 'Ice Boost',     i: 'snow',   tok: true,  d: 'Bubble. Ice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also releases 2 bubbles.' },
   cloudBoost:  { n: 'Cloud Boost',   i: 'cloud',  tok: true,  d: 'Bubble. Cloud gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also spills a butter puddle where the bubble lay.' },
@@ -316,6 +316,8 @@ const BUFFS = {
   heat:       { n: 'Heat',         i: 'flame',   d: '+2% Spice gathering per stack.' },
   chill:      { n: 'Chill',        i: 'snow',    d: '+1% Ice gathering and +1% capacity per stack (+1.5% with Glacier Star).' },
   nimbusb:    { n: 'Nimbus',       i: 'cloud',   d: '+2% capacity per stack.' },
+  kukur:      { n: 'Kukur Puja',   i: 'paw',     d: '+50% to all gathering.' },
+  litfield:   { n: 'Lit field',    i: 'diya',    d: 'You lit every diya in this field: +50% gathering here until the night ends.' },
   butterbomb: { n: 'Butter Bomb',  i: 'drop',    d: 'The whole field counts as butter.' },
   polar:      { n: 'Polar Power',  i: 'snow',    d: '+100% Ice gathering and +10% crit chance.' },
   cloudburst: { n: 'Cloud Burst',  i: 'cloud',   d: 'Tool reach x1.5 and tool gathering x2.' },
@@ -347,8 +349,9 @@ const ITEMS = {
   goldenTea:   { n: 'Golden Tea',    i: 'cup', d: 'All gathering x1.15 for 15 minutes. Blend only.', use: true },
   masala:      { n: 'Masala Tonic',  i: 'bottle', d: '+8% instant conversion for 10 minutes. Blend only.', use: true },
   lotusSeed:   { n: 'Lotus Seed',    i: 'sprout', d: 'Plant it to grow a sprout in the field you stand in. Planted sprouts are rarer than wild ones.', use: true },
-  marigold:    { n: 'Marigold',      i: 'marigold', d: 'Tihar festival flower. Drops while gathering during the festival. Spend it at the Tihar Stall.' },
+  marigold:    { n: 'Marigold',      i: 'marigold', d: 'Tihar festival flower. Earned by lighting diyas on Diyo Night (higher fields give more) and from sprouts. Spend it at the Tihar Stall.' },
   garland:     { n: 'Marigold Garland', i: 'garland', d: 'Welcomes the Tihar Dog into your crew. Needs a free bed.', use: true },
+  tilak:       { n: 'Kukur Tilak',   i: 'paw', d: 'A red tilak from a stray dog you befriended on Diyo Night. The Tihar Stall needs 5 of them, plus marigolds, for a Marigold Garland.' },
   butterDrop:  { n: 'Butter Drop',   i: 'drop',    d: 'Drops a pool of yak butter (radius 110) where you stand for 40s. Gathering inside x2, and Cloud crew gather x1.5 more.', price: 15000, use: true },
   permit:      { n: 'Trekking Permit', i: 'ticket', d: 'Recruit a random crew member into an empty bed.' },
   mysticWheel: { n: 'Mystic Wheel',  i: 'wheel', d: 'Reroll a crew member. Never gives Commons.' },
@@ -550,10 +553,10 @@ const BADGES = [
 ];
 
 /* ---------------- Tihar festival ---------------- */
-const TIHAR_END = Date.UTC(2027, 0, 31);
-const tiharOn = () => Date.now() < TIHAR_END;
-const NIGHT_EVERY = 300, NIGHT_LEN = 70;
+const tiharOn = () => true;   /* permanent festival */
+const NIGHT_EVERY = 900, NIGHT_LEN = 150;
+const STRAY_CHANCE = .4, TILAK_NEED = 5;
 const TIHAR_SHOP = [
-  { k: 'garland', p: 400 }, { k: 'lotusSeed', p: 30 }, { k: 'mysticWheel', p: 80 }, { k: 'goldenTea', p: 60 },
-  { k: 'incense', p: 25 }, { k: 'selroti', p: 4 }, { k: 'goldenMomo', p: 300 }
+  { k: 'garland', p: 1500, tilak: TILAK_NEED }, { k: 'lotusSeed', p: 40 }, { k: 'mysticWheel', p: 120 }, { k: 'goldenTea', p: 80 },
+  { k: 'incense', p: 30 }, { k: 'dalbhat', p: 15 }, { k: 'goldenMomo', p: 450 }
 ];
