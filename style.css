@@ -353,3 +353,18 @@ body.panel #hud .hcard,body.panel #buffs,body.panel #toast,body.panel #tip{left:
 body.panel #hud .hcard{width:min(300px,30vw)}
 body.panel #quest{display:none}
 #place{right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 64px)}
+
+/* v23 layout fixes */
+:root{--pw:min(330px,40vw)}
+#quest{display:none!important}
+#bar button{width:42px;height:42px}
+#gearq button{width:48px;height:48px;border-radius:13px;background:var(--card);box-shadow:0 2px 8px rgba(43,34,51,.18);display:flex;align-items:center;justify-content:center}
+#gearq button .ic{width:24px;height:24px}
+.chip.pchip{background:#efe8ff;color:#5b3fb3;box-shadow:0 2px 8px rgba(91,63,179,.18)}
+.chip.pchip .pring{background:conic-gradient(#7c4ddb var(--p),#d9ccff 0)}
+#pop{position:fixed;z-index:12;max-width:240px;background:var(--ink);color:#fff;border-radius:13px;padding:8px 11px;font-size:12px;line-height:1.35;display:none;flex-direction:column;gap:3px;pointer-events:auto;box-shadow:var(--sh)}
+#pop.on{display:flex}
+#pop b{font-size:13px}#pop small{opacity:.65;font-weight:700}#pop span{opacity:.9}
+#pop::after{content:'';position:absolute;left:calc(var(--ax) - 6px);width:12px;height:12px;background:var(--ink);transform:rotate(45deg)}
+#pop.down::after{top:-5px}#pop.up::after{bottom:-5px}
+#pop .pst{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}#pop .pst i{font-style:normal;font-weight:800;font-size:11px;background:rgba(255,255,255,.14);padding:2px 7px;border-radius:7px}

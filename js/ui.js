@@ -5,15 +5,16 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '22';
-const NAV = [['home', 'home', 'Home'], ['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['gear', 'backpack', 'Gear'], ['map', 'map', 'Map'], ['badges', 'badge', 'Badges'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
+const VERSION = '23';
+const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
   $('rpi').innerHTML = ic('coin'); $('dki').innerHTML = ic('basket');
   $('menub').innerHTML = ic('menu');
   $('menub').addEventListener('click', () => { if (panel) { closePanel(); document.body.classList.remove('menu'); } else document.body.classList.toggle('menu'); });
-  $('gearq').addEventListener('click', () => openPanel('gear'));
+  $('gearq').addEventListener('click', ev => { const b = ev.target.closest('[data-g]'); if (b) gearPop(b); });
+  addEventListener('pointerdown', ev => { if (!ev.target.closest('#pop,[data-g],[data-b],[data-p]')) hidePop(); }, true);
   if (!S.hotbar || S.hotbar.length !== HOTBAR_N) S.hotbar = ['permit', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
   $('hotbar').addEventListener('pointerdown', ev => { const sl = ev.target.closest('.hslot'); if (!sl) return; ev.preventDefault(); dragStart(ev, S.hotbar[+sl.dataset.i], +sl.dataset.i); });
   addEventListener('pointermove', dragMove); addEventListener('pointerup', dragEnd); addEventListener('pointercancel', dragEnd);
@@ -27,7 +28,7 @@ function uiInit() {
   $('quest').addEventListener('click', () => openPanel('quests'));
   $('talk').addEventListener('click', () => talk());
   $('place').addEventListener('click', () => placeSprinkler());
-  $('buffs').addEventListener('pointerdown', ev => { const b = ev.target.closest('[data-b]'), p = ev.target.closest('[data-p]'); if (b) { ev.preventDefault(); buffTip(b.dataset.b); } else if (p) { ev.preventDefault(); pasTip(p.dataset.p); } });
+  $('buffs').addEventListener('pointerdown', ev => { const b = ev.target.closest('[data-b]'), p = ev.target.closest('[data-p]'); if (b) { ev.preventDefault(); buffTip(b.dataset.b, b); } else if (p) { ev.preventDefault(); pasTip(p.dataset.p, p); } });
   uiTick(1);
 }
 
@@ -48,7 +49,7 @@ function uiTick(dt) {
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
   $('quest').innerHTML = questTracker();
   renderHotbar();
-  { const tl = tool(), dk = doko(), g = `${ic(tl.i)}${ic(dk.i)}`; if ($('gearq').dataset.g !== tl.id + dk.id) { $('gearq').innerHTML = `<span>${ic(tl.i)}</span><span>${ic(dk.i)}</span>`; $('gearq').dataset.g = tl.id + dk.id; } }
+  { const eq = equippedSlots(), sig = eq.map(([k, it]) => it.id).join(); if ($('gearq').dataset.sig !== sig) { $('gearq').innerHTML = eq.map(([k, it]) => `<button data-g="${k}" style="color:${gearCol(it)}">${ic(it.i)}</button>`).join(''); $('gearq').dataset.sig = sig; } }
   const pf = fieldAt(player.x, player.y), canPlace = S.spr.n > 0 && pf >= 0 && fieldOpen(pf) && !panel;
   $('place').classList.toggle('on', canPlace);
   if (canPlace) $('place').innerHTML = `${ic('drop')}<span><small>${SPRINKLERS[S.spr.lv].n}</small>Place ${S.spr.placed.length}/${S.spr.n}</span>`;
@@ -368,7 +369,8 @@ function pItems() {
 let hbSig = '';
 function renderHotbar() {
   if (!S.hotbar) S.hotbar = ['permit', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
-  const sig = S.hotbar.map(k => k ? k + ':' + (S.items[k] || 0) : '-').join('|') + (dragS ? 'd' : '');
+  if (dragS && dragS.on) return;
+  const sig = S.hotbar.map(k => k ? k + ':' + (S.items[k] || 0) : '-').join('|');
   if (sig === hbSig) return; hbSig = sig;
   $('hotbar').innerHTML = S.hotbar.map((k, i) => { if (!k) return `<button class="hslot empty" data-i="${i}"><small>${i + 1}</small></button>`;
     const n = S.items[k] || 0; return `<button class="hslot ${n ? '' : 'zero'}" data-i="${i}" style="--c:${icol(ITEMS[k].i)}">${ic(ITEMS[k].i)}<b>${fmt(n)}</b><small>${i + 1}</small></button>`; }).join('');
@@ -391,16 +393,20 @@ function dragMove(ev) {
   if (!dragS.on && dragS.armed && Math.hypot(ev.clientX - dragS.x0, ev.clientY - dragS.y0) > 9 && dragS.k) {
     dragS.on = true; const d = $('drag'); d.innerHTML = ib(ITEMS[dragS.k].i, icol(ITEMS[dragS.k].i)); d.classList.add('on'); document.body.classList.add('dragging');
   }
-  if (dragS.on) { const d = $('drag'); d.style.transform = `translate(${ev.clientX - 26}px,${ev.clientY - 26}px)`;
-    document.querySelectorAll('.hslot').forEach(s2 => s2.classList.remove('over')); const el = document.elementFromPoint(ev.clientX, ev.clientY), sl = el && el.closest('.hslot'); if (sl) sl.classList.add('over'); }
+  if (dragS.on) { const d = $('drag'); d.style.transform = `translate(${ev.clientX - 26}px,${ev.clientY - 26}px)`; dragS.lx = ev.clientX; dragS.ly = ev.clientY;
+    document.querySelectorAll('.hslot').forEach(s2 => s2.classList.remove('over')); const sl = slotAt(ev.clientX, ev.clientY); dragS.over = sl ? +sl.dataset.i : -1; if (sl) sl.classList.add('over'); }
 }
 function dragEnd(ev) {
   if (!dragS || ev.pointerId !== dragS.id) return;
   const ds = dragS; dragS = null; $('drag').classList.remove('on'); document.body.classList.remove('dragging');
   if (!ds.on) { if (ds.from >= 0) hotUse(ds.from); else if (ds.k) { invSel = ds.k; renderPanel(); } hbSig = ''; return; }
-  const el = document.elementFromPoint(ev.clientX, ev.clientY), sl = el && el.closest('.hslot');
-  if (sl) { const to = +sl.dataset.i; if (ds.from >= 0) { const t = S.hotbar[to]; S.hotbar[to] = ds.k; S.hotbar[ds.from] = t; } else { const prev = S.hotbar.indexOf(ds.k); if (prev >= 0) S.hotbar[prev] = S.hotbar[to]; S.hotbar[to] = ds.k; } }
-  else if (ds.from >= 0) S.hotbar[ds.from] = null;
+  if (ev.type === 'pointercancel') { hbSig = ''; renderHotbar(); return; }
+  const sl = slotAt(ev.clientX, ev.clientY) || (ds.over >= 0 ? document.querySelector(`.hslot[data-i="${ds.over}"]`) : null);
+  if (sl) { const to = +sl.dataset.i;
+    if (to !== ds.from && S.hotbar[to] !== ds.k) {
+      if (ds.from >= 0) { const t = S.hotbar[to]; S.hotbar[to] = ds.k; S.hotbar[ds.from] = t; }
+      else { const prev = S.hotbar.indexOf(ds.k); if (prev >= 0) S.hotbar[prev] = S.hotbar[to]; S.hotbar[to] = ds.k; } } }
+  else if (ds.from >= 0) { const hb = $('hotbar').getBoundingClientRect(); if (ev.clientY < hb.top - 40) S.hotbar[ds.from] = null; }
   hbSig = ''; renderHotbar(); save(); if (panel === 'inv') renderPanel();
 }
 function useItem(k) {
@@ -738,19 +744,34 @@ function pStats() {
 
 function buySprinkler() { const c = sprCountCost(S.spr.n); if (S.rp < c || S.spr.n >= SPR_MAX) return; spend(c); S.spr.n++; toast(`Sprinkler ${S.spr.n} bought. Stand in a field and tap Place`, 'drop'); save(); renderPanel(); }
 function upgradeSprinkler() { const c = sprLevelCost(S.spr.lv); if (S.rp < c || !SPRINKLERS[S.spr.lv + 1]) return; spend(c); S.spr.lv++; refreshWet(); toast(`Upgraded to ${SPRINKLERS[S.spr.lv].n}`, 'drop'); save(); renderPanel(); }
-let tipT = null;
-function buffTip(k) {
-  const t = $('tip');
-  if (k === 'frostmark') { const fl = frostAt(player.x, player.y); t.innerHTML = `${ib('snow', '#2ea4dc')}<div><b>Frost Mark level ${fl}</b><span>Ice flowers inside this frost mark are gathered at x${FROST_MUL[fl]}.</span></div>`; t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 3200); return; }
-  const b = BUFFS[k]; if (!b || !B[k]) return;
-  t.innerHTML = `${ib(b.i, '#ff8a3d')}<div><b>${b.n}${B[k].st > 1 ? ' x' + B[k].st : ''}</b><span>${b.d}</span><small>${Math.ceil(B[k].t)}s left</small></div>`;
-  t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 3200);
+let tipT = null, popT = null;
+const slotAt = (x, y) => [...document.querySelectorAll('.hslot')].find(s2 => { const r = s2.getBoundingClientRect(); return x >= r.left - 4 && x <= r.right + 4 && y >= r.top - 14 && y <= r.bottom + 10; });
+/* small popover anchored to a chip or gear button */
+function showPop(el, html, above) {
+  const p = $('pop'), r = el.getBoundingClientRect();
+  p.innerHTML = html; p.className = 'on ' + (above ? 'up' : 'down');
+  const w = p.offsetWidth, x = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+  p.style.left = x + 'px'; p.style.setProperty('--ax', (r.left + r.width / 2 - x) + 'px');
+  if (above) { p.style.top = ''; p.style.bottom = (innerHeight - r.top + 8) + 'px'; } else { p.style.bottom = ''; p.style.top = (r.bottom + 8) + 'px'; }
+  clearTimeout(popT); popT = setTimeout(hidePop, 4500);
 }
-
-function pasTip(id) {
-  const p = PASSIVES[id], t = $('tip');
-  t.innerHTML = `${ib('sparkle', '#9b6ef3')}<div><b>${p.n}</b><span>${p.d}</span><small>${S.pas[id] || 0} / ${p.need} charged${p.col !== 'any' ? ' · counts ' + COL[p.col].n + ' crew abilities' : ' · counts every ability'}</small></div>`;
-  t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 3600);
+function hidePop() { $('pop').className = ''; }
+function buffTip(k, el) {
+  el = el || document.querySelector(`[data-b="${k}"]`); if (!el) return;
+  if (k === 'frostmark') { const fl = frostAt(player.x, player.y); showPop(el, `<b>Frost Mark level ${fl}</b><span>Ice flowers here are gathered at x${FROST_MUL[fl]}.</span>`); return; }
+  const b = BUFFS[k]; if (!b || !B[k]) return;
+  showPop(el, `<b>${b.n}${B[k].st > 1 ? ' x' + B[k].st : ''}</b><span>${b.d}</span><small>${Math.ceil(B[k].t)}s left</small>`);
+}
+function pasTip(id, el) {
+  el = el || document.querySelector(`[data-p="${id}"]`); if (!el) return;
+  const p = PASSIVES[id];
+  showPop(el, `<b>${p.n}</b><span>${p.d}</span><small>${S.pas[id] || 0} / ${p.need} charged · counts ${p.col !== 'any' ? COL[p.col].n + ' abilities' : 'every ability'}</small>`);
+}
+function equippedSlots() { return [['tool', tool()], ['doko', doko()], ['hat', HEADGEAR.find(h => h.id === S.hat)], ['boots', BOOTS.find(b2 => b2.id === S.boots)]].filter(([, it]) => it); }
+function gearPop(el) {
+  const k = el.dataset.g, it = equippedSlots().find(([k2]) => k2 === k)[1];
+  const st = gearStats(k, it), kind = { tool: 'Tool', doko: 'Bag', hat: 'Hat', boots: 'Boots' }[k];
+  showPop(el, `<b>${it.n}</b><small>${kind}</small><div class="pst">${st.map(x => `<i>${x}</i>`).join('')}</div>${it.pas ? `<span><b>${PASSIVES[it.pas].n}:</b> ${PASSIVES[it.pas].d}</span>` : ''}`, true);
 }
 
 function switchProfile(n) { save(); S = null; try { localStorage.setItem('chiya_slot', String(n)); } catch (e) {} location.reload(); }
