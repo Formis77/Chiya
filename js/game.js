@@ -221,9 +221,9 @@ function zoneMult(x, y, col, src) {
     if (d.kind === 'goo' && !inGoo && dist(x, y, d.x, d.y) < d.r) { inGoo = true; z *= mpas('butterStar') ? 3 : 2; if (src === 'cloud') z *= 1.5; }
     else if (d.kind === 'wheel' && dist(x, y, d.x, d.y) < d.r) z *= 2;
     else if (d.kind === 'flame' && !inFlame && dist(x, y, d.x, d.y) < d.r) { inFlame = true; z *= mpas('blazingStar') ? 2 : 1.5; }
-    else if (d.kind === 'frost' && col === 'ice' && dist(x, y, d.x, d.y) < 56) frost = Math.max(frost, d.lv || 1);
   }
   lastGoo = inGoo;
+  if (col === 'ice') frost = frostAt(x, y);
   return z * FROST_MUL[frost];
 }
 const fieldBonus = fi => { const id = FIELDS[fi].id; return 1 + ((S.fperm && S.fperm[id]) || 0) + ((S.badges && S.badges['f_' + id]) || 0) * BADGE_FIELD; };
@@ -731,6 +731,7 @@ function update(dt) {
 /* ---------------- rendering ---------------- */
 const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 let DPR = 1, scale = 1, viewH = 800, bgGrad = null;
+let lastCW = 0, lastCH = 0;
 function resize() {
   // iOS home-screen apps with a translucent status bar report a viewport that is
   // shorter than the screen by the status bar height; stretch everything over the gap.
@@ -1002,21 +1003,38 @@ function drawCrewEnt(c, e) {
   if (e.m.lvl > 1) { c.font = '800 8px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.lineWidth = 2.4; c.strokeStyle = 'rgba(20,24,40,.85)'; c.strokeText(e.m.lvl, e.x + 11, e.y + 3); c.fillStyle = '#fff'; c.fillText(e.m.lvl, e.x + 11, e.y + 3); }
 }
 
-function frostAt(x, y) { let lv = 0; for (const d of E.decals) if (d.kind === 'frost' && dist(x, y, d.x, d.y) < 56) lv = Math.max(lv, d.lv || 1); return lv; }
+/* Frost marks that touch or sit close merge into one ice sheet: the whole sheet uses the highest mark level in it. */
+let frostG = [], frostGT = -1;
+function frostGroups() {
+  if (frostGT === now) return frostG; frostGT = now;
+  const ms = E.decals.filter(d => d.kind === 'frost'), par = ms.map((_, i) => i), find = i => par[i] === i ? i : (par[i] = find(par[i])), links = [];
+  for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) if (dist(ms[i].x, ms[i].y, ms[j].x, ms[j].y) <= 160 && fieldAt(ms[i].x, ms[i].y) === fieldAt(ms[j].x, ms[j].y)) { par[find(i)] = find(j); links.push([i, j]); }
+  const gs = {}; ms.forEach((m, i) => { const r = find(i); (gs[r] = gs[r] || { ms: [], links: [], lv: 0 }).ms.push(m); gs[r].lv = Math.max(gs[r].lv, m.lv || 1); });
+  links.forEach(([i, j]) => gs[find(i)].links.push([ms[i], ms[j]]));
+  return (frostG = Object.values(gs));
+}
+function segDist(px, py, a, b) { const vx = b.x - a.x, vy = b.y - a.y, L = vx * vx + vy * vy || 1, t = Math.max(0, Math.min(1, ((px - a.x) * vx + (py - a.y) * vy) / L)); return Math.hypot(px - a.x - vx * t, py - a.y - vy * t); }
+function frostAt(x, y) {
+  let lv = 0;
+  for (const g2 of frostGroups()) { if (g2.lv <= lv) continue;
+    if (g2.ms.some(m => dist(x, y, m.x, m.y) < 56) || g2.links.some(([a, b]) => segDist(x, y, a, b) < 31)) lv = g2.lv; }
+  return lv;
+}
 function drawFrostSheet(c, fi) {
   const ms = E.decals.filter(d => d.kind === 'frost' && fieldAt(d.x, d.y) === fi); if (!ms.length) return;
   const R2 = d => 56 * Math.min(1, d.age * 5, Math.max(0, d.dur - d.age) * 2);
   const shapes = [];
   ms.forEach(d => { const r = R2(d); if (r > 1) shapes.push(p => { p.moveTo(d.x + r, d.y); p.arc(d.x, d.y, r, 0, TAU); }); });
   for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) {
-    const a = ms[i], b = ms[j], L = dist(a.x, a.y, b.x, b.y), w = Math.min(R2(a), R2(b)) * .55; if (L > 160 || w < 2) continue;
+    const a = ms[i], b = ms[j], L = dist(a.x, a.y, b.x, b.y), w = Math.min(R2(a), R2(b)) * .55; if (L > 160 || w < 2 || L < 1) continue;
     const nx = -(b.y - a.y) / L * w, ny = (b.x - a.x) / L * w;
     shapes.push(p => { p.moveTo(a.x + nx, a.y + ny); p.lineTo(b.x + nx, b.y + ny); p.lineTo(b.x - nx, b.y - ny); p.lineTo(a.x - nx, a.y - ny); p.closePath(); });
   }
   c.save(); c.lineJoin = 'round';
   for (const sh of shapes) { P(c); sh(c); c.strokeStyle = '#6cc3ea'; c.lineWidth = 6; c.stroke(); }
-  for (const sh of shapes) { P(c); sh(c); c.fillStyle = '#d6f2ff'; c.fill(); }
-  for (const d of ms) { const r = R2(d), lv = d.lv || 1; if (lv >= 2) circ(c, d.x, d.y, r * .72, '#bfe8fb', false); if (lv >= 3) circ(c, d.x, d.y, r * .46, '#a6dcf6', false); if (lv >= 4) circ(c, d.x, d.y, r * .22, '#8dd0f2', false); }
+  const gl = Math.max(...ms.map(d => frostAt(d.x, d.y)), 1);
+  for (const sh of shapes) { P(c); sh(c); c.fillStyle = ['#d6f2ff', '#d6f2ff', '#bde8fb', '#a3dcf7', '#8ad0f2'][gl]; c.fill(); }
+
   c.restore();
 }
 function drawDecalGround(c, d) {
@@ -1153,6 +1171,7 @@ function fmt(n) {
 /* ---------------- loop, offline, boot ---------------- */
 let last = performance.now(), rateSamples = [], saveT = 0, sampleT = 0;
 function frame(t) {
+  if (cv.clientWidth !== lastCW || cv.clientHeight !== lastCH) { lastCW = cv.clientWidth; lastCH = cv.clientHeight; resize(); }
   const dt = Math.min(.05, (t - last) / 1000); last = t;
   if (S) {
     update(dt);

@@ -368,3 +368,11 @@ body.panel #quest{display:none}
 #pop::after{content:'';position:absolute;left:calc(var(--ax) - 6px);width:12px;height:12px;background:var(--ink);transform:rotate(45deg)}
 #pop.down::after{top:-5px}#pop.up::after{bottom:-5px}
 #pop .pst{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}#pop .pst i{font-style:normal;font-weight:800;font-size:11px;background:rgba(255,255,255,.14);padding:2px 7px;border-radius:7px}
+
+#gearq{gap:4px}
+#gearq button{width:30px;height:30px;border-radius:9px}
+#gearq button .ic{width:16px;height:16px;stroke-width:2.3}
+#cv{width:100vw;height:100vh;height:100dvh}
+.item.badge.tier{background:color-mix(in srgb,var(--bc) 22%,#fff);border-color:color-mix(in srgb,var(--bc) 55%,#fff)}
+.item.badge.tier .ib{background:var(--bc)}
+.item.badge.tier .qbar{background:rgba(255,255,255,.6)}

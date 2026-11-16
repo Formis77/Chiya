@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '23';
+const VERSION = '24';
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -845,7 +845,7 @@ function pBadges() {
   const tot = Object.values(S.badges).reduce((a, b) => a + b, 0);
   let h = `<div class="ph"><h2>Badges</h2><span class="pill">${ic('badge')}${tot} tiers</span></div><p class="mut small">Every badge has five tiers: Bronze, Silver, Gold, Diamond and Himalayan. Each tier gives items. Field badges also add +4% gathering in their field per tier.</p>`;
   const row = b => { const tr = badgeTier(b), v = b.get(), done = tr >= 5, goal = done ? b.t[4] : b.t[tr], col = tr ? BADGE_T[tr - 1].c : '#c9c3cf';
-    return `<div class="item gear badge">${ib(b.i, col)}<div class="it"><b>${b.n} <span class="mut small">${tr ? BADGE_T[tr - 1].n : 'Not started'}</span></b>
+    return `<div class="item gear badge ${tr ? 'tier' : ''}" style="--bc:${col}">${ib(b.i, tr ? '#ffffff' : col)}<div class="it"><b>${b.n} <span class="mut small">${tr ? BADGE_T[tr - 1].n : 'Not started'}</span></b>
       <div class="bdots">${BADGE_T.map((t, i) => `<i style="background:${i < tr ? t.c : '#ece7f0'}"></i>`).join('')}</div>
       ${done ? '<span class="mut small">Complete</span>' : `<div class="qbar"><i style="width:${Math.min(100, v / goal * 100)}%;background:${BADGE_T[tr].c}"></i></div><span class="mut small">${bfmt(b, Math.min(v, goal))} / ${bfmt(b, goal)} for ${BADGE_T[tr].n}: ${rwText({ items: BADGE_RW[tr] })}</span>`}</div>
       ${badgeReady(b) ? `<button class="btn sm primary" onclick="claimBadge('${b.id}')"><span>Claim</span></button>` : ''}</div>`; };
