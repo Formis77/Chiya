@@ -176,7 +176,7 @@ const mpas = id => !!(S.mandala && S.mandala.pas.includes(id));
 const lvlMult = m => (1 + .1 * (m.lvl - 1)) * (m.bl ? 1.25 : 1);
 const inIceField = () => { const fi = fieldAt(player.x, player.y); return fi >= 0 && FIELDS[fi].c === 'ice'; };
 /* Ice Swell (like Bubble Bloat): up to x6 Ice-field capacity and brewing speed, growing with its remaining time (max 1 hour) */
-const swellMul = () => B.swell ? 1 + 5 * Math.min(1, B.swell.t / 3600) : 1;
+const swellMul = () => B.swell ? 1 + 4 * Math.min(1, B.swell.t / 3600) : 1;
 /* Lantern Blessing (like Balloon Blessing): stacks from the teahouse lantern, x4 capacity and x2.5 teahouse brewing at 100 */
 const BLESS_MAX = 2e10;
 const blessStacks = p => Math.max(1, Math.min(100, Math.floor(100 * Math.sqrt(p / BLESS_MAX))));
@@ -205,7 +205,7 @@ function gMult(col, isTool) {
   if (B['shot_' + col]) m *= 1.25;
   if (B.gtea) m *= 1.15;
   if (B.love) m *= 1.5;
-  if (B.popstar && col === 'ice') m *= 2 + Math.min(2.5, B.popstar.st * .01);
+  if (B.popstar && col === 'ice') m *= 2 + Math.min(1, B.popstar.st * .01);
   if (B.inspire) m *= 1 + B.inspire.st;
   if (isTool && B.bear) m *= 2;
   if (isTool && B.cloudburst) m *= 2;
@@ -397,7 +397,7 @@ function takeToken(tk) {
   const src = a === 'pounce' ? tk.e : { x: tk.x, y: tk.y, m: tk.e.m, face: 1 };
   FX[a](src, tk.fi, tk);
   if (a === 'inspire') return;
-  if (a === 'iceBoost' && mpas('glacierStar') && !B.popstar && Date.now() > (S.popCd || 0) && (S.blueN = (S.blueN || 0) + 1) >= 30) {
+  if (a === 'iceBoost' && mpas('glacierStar') && !B.popstar && Date.now() > (S.popCd || 0) && (S.blueN = (S.blueN || 0) + 1) >= 45) {
     S.blueN = 0; S.popCd = Date.now() + 45000 + 60000; B.popstar = { t: 45, st: 0 }; addTimed('swell', 120, 3600);
     ring(player.x, player.y, 140, '#bfefff', .7, 8); burst(player.x, player.y - 40, 50, { type: 'snow', col: '#e3f6ff', spd: 240, life: 1.2, size: 3 }); shake(8);
     toast('Glacier Star! x2 Ice and +10% Ice conversion for 45s. Pop bubbles to grow it', 'snow'); }

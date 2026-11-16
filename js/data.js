@@ -280,7 +280,7 @@ const MANDALA_STATS = [
    A double always pairs one main with one side. */
 const MANDALA_PAS = {
   blazingStar: { n: 'Blazing Star', col: 'spice', main: true, d: 'Flames last twice as long, burn twice as often, count x2 inside instead of x1.5 (Dark Flames x3), and Heat builds 50% faster.' },
-  glacierStar: { n: 'Glacier Star', col: 'ice',   main: true, d: 'Permanently x1.25 capacity while you are in an Ice field. Every 30th Ice Boost bubble you collect (1 minute cooldown) summons the Glacier Star for 45s: x2 Ice gathering and +10% instant Ice conversion, plus 2 minutes of Ice Swell. Every bubble you pop while it shines adds +1% (up to x4.5) and 4s of Ice Swell. When it fades it leaves bubbles behind, more for every bubble popped.' },
+  glacierStar: { n: 'Glacier Star', col: 'ice',   main: true, d: 'Permanently x1.25 capacity while you are in an Ice field. Every 45th Ice Boost bubble you collect (1 minute cooldown) summons the Glacier Star for 45s: x2 Ice gathering and +10% instant Ice conversion, plus 2 minutes of Ice Swell. Every bubble you pop while it shines adds +1% (up to x3) and 4s of Ice Swell. When it fades it leaves bubbles behind, more for every bubble popped.' },
   butterStar:  { n: 'Butter Star',  col: 'cloud', main: true, d: 'Butter gathers x3 instead of x2 and lasts 50% longer. Every 150 flowers gathered in butter drops a Butter Bomb that covers the field in butter for 20s.' },
   guidingStar: { n: 'Wayfinder Star', col: 'any', main: false, d: 'Every 250 boost bubbles you collect (Spice, Ice or Cloud Boost), a random open field becomes your wayfinder field for 10 minutes: x2.5 gathering there.' },
   starSaw:     { n: 'Chakra Saw',   col: 'any',   main: false, d: 'Use 3 Marigolds to spin up a Chakra Saw for 30s (the third Marigold is given back). It circles you in fields, gathers a little from every flower it touches, and brews your doko straight into rupees as it spins, even when the doko is full (about 10% of the bag per second).' },
@@ -319,8 +319,8 @@ const BUFFS = {
   darkheat:   { n: 'Dark Heat',    i: 'flame',   d: '+1% Super Crit chance and +0.5% instant conversion per stack. Equal to the number of Dark Flames burning right now (max 50).' },
   precision:  { n: 'Precision',    i: 'focus',   d: '+0.5% chance per stack (up to 20%) that a crit becomes a Super Crit: it doubles again and is brewed straight into rupees.' },
   chill:      { n: 'Chill',        i: 'snow',    d: '+1% Ice gathering per stack.' },
-  popstar:    { n: 'Glacier Star', i: 'snow',    d: 'x2 Ice gathering (+1% per bubble popped, up to x4.5) and +10% instant Ice conversion.' },
-  swell:      { n: 'Ice Swell',    i: 'drop',    d: 'Up to x6 capacity in Ice fields and x6 brewing speed at the teahouse. Stronger the more time is left (full at 1 hour).' },
+  popstar:    { n: 'Glacier Star', i: 'snow',    d: 'x2 Ice gathering (+1% per bubble popped, up to x3) and +10% instant Ice conversion.' },
+  swell:      { n: 'Ice Swell',    i: 'drop',    d: 'Up to x5 capacity in Ice fields and x5 brewing speed at the teahouse. Stronger the more time is left (full at 1 hour).' },
   lbless:     { n: 'Lantern Blessing', i: 'diya', d: 'From the teahouse lantern: +3% capacity and +1.5% teahouse brewing value per stack (x4 and x2.5 at 100).' },
   nimbusb:    { n: 'Nimbus',       i: 'cloud',   d: '+2% capacity per stack.' },
   inspire:    { n: 'Inspire',      i: 'sparkle', d: 'All gathering multiplied by (1 + stacks): x2 at one stack. Lasts 5s, refreshed by more comets or Inspire bubbles.' },

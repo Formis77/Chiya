@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '32';
+const VERSION = '33';
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -45,7 +45,7 @@ function uiTick(dt) {
   const BI = { popstar: 'snow', swell: 'drop', lbless: 'diya', inspire: 'sparkle', saw: 'star', precision: 'focus', darkheat: 'flame', kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   { const fl = frostAt(player.x, player.y); if (fl) bf.push(`<button class="chip frostc" data-b="frostmark">${ic('snow')}<b>x${FROST_MUL[fl]}</b></button>`); }
   if (S.sawN > 0 && now - (S.sawLast || -99) <= 20) bf.push(`<button class="chip" data-b="sawcount">${ic('marigold')}<b>${S.sawN}/3</b></button>`); else if (S.sawN) S.sawN = 0;
-  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'popstar' ? '<i>x' + (2 + Math.min(2.5, B[k].st * .01)).toFixed(2) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'swell' ? '<i>x' + swellMul().toFixed(1) + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : k === 'lbless' ? '<i>x' + B[k].st + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
+  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'popstar' ? '<i>x' + (2 + Math.min(1, B[k].st * .01)).toFixed(2) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'swell' ? '<i>x' + swellMul().toFixed(1) + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : k === 'lbless' ? '<i>x' + B[k].st + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
   $('quest').innerHTML = questTracker();
