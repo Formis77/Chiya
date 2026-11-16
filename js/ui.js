@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '14';
+const VERSION = '15';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['gear', 'backpack', 'Gear'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -36,7 +36,7 @@ function uiTick(dt) {
   const fi = fieldAt(player.x, player.y);
   $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>Lv ${FIELDS[fi].lv[0]}${FIELDS[fi].lv[1] > FIELDS[fi].lv[0] ? "-" + FIELDS[fi].lv[1] : ""}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
   const bf = [];
-  const BI = { haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
+  const BI = { boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   for (const k in B) bf.push(`<button class="chip" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
@@ -259,7 +259,7 @@ function shopExtra(t) {
   if (t === 'supplies') {
     h += `<div class="item">${ib('ticket', icol('ticket'))}<div class="it"><b>Trekking Permit</b><span class="mut small">Recruit a crew member. Price rises.</span></div><button class="btn sm primary" data-cost="${permitCost()}" onclick="buyItem('permit',${permitCost()})">${money(permitCost())}</button></div>`;
     h += `<div class="item">${ib('wheel', icol('wheel'))}<div class="it"><b>Mystic Wheel</b><span class="mut small">Reroll a crew member. No Commons.</span></div><button class="btn sm primary" data-cost="${wheelCost()}" onclick="buyItem('mysticWheel',${wheelCost()})">${money(wheelCost())}</button></div>`;
-    for (const k of ['momo', 'selroti', 'dalbhat', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'goldenMomo']) {
+    for (const k of ['momo', 'selroti', 'dalbhat', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'butterDrop', 'goldenMomo']) {
       const it = ITEMS[k];
       h += `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k] || 0}</span></b><span class="mut small">${it.d}</span></div><div class="buyrow"><button class="btn sm primary" data-cost="${it.price}" onclick="buyItem('${k}',${it.price})">${money(it.price)}</button>${it.price * 10 < 1e9 ? `<button class="btn sm" data-cost="${it.price * 10}" onclick="buyItem('${k}',${it.price * 10},10)"><span>x10</span></button>` : ''}</div></div>`;
     }
@@ -321,6 +321,7 @@ function useItem(k) {
   if (k === 'glacierShard') addBuff('shot_ice', 60);
   if (k === 'yakCheese') addBuff('shot_cloud', 60);
   if (k === 'incense') addBuff('incense', 60);
+  if (k === 'butterDrop') { if (fieldAt(player.x, player.y) < 0) { S.items[k]++; toast('Stand in a field to drop butter', 'drop'); return; } E.decals.push({ kind: 'goo', x: player.x, y: player.y, r: 110, age: 0, dur: mpas('butterStar') ? 80 : 40 }); }
   ring(player.x, player.y, 80, '#ffd24a', .5, 5);
   burst(player.x, player.y - 20, 24, { type: 'star', col: '#fff1a8', spd: 120, life: .9, size: 2.4 });
   toast(`${ITEMS[k].n} active`, ITEMS[k].i); renderPanel();
