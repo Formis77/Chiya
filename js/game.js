@@ -693,8 +693,15 @@ function update(dt) {
     const nd = Math.min(50, E.decals.reduce((a, d) => a + (d.kind === 'flame' && d.dark ? 1 : 0), 0));
     if (nd) B.darkheat = { t: 99, st: nd, perm: true }; else delete B.darkheat; }
   // side stars
+  // Chakra Saw: brews a big share of the doko straight into rupees while it spins (works with a full bag too)
+  if (pf >= 0 && fieldOpen(pf) && mpas('starSaw') && B.saw) { sawT -= dt; if (sawT <= 0) { sawT = .12;
+    const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50;
+    if (S.doko < capMax()) tilesNear(pf, sx, sy, 38).forEach(t => collect(t, tool().amt * .5, 'neutral', 1));
+    const cv2 = Math.min(S.doko, S.doko * .012 + capMax() * .002);
+    if (cv2 > 0) { const val = cv2 * brewValue(); S.doko -= cv2; S.rp += val; S.stats.earn += val; sawAcc += val;
+      burst(sx, sy - 6, 3, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.4 }); E.parts.push({ type: 'dot', x: player.x, y: player.y - 30, vx: (sx - player.x) * 2.5, vy: (sy - player.y - 10) * 2.5, g: 0, life: .4, max: .4, size: 3, col: '#ffcf5a' }); }
+    sawPopT += .12; if (sawPopT >= .6 && sawAcc > 0) { pop(sx, sy - 30, '+' + fmt(sawAcc), '#ff9f1a', true); sawAcc = 0; sawPopT = 0; } } }
   if (pf >= 0 && fieldOpen(pf) && S.doko < capMax()) {
-    if (mpas('starSaw') && B.saw) { sawT -= dt; if (sawT <= 0) { sawT = .12; const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; tilesNear(pf, sx, sy, 38).forEach(t => collect(t, tool().amt * .5, 'neutral', 1)); const cv2 = S.doko * .0018; if (cv2 > 0) { const val = cv2 * brewValue(); S.doko -= cv2; S.rp += val; S.stats.earn += val; } } }
     if (mpas('starShower')) { showerT -= dt; if (showerT <= 0 && !E.decals.some(d => d.kind === 'starspot')) { showerT = 45; const f = FIELDS[pf];
       for (let k = 0; k < 10; k++) E.decals.push({ kind: 'starspot', x: rand(f.x + 40, f.x + f.w - 40), y: rand(f.yy + 40, f.yy + f.h - 40), r: 34, age: 0, dur: 3 + k * .9, fi: pf }); } }
   }
@@ -974,7 +981,7 @@ function render() {
   for (const p of E.parts) drawPart(c, p);
   // top decals (rays, flash, focus)
   for (const d of E.decals) drawDecalTop(c, d);
-  if (mpas('starSaw') && B.saw && fieldAt(player.x, player.y) >= 0) { const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; c.save(); c.globalAlpha = .3; circ(c, sx, sy, 30, '#ffe066', false); c.restore(); drawStarShape(c, sx, sy - 6, 14, now * 14, '#ffd24a'); }
+  if (mpas('starSaw') && B.saw && fieldAt(player.x, player.y) >= 0) { const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; c.save(); c.globalAlpha = .28 + Math.sin(now * 10) * .08; circ(c, sx, sy, 42, '#ffb347', false); c.globalAlpha = .5; line(c, player.x, player.y - 30, sx, sy - 6, '#ffcf5a', 3); c.restore(); drawStarShape(c, sx, sy - 6, 20, now * 16, '#ffd24a'); drawStarShape(c, sx, sy - 6, 9, -now * 20, '#ff8a3d'); }
   // popups
   c.textAlign = 'center';
   for (const p of E.pops) {
@@ -1392,7 +1399,7 @@ function dropMat(fi) {
   burst(player.x, player.y - 30, 8, { type: 'star', col: '#d6b4ff', spd: 80, life: .7, size: 2 });
 }
 const abNameT = {};
-let heatT = 0, combo = { n: 0, t: -99 }, bullHits = 0, sawT = 0, showerT = 0;
+let sawAcc = 0, sawPopT = 0, heatT = 0, combo = { n: 0, t: -99 }, bullHits = 0, sawT = 0, showerT = 0;
 function spawnBubble(fi, x, y, base) {
   if (fi < 0 || E.decals.filter(d => d.kind === 'bubble').length > 40) return;
   const f = FIELDS[fi];
