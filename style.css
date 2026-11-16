@@ -255,3 +255,7 @@ html.gapfix #toast{bottom:150px}
 .mbig .ic{width:80px;height:80px}
 .mlines{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .mlines span{font-size:11.5px;font-weight:800;background:var(--soft);padding:3px 8px;border-radius:8px}
+.fruits{display:flex;gap:8px;margin:8px 0 12px;flex-wrap:wrap}
+.fruits span{display:flex;align-items:center;gap:6px;background:var(--card);border-radius:14px;padding:5px 10px 5px 5px}
+.fruits .ib{width:30px;height:30px;border-radius:10px}.fruits .ib .ic{width:17px;height:17px}
+.buyrow.col{flex-direction:column}

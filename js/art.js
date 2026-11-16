@@ -287,6 +287,22 @@ function drawPlayer(c, t, mv, swing, dokoCol, gear) {
   }, t, mv, false);
 }
 
+/* ---------------- blender ---------------- */
+function drawBlender(c, t) {
+  ell(c, 0, 4, 50, 12, 'rgba(0,0,0,.15)', false);
+  rr(c, -40, -22, 80, 24, 5, '#b98455'); line(c, -36, -12, 36, -12, 'rgba(0,0,0,.15)', 2);
+  rr(c, -16, -36, 32, 16, 4, '#5d6670');
+  P(c); c.moveTo(-14, -36); c.lineTo(-18, -84); c.lineTo(18, -84); c.lineTo(14, -36); c.closePath(); fs(c, 'rgba(190,230,255,.75)', 2.2);
+  c.save(); P(c); c.moveTo(-13, -38); c.lineTo(-16.5, -74); c.lineTo(16.5, -74); c.lineTo(13, -38); c.closePath(); c.clip();
+  for (let k = 0; k < 3; k++) { c.fillStyle = ['#f05a3a', '#4fb6e6', '#ffffff'][k]; c.beginPath(); c.arc(Math.sin(t * 3 + k * 2) * 7, -48 - k * 7 + Math.cos(t * 4 + k) * 3, 7, 0, TAU); c.fill(); }
+  c.restore();
+  rr(c, -20, -90, 40, 7, 3, '#e5484d');
+  c.font = '900 10px -apple-system,system-ui,sans-serif'; const tw = c.measureText('Blender').width + 30;
+  P(c); c.roundRect(-tw / 2, -118, tw, 22, 11); fs(c, '#ffffff', 1.8);
+  drawIcon(c, 'blender', -tw / 2 + 13, -107, 12, '#2ea4dc', 2.4);
+  c.fillStyle = OUT; c.textAlign = 'left'; c.fillText('Blender', -tw / 2 + 23, -103);
+}
+
 /* ---------------- mandala shrine ---------------- */
 function drawMandalaShrine(c, t) {
   ell(c, 0, 4, 70, 16, 'rgba(0,0,0,.15)', false);

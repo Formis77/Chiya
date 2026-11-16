@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '15';
+const VERSION = '16';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['gear', 'backpack', 'Gear'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -36,7 +36,7 @@ function uiTick(dt) {
   const fi = fieldAt(player.x, player.y);
   $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>Lv ${FIELDS[fi].lv[0]}${FIELDS[fi].lv[1] > FIELDS[fi].lv[0] ? "-" + FIELDS[fi].lv[1] : ""}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
   const bf = [];
-  const BI = { boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
+  const BI = { gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   for (const k in B) bf.push(`<button class="chip" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
@@ -77,7 +77,7 @@ function openPanel(name, tab) {
 }
 function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
-  const fn = { crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
+  const fn = { blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
   if (!fn) return;
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
   document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel));
@@ -94,7 +94,8 @@ function refreshCosts() {
 /* --- costs --- */
 const permitCost = () => Math.round(250 * Math.pow(1.55, S.recruits));
 const bedCost = () => Math.round(600 * Math.pow(1.6, S.beds - 5));
-const wheelCost = () => Math.round(3000 * Math.pow(1.3, S.wheels));
+const wheelCost = (n = 0) => Math.min(2.5e6, Math.round(3000 * Math.pow(1.3, S.wheels + n)));
+const wheelBulk = n => { let t = 0; for (let i = 0; i < n; i++) t += wheelCost(i); return t; };
 const xpNeed = l => Math.round(30 * Math.pow(1.75, l - 1));
 const money = n => `<span class="money">${ic('coin')}${fmt(n)}</span>`;
 const icol = name => ICOL[name] || '#ff8a3d';
@@ -141,7 +142,11 @@ function pCrewDetail(i) {
   for (const f in FOOD) h += `<button class="btn ${f === d.fav ? 'fav' : ''}" ${(S.items[f] || 0) && m.lvl < 20 ? '' : 'disabled'} onclick="feed(${i},'${f}')">${ic(FOOD[f].i)}<span>${S.items[f] || 0}</span><small>+${FOOD[f].xp * (f === d.fav ? 3 : 1)}</small></button>`;
   h += `</div><div class="row2">
     <button class="btn" ${(S.items.mysticWheel || 0) ? '' : 'disabled'} onclick="reroll(${i})">${ic('wheel')}<span>Mystic Wheel</span><small>Reroll (${S.items.mysticWheel || 0})${m.bl ? ', loses Blessed' : ''}</small></button>
-    <button class="btn gold" ${(S.items.goldenMomo || 0) && !m.bl ? '' : 'disabled'} onclick="bless(${i})">${ic('star')}<span>Golden Momo</span><small>${m.bl ? 'Already Blessed' : `Make Blessed (${S.items.goldenMomo || 0})`}</small></button></div>`;
+    <button class="btn gold" ${(S.items.goldenMomo || 0) && !m.bl ? '' : 'disabled'} onclick="bless(${i})">${ic('star')}<span>Golden Momo</span><small>${m.bl ? 'Already Blessed' : `Make Blessed (${S.items.goldenMomo || 0})`}</small></button></div>
+    <h3>Auto-roll <span class="mut small">uses Mystic Wheels until it hits</span></h3><div class="row3">
+    <button class="btn" ${(S.items.mysticWheel || 0) ? '' : 'disabled'} onclick="reroll(${i},'leg')"><span>Legendary+</span></button>
+    <button class="btn" ${(S.items.mysticWheel || 0) ? '' : 'disabled'} onclick="reroll(${i},'myth')"><span>Mythic</span></button>
+    <button class="btn" ${(S.items.mysticWheel || 0) ? '' : 'disabled'} onclick="reroll(${i},'blessed')"><span>Blessed</span></button></div>`;
   return h;
 }
 const STATN = { cap: 'doko capacity', gather: 'all gathering', spice: 'Spice gathering', ice: 'Ice gathering', cloud: 'Cloud gathering', brew: 'brewing value', speed: 'move speed', crit: 'crit chance', offline: 'offline earnings', tool: 'tool gathering' };
@@ -189,13 +194,24 @@ function feed(i, f) {
   if (up) toast(`${d.n} reached level ${m.lvl}`, 'up');
   renderPanel();
 }
-function reroll(i) {
-  if (!(S.items.mysticWheel > 0)) return;
+function rollOnce(i) {
   S.items.mysticWheel--;
   const m = S.crew[i], id = rollCrew(WHEEL_ODDS), bl = Math.random() < blessChance();
   const isNew = !S.found[id]; S.found[id] = true;
-  m.id = id; m.bl = bl; S.stats.rerolls++; if (bl) S.stats.blessed++; rebuildCrew(); save();
-  reveal(id, bl, isNew, 'Nice'); renderPanel();
+  m.id = id; m.bl = bl; S.stats.rerolls++; if (bl) S.stats.blessed++;
+  return { id, bl, isNew };
+}
+function reroll(i, until) {
+  if (!(S.items.mysticWheel > 0)) return;
+  const stop = { leg: r => RAR[CREW[r.id].r].o >= 3, myth: r => CREW[r.id].r === 'mythic', blessed: r => r.bl }[until];
+  let res, n = 0, anyNew = false;
+  do { res = rollOnce(i); n++; anyNew = anyNew || res.isNew; } while (stop && !stop(res) && S.items.mysticWheel > 0 && n < 1000);
+  rebuildCrew(); save(); renderPanel();
+  const d = CREW[res.id], hit = !stop || stop(res);
+  showModal(`<div class="reveal" style="--rc:${RAR[d.r].c}"><div class="burst"></div><img src="${portrait(res.id, res.bl)}" alt=""></div>
+    ${anyNew ? '<div class="new">New</div>' : ''}<h2>${d.n}</h2><div class="badges center">${rarBadge(d.r)}${colBadge(d.c)}${res.bl ? `<span class="rb gold">${ic('star')}Blessed</span>` : ''}</div>
+    <p class="mut small">${n > 1 ? `${n} Mystic Wheels used${hit ? '' : ', stopped (out of wheels or 1000 rolls)'}. ` : ''}${S.items.mysticWheel || 0} left.</p>
+    <div class="row2"><button class="btn primary" ${S.items.mysticWheel ? '' : 'disabled'} onclick="reroll(${i}${until ? `,'${until}'` : ''})"><span>Roll again</span></button><button class="btn" onclick="closeModal()"><span>Keep</span></button></div>`);
 }
 function bless(i) {
   const m = S.crew[i]; if (!(S.items.goldenMomo > 0) || m.bl) return;
@@ -258,7 +274,7 @@ function shopExtra(t) {
   }
   if (t === 'supplies') {
     h += `<div class="item">${ib('ticket', icol('ticket'))}<div class="it"><b>Trekking Permit</b><span class="mut small">Recruit a crew member. Price rises.</span></div><button class="btn sm primary" data-cost="${permitCost()}" onclick="buyItem('permit',${permitCost()})">${money(permitCost())}</button></div>`;
-    h += `<div class="item">${ib('wheel', icol('wheel'))}<div class="it"><b>Mystic Wheel</b><span class="mut small">Reroll a crew member. No Commons.</span></div><button class="btn sm primary" data-cost="${wheelCost()}" onclick="buyItem('mysticWheel',${wheelCost()})">${money(wheelCost())}</button></div>`;
+    h += `<div class="item">${ib('wheel', icol('wheel'))}<div class="it"><b>Mystic Wheel</b><span class="mut small">Reroll a crew member. No Commons. Price stops rising at 2.5M.</span></div><div class="buyrow"><button class="btn sm primary" data-cost="${wheelCost()}" onclick="buyItem('mysticWheel',${wheelCost()})">${money(wheelCost())}</button><button class="btn sm" data-cost="${wheelBulk(10)}" onclick="buyItem('mysticWheel',${wheelBulk(10)},10)"><span>x10</span></button><button class="btn sm" data-cost="${wheelBulk(100)}" onclick="buyItem('mysticWheel',${wheelBulk(100)},100)"><span>x100</span></button></div></div>`;
     for (const k of ['momo', 'selroti', 'dalbhat', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'butterDrop', 'goldenMomo']) {
       const it = ITEMS[k];
       h += `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k] || 0}</span></b><span class="mut small">${it.d}</span></div><div class="buyrow"><button class="btn sm primary" data-cost="${it.price}" onclick="buyItem('${k}',${it.price})">${money(it.price)}</button>${it.price * 10 < 1e9 ? `<button class="btn sm" data-cost="${it.price * 10}" onclick="buyItem('${k}',${it.price * 10},10)"><span>x10</span></button>` : ''}</div></div>`;
@@ -297,7 +313,7 @@ function buyGear(key, id) {
 function equip(key, id) { const car = $('car'), pos = car ? car.scrollLeft : 0; setTimeout(() => { const c2 = $('car'); if (c2) c2.scrollLeft = pos; }, 0); if (key === 'tool') S.tool = id; if (key === 'doko') S.dokoId = id; if (key === 'boots') S.boots = id; if (key === 'hat') S.hat = id; if (key === 'charm') S.charm = id; recompute(); renderPanel(); }
 function buyItem(k, cost, n = 1) {
   if (S.rp < cost) return; spend(cost); S.items[k] = (S.items[k] || 0) + n;
-  if (k === 'permit') S.recruits++; if (k === 'mysticWheel') S.wheels++;
+  if (k === 'permit') S.recruits++; if (k === 'mysticWheel') S.wheels += n;
   toast(`+${n} ${ITEMS[k].n}`, ITEMS[k].i); renderPanel();
 }
 function buyLodge(i) { const l = LODGE[i]; if (S.rp < l.cost) return; spend(l.cost); S.lodge = i; toast(`Hired: ${l.n}`, 'key'); save(); renderPanel(); }
@@ -316,11 +332,14 @@ function pItems() {
 }
 function useItem(k) {
   if (!(S.items[k] > 0)) return; S.items[k]--;
-  if (k === 'butterTea') { addBuff('haste', 30, 3); B.haste.st = Math.max(B.haste.st, 3); }
-  if (k === 'spiceShot') addBuff('shot_spice', 60);
-  if (k === 'glacierShard') addBuff('shot_ice', 60);
-  if (k === 'yakCheese') addBuff('shot_cloud', 60);
-  if (k === 'incense') addBuff('incense', 60);
+  if (k === 'butterTea') { addTimed('haste', 180, 1800); B.haste.st = Math.max(B.haste.st, 3); }
+  if (k === 'spiceShot') addTimed('shot_spice', 600);
+  if (k === 'glacierShard') addTimed('shot_ice', 600);
+  if (k === 'yakCheese') addTimed('shot_cloud', 600);
+  if (k === 'incense') addTimed('incense', 300);
+  if (k === 'goldenTea') addTimed('gtea', 900);
+  if (k === 'masala') addTimed('masala', 600);
+  if (k === 'lotusSeed') { if (fieldAt(player.x, player.y) < 0 || !window.plantSprout) { S.items[k]++; toast('Stand in a field to plant it', 'leaf'); return; } plantSprout(fieldAt(player.x, player.y)); }
   if (k === 'butterDrop') { if (fieldAt(player.x, player.y) < 0) { S.items[k]++; toast('Stand in a field to drop butter', 'drop'); return; } E.decals.push({ kind: 'goo', x: player.x, y: player.y, r: 110, age: 0, dur: mpas('butterStar') ? 80 : 40 }); }
   ring(player.x, player.y, 80, '#ffd24a', .5, 5);
   burst(player.x, player.y - 20, 24, { type: 'star', col: '#fff1a8', spd: 120, life: .9, size: 2.4 });
@@ -418,6 +437,7 @@ const gliderOf = id => GLIDERS.find(g => g.id === id);
 function updateTalk() {
   const t = $('talk');
   if (!nearNpc) { t.classList.remove('on'); return; }
+  if (nearNpc === 'blender') { t.innerHTML = `<span class="gl">${ic('blender')}</span><span><small>Machine</small>Blender</span>`; t.classList.add('on'); return; }
   if (nearNpc === 'mandala') { t.innerHTML = `<span class="gl" style="background:#f3edff;color:#9b6ef3">${ic('wheel')}</span><span><small>Generator</small>Mandala Shrine</span>`; t.classList.add('on'); return; }
   if (nearNpc.startsWith('shop:')) { const sh = SHOPS.find(q => 'shop:' + q.id === nearNpc); t.innerHTML = `<span class="gl" style="background:${sh.col}22;color:${sh.col}">${ic('shop')}</span><span><small>Shop</small>${sh.n}</span>`; t.classList.add('on'); return; }
   if (gliderOf(nearNpc)) { t.innerHTML = `<span class="gl">${ic('wind')}</span><span><small>Glider pad</small>Fly somewhere</span>`; t.classList.add('on'); return; }
@@ -434,6 +454,7 @@ function gliderMenu(id) {
 }
 function talk(gid) {
   gid = gid || nearNpc; if (!gid) return;
+  if (gid === 'blender') { openPanel('blender', 'x'); return; }
   if (gid === 'mandala') { panelTab = null; openPanel('mandala', 'x'); return; }
   if (gid.startsWith('shop:')) { openShop(gid.slice(5)); return; }
   if (gliderOf(gid)) { gliderMenu(gid); return; }
@@ -676,3 +697,21 @@ function genMandala(i) {
     <div class="row2"><button class="btn primary" onclick="keepMandala(true)"><span>Keep new</span></button><button class="btn" onclick="keepMandala(false)"><span>${S.mandala ? 'Keep current' : 'Discard'}</span></button></div>`);
 }
 function keepMandala(yes) { if (yes && pendingMandala) { S.mandala = pendingMandala; S.comet = S.gstar = S.cswing = 0; recompute(); toast('Mandala equipped', 'wheel'); } pendingMandala = null; closeModal(); save(); if (panel) renderPanel(); }
+
+/* ---------------- BLENDER ---------------- */
+const canBlend = (b, n = 1) => Object.entries(b.req).every(([k, q]) => (S.items[k] || 0) >= q * n);
+function pBlender() {
+  let h = `<div class="ph"><h2>Blender</h2></div><p class="mut small">Blend fruit and treats into boosts. Fruit drops while you gather: Chili from red flowers, Glacier Berries from blue, Mustang Apples from white, and Walnuts higher up.</p>`;
+  h += `<div class="fruits">${Object.keys(FRUITS).map(k => `<span>${ib(ITEMS[k].i, icol(ITEMS[k].i))}<b>${S.items[k] || 0}</b></span>`).join('')}</div>`;
+  h += BLENDS.map((b, i) => { const it = ITEMS[b.out]; return `<div class="item gear">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[b.out] || 0}</span></b><span class="mut small">${it.d}</span>
+    <div class="req">${Object.entries(b.req).map(([k, q]) => `<span class="${(S.items[k] || 0) >= q ? 'ok' : 'no'}">${ic(ITEMS[k].i)}${Math.min(S.items[k] || 0, q)}/${q} ${ITEMS[k].n}</span>`).join('')}</div></div>
+    <div class="buyrow col"><button class="btn sm primary" ${canBlend(b) ? '' : 'disabled'} onclick="blend(${i},1)"><span>Blend</span></button><button class="btn sm" ${canBlend(b, 5) ? '' : 'disabled'} onclick="blend(${i},5)"><span>x5</span></button></div></div>`; }).join('');
+  return h;
+}
+function blend(i, n) {
+  const b = BLENDS[i]; if (!canBlend(b, n)) return;
+  for (const k in b.req) S.items[k] -= b.req[k] * n;
+  S.items[b.out] = (S.items[b.out] || 0) + n; S.stats.blends = (S.stats.blends || 0) + n;
+  burst(BLENDER.x, BLENDER.y - 80, 24, { type: 'star', col: '#bfe6ff', spd: 120, life: .8, size: 2.4 });
+  toast(`+${n} ${ITEMS[b.out].n}`, ITEMS[b.out].i); save(); renderPanel();
+}

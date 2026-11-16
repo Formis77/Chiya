@@ -1,6 +1,6 @@
 // Chiya service worker: serve from cache instantly (works offline),
 // refresh the cache in the background whenever there is signal.
-const CACHE = 'chiya-v15';
+const CACHE = 'chiya-v16';
 const ASSETS = ['./', './index.html', './style.css', './js/icons.js', './js/data.js', './js/art.js', './js/game.js', './js/ui.js', './manifest.json', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

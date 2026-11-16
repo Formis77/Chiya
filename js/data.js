@@ -136,39 +136,39 @@ const TOOLS = [
   { id: 'sickle',  n: 'Sickle',          i: 'sickle',  cost: 0,     r: 30,  amt: 2,   sw: .75, d: 'Humble but honest.' },
   { id: 'trowel',  n: 'Trowel',          i: 'trowel',  cost: 600,   r: 34,  amt: 2.5, sw: .7 },
   { id: 'rake',    n: 'Bamboo Rake',     i: 'rake',    cost: 2e3,   r: 42,  amt: 3,   sw: .7 },
-  { id: 'hook',    n: 'Pruning Hook',    i: 'hook',    cost: 8e3,   r: 42,  amt: 4,   sw: .65, col: 'cloud', cb: .3, req: { teaLeaf: 5 } },
-  { id: 'axe',     n: 'Ice Axe',         i: 'axe',     cost: 3e4,   r: 46,  amt: 6,   sw: .65, col: 'ice',   cb: .6, req: { ice: 8 } },
-  { id: 'scoop',   n: 'Chili Scoop',     i: 'scoop',   cost: 3e4,   r: 46,  amt: 6,   sw: .65, col: 'spice', cb: .6, req: { ginger: 8 } },
-  { id: 'shears',  n: 'Tea Shears',      i: 'shears',  cost: 3e4,   r: 46,  amt: 6,   sw: .65, col: 'cloud', cb: .6, req: { teaLeaf: 8 } },
-  { id: 'broom',   n: 'Juniper Broom',   i: 'broom',   cost: 1.2e5, r: 56,  amt: 9,   sw: .6,  st: { gather: .1 }, req: { petal: 10, wool: 10, momo: 20 } },
+  { id: 'hook',    n: 'Pruning Hook',    i: 'hook',    cost: 8e3,   r: 42,  amt: 4,   sw: .65, col: 'cloud', cb: .3, req: { apple: 5 } },
+  { id: 'axe',     n: 'Ice Axe',         i: 'axe',     cost: 3e4,   r: 46,  amt: 6,   sw: .65, col: 'ice',   cb: .6, req: { berry: 8 } },
+  { id: 'scoop',   n: 'Chili Scoop',     i: 'scoop',   cost: 3e4,   r: 46,  amt: 6,   sw: .65, col: 'spice', cb: .6, req: { chili: 8 } },
+  { id: 'shears',  n: 'Tea Shears',      i: 'shears',  cost: 3e4,   r: 46,  amt: 6,   sw: .65, col: 'cloud', cb: .6, req: { apple: 8 } },
+  { id: 'broom',   n: 'Juniper Broom',   i: 'broom',   cost: 1.2e5, r: 56,  amt: 9,   sw: .6,  st: { gather: .1 }, req: { chili: 10, apple: 10, momo: 20 } },
   { id: 'staff',   n: 'Prayer Staff',    i: 'staff',   cost: 4e5,   r: 62,  amt: 12,  sw: .6,  st: { cdr: .05 }, req: { berry: 15, selroti: 10 } },
-  { id: 'esickle', n: 'Ember Sickle',    i: 'sickle',  cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'spice', cb: .8, st: { conv: .03 }, req: { petal: 30, ginger: 30, dalbhat: 5 } },
-  { id: 'gpick',   n: 'Glacier Pick',    i: 'pick',    cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'ice',   cb: .8, req: { ice: 40, berry: 15, dalbhat: 5 } },
-  { id: 'crake',   n: 'Cloud Rake',      i: 'rake',    cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'cloud', cb: .8, req: { wool: 40, teaLeaf: 30, dalbhat: 5 } },
-  { id: 'claw',    n: 'Yeti Claw',       i: 'claw',    cost: 8e6,   r: 72,  amt: 28,  sw: .55, req: { berry: 30, saffron: 10 } },
-  { id: 'talon',   n: 'Danphe Talon',    i: 'talon',   cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'spice', cb: 1, st: { conv: .06 }, pas: 'strike', req: { saffron: 40, petal: 60, goldenMomo: 1 } },
-  { id: 'scythe',  n: 'Frostbite Scythe',i: 'scythe',  cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'ice',   cb: 1, pas: 'stomp',  req: { ice: 80, berry: 40, goldenMomo: 1 } },
-  { id: 'fan',     n: 'Wind Fan',        i: 'fan',     cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'cloud', cb: 1, pas: 'dance',  req: { wool: 80, bead: 20, goldenMomo: 1 } },
-  { id: 'wheel',   n: 'Spirit Wheel',    i: 'wheel',   cost: 1.5e8, r: 92,  amt: 60,  sw: .5,  crit: .1, req: { bead: 30, saffron: 30, dalbhat: 30 } },
+  { id: 'esickle', n: 'Ember Sickle',    i: 'sickle',  cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'spice', cb: .8, st: { conv: .03 }, req: { chili: 60, dalbhat: 5 } },
+  { id: 'gpick',   n: 'Glacier Pick',    i: 'pick',    cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'ice',   cb: .8, req: { berry: 55, dalbhat: 5 } },
+  { id: 'crake',   n: 'Cloud Rake',      i: 'rake',    cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'cloud', cb: .8, req: { apple: 70, dalbhat: 5 } },
+  { id: 'claw',    n: 'Yeti Claw',       i: 'claw',    cost: 8e6,   r: 72,  amt: 28,  sw: .55, req: { berry: 30, walnut: 10 } },
+  { id: 'talon',   n: 'Danphe Talon',    i: 'talon',   cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'spice', cb: 1, st: { conv: .06 }, pas: 'strike', req: { walnut: 40, chili: 60, goldenMomo: 1 } },
+  { id: 'scythe',  n: 'Frostbite Scythe',i: 'scythe',  cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'ice',   cb: 1, pas: 'stomp',  req: { berry: 120, goldenMomo: 1 } },
+  { id: 'fan',     n: 'Wind Fan',        i: 'fan',     cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'cloud', cb: 1, pas: 'dance',  req: { apple: 80, walnut: 20, goldenMomo: 1 } },
+  { id: 'wheel',   n: 'Spirit Wheel',    i: 'wheel',   cost: 1.5e8, r: 92,  amt: 60,  sw: .5,  crit: .1, req: { walnut: 60, dalbhat: 30 } },
   { id: 'banner',  n: 'Summit Banner',   i: 'banner',  cost: 1e9,   r: 110, amt: 120, sw: .45, st: { gather: .2, conv: .05 }, pas: 'summitBless', req: { gem: 60, goldenMomo: 3, mysticWheel: 5 } }
 ];
 const HEADGEAR = [
-  { id: 'woolCap',    n: 'Wool Cap',      i: 'hat', cost: 1.5e4, st: { cloud: .1, cap: .05 }, req: { wool: 5, momo: 10 } },
-  { id: 'gingerTopi', n: 'Ginger Topi',   i: 'hat', cost: 1.5e4, st: { spice: .1, cap: .05 }, req: { ginger: 5, momo: 10 } },
-  { id: 'iceHood',    n: 'Ice Hood',      i: 'hat', cost: 1.5e4, st: { ice: .1, cap: .05 },   req: { ice: 5, momo: 10 } },
-  { id: 'sherpaHat',  n: 'Sherpa Hat',    i: 'hat', cost: 6e5,   st: { gather: .12, speed: .05 }, req: { wool: 25, berry: 15, selroti: 20 } },
-  { id: 'emberCrown', n: 'Ember Crown',   i: 'hat', col: 'spice', cost: 2.5e7, st: { spice: .4, crit: .05, conv: .04 }, pas: 'wildfire',   req: { petal: 50, saffron: 30, dalbhat: 30, goldenMomo: 1 } },
-  { id: 'frostCrown', n: 'Frost Crown',   i: 'hat', col: 'ice',   cost: 2.5e7, st: { ice: .4, crit: .05 },   pas: 'polar',      req: { ice: 60, berry: 40, dalbhat: 30, goldenMomo: 1 } },
-  { id: 'cloudCrown', n: 'Cloud Crown',   i: 'hat', col: 'cloud', cost: 2.5e7, st: { cloud: .4, cap: .1 },   pas: 'cloudburst', req: { wool: 60, bead: 30, dalbhat: 30, goldenMomo: 1 } },
+  { id: 'woolCap',    n: 'Wool Cap',      i: 'hat', cost: 1.5e4, st: { cloud: .1, cap: .05 }, req: { apple: 5, momo: 10 } },
+  { id: 'gingerTopi', n: 'Ginger Topi',   i: 'hat', cost: 1.5e4, st: { spice: .1, cap: .05 }, req: { chili: 5, momo: 10 } },
+  { id: 'iceHood',    n: 'Ice Hood',      i: 'hat', cost: 1.5e4, st: { ice: .1, cap: .05 },   req: { berry: 5, momo: 10 } },
+  { id: 'sherpaHat',  n: 'Sherpa Hat',    i: 'hat', cost: 6e5,   st: { gather: .12, speed: .05 }, req: { apple: 25, berry: 15, selroti: 20 } },
+  { id: 'emberCrown', n: 'Ember Crown',   i: 'hat', col: 'spice', cost: 2.5e7, st: { spice: .4, crit: .05, conv: .04 }, pas: 'wildfire',   req: { chili: 50, walnut: 30, dalbhat: 30, goldenMomo: 1 } },
+  { id: 'frostCrown', n: 'Frost Crown',   i: 'hat', col: 'ice',   cost: 2.5e7, st: { ice: .4, crit: .05 },   pas: 'polar',      req: { berry: 100, dalbhat: 30, goldenMomo: 1 } },
+  { id: 'cloudCrown', n: 'Cloud Crown',   i: 'hat', col: 'cloud', cost: 2.5e7, st: { cloud: .4, cap: .1 },   pas: 'cloudburst', req: { apple: 60, walnut: 30, dalbhat: 30, goldenMomo: 1 } },
   { id: 'spiritMask', n: 'Spirit Mask',   i: 'hat', cost: 1e9,   st: { gather: .3, crit: .05, conv: .05 }, pas: 'spirit', req: { gem: 100, goldenMomo: 3, mysticWheel: 10 } }
 ];
 const CHARMS = [
-  { id: 'beads',     n: 'Prayer Beads',      i: 'amulet', cost: 6e4,   st: { cdr: .1 },               req: { petal: 10, selroti: 15 } },
-  { id: 'turquoise', n: 'Turquoise Pendant', i: 'amulet', cost: 2e5,   st: { cap: .15, brew: .1 },    req: { ice: 15, wool: 15, dalbhat: 5 } },
-  { id: 'yakBell',   n: 'Yak Bell',          i: 'amulet', cost: 5e5,   st: { yak: .5 }, pas: 'herd',   req: { wool: 30, selroti: 30 } },
-  { id: 'emberAm',   n: 'Ember Amulet',      i: 'amulet', col: 'spice', cost: 5e6, st: { spice: .25 }, pas: 'spark',   req: { petal: 30, saffron: 10, dalbhat: 10 } },
-  { id: 'glacierHt', n: 'Glacier Heart',     i: 'amulet', col: 'ice',   cost: 5e6, st: { ice: .25 },   pas: 'freeze',  req: { ice: 40, berry: 20, dalbhat: 10 } },
-  { id: 'cloudFth',  n: 'Cloud Feather',     i: 'amulet', col: 'cloud', cost: 5e6, st: { cloud: .25 }, pas: 'updraft', req: { wool: 40, bead: 10, dalbhat: 10 } },
+  { id: 'beads',     n: 'Prayer Beads',      i: 'amulet', cost: 6e4,   st: { cdr: .1 },               req: { chili: 10, selroti: 15 } },
+  { id: 'turquoise', n: 'Turquoise Pendant', i: 'amulet', cost: 2e5,   st: { cap: .15, brew: .1 },    req: { berry: 15, apple: 15, dalbhat: 5 } },
+  { id: 'yakBell',   n: 'Yak Bell',          i: 'amulet', cost: 5e5,   st: { yak: .5 }, pas: 'herd',   req: { apple: 30, selroti: 30 } },
+  { id: 'emberAm',   n: 'Ember Amulet',      i: 'amulet', col: 'spice', cost: 5e6, st: { spice: .25 }, pas: 'spark',   req: { chili: 30, walnut: 10, dalbhat: 10 } },
+  { id: 'glacierHt', n: 'Glacier Heart',     i: 'amulet', col: 'ice',   cost: 5e6, st: { ice: .25 },   pas: 'freeze',  req: { berry: 60, dalbhat: 10 } },
+  { id: 'cloudFth',  n: 'Cloud Feather',     i: 'amulet', col: 'cloud', cost: 5e6, st: { cloud: .25 }, pas: 'updraft', req: { apple: 40, walnut: 10, dalbhat: 10 } },
   { id: 'mountainHt',n: 'Mountain Heart',    i: 'amulet', cost: 3e8,   st: { gather: .2 }, pas: 'renewal', req: { gem: 40, goldenMomo: 2 } }
 ];
 /* passives charge up as abilities of a color fire (auto abilities and bubbles you collect) */
@@ -191,6 +191,15 @@ const PASSIVES = {
   nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Capacity grows +1% for every ability that fires, up to +60%. Resets when you finish brewing.' }
 };
 /* crafting materials drop while gathering in each field */
+/* fruits: drop while gathering (by flower color), from quests and sprouts */
+const FRUITS = {
+  chili:  { n: 'Chili',         i: 'chili', col: 'spice' },
+  berry:  { n: 'Glacier Berry', i: 'berry', col: 'ice' },
+  apple:  { n: 'Mustang Apple', i: 'apple', col: 'cloud' },
+  walnut: { n: 'Walnut',        i: 'walnut' },
+  gem:    { n: 'Summit Gem',    i: 'gem' }
+};
+const OLD_MAT = { teaLeaf: 'apple', wool: 'apple', ginger: 'chili', petal: 'chili', ice: 'berry', saffron: 'walnut', bead: 'walnut' };
 const MATS = {
   teaLeaf: { n: 'Tea Leaf',      i: 'leaf',   f: 'tea' },
   ginger:  { n: 'Ginger Root',   i: 'root',   f: 'ginger' },
@@ -202,8 +211,19 @@ const MATS = {
   bead:    { n: 'Prayer Bead',   i: 'bead',   f: 'flags' },
   gem:     { n: 'Summit Gem',    i: 'gem',    f: 'summit' }
 };
-const FIELD_MAT = {}; for (const k in MATS) FIELD_MAT[MATS[k].f] = k;
-Object.assign(FIELD_MAT, { bazaar: 'ginger', lake: 'ice', ember: 'petal', frost: 'berry' });
+/* blender recipes */
+const BLENDS = [
+  { out: 'spiceShot',   req: { chili: 25, momo: 5 } },
+  { out: 'glacierShard',req: { berry: 25, momo: 5 } },
+  { out: 'yakCheese',   req: { apple: 25, momo: 5 } },
+  { out: 'butterTea',   req: { apple: 10, selroti: 2 } },
+  { out: 'butterDrop',  req: { apple: 15, berry: 5 } },
+  { out: 'incense',     req: { walnut: 4, selroti: 5 } },
+  { out: 'masala',      req: { chili: 20, apple: 20, dalbhat: 3 } },
+  { out: 'goldenTea',   req: { walnut: 12, chili: 10, berry: 10, apple: 10, dalbhat: 5 } },
+  { out: 'mysticWheel', req: { walnut: 10, berry: 20, chili: 20 } },
+  { out: 'goldenMomo',  req: { mysticWheel: 5, gem: 8, dalbhat: 20 } }
+];
 
 const DOKOS = [
   { id: 'basket', n: 'Bamboo Basket',   i: 'basket',   cost: 0,     cap: 500 },
@@ -213,9 +233,9 @@ const DOKOS = [
   { id: 'exped',  n: 'Expedition Pack', i: 'backpack', cost: 3e6,   cap: 2.5e5 },
   { id: 'glacier',n: 'Glacier Pack',    i: 'backpack', cost: 4e7,   cap: 1e6 },
   { id: 'spirit', n: 'Spirit Satchel',  i: 'backpack', cost: 6e8,   cap: 4e6 },
-  { id: 'kiln',   n: 'Ember Kiln Pack', i: 'backpack', col: 'spice', cost: 3e9, cap: 8e6,   pas: 'kiln',       req: { petal: 150, saffron: 80, goldenMomo: 3 } },
-  { id: 'vault',  n: 'Glacier Vault',   i: 'backpack', col: 'ice',   cost: 3e9, cap: 1.4e7, pas: 'deepfreeze', req: { ice: 150, berry: 80, goldenMomo: 3 } },
-  { id: 'nimbus', n: 'Nimbus Bag',      i: 'backpack', col: 'cloud', cost: 3e9, cap: 9e6,   pas: 'nimbus',     req: { wool: 150, bead: 80, goldenMomo: 3 } }
+  { id: 'kiln',   n: 'Ember Kiln Pack', i: 'backpack', col: 'spice', cost: 3e9, cap: 8e6,   pas: 'kiln',       req: { chili: 150, walnut: 80, goldenMomo: 3 } },
+  { id: 'vault',  n: 'Glacier Vault',   i: 'backpack', col: 'ice',   cost: 3e9, cap: 1.4e7, pas: 'deepfreeze', req: { berry: 230, goldenMomo: 3 } },
+  { id: 'nimbus', n: 'Nimbus Bag',      i: 'backpack', col: 'cloud', cost: 3e9, cap: 9e6,   pas: 'nimbus',     req: { apple: 150, walnut: 80, goldenMomo: 3 } }
 ];
 const BOOTS = [
   { id: 'sandals', n: 'Sandals',      i: 'boot', cost: 0,   spd: 120 },
@@ -286,9 +306,11 @@ const BUFFS = {
   roar:       { n: 'Roar',         i: 'roar',    d: 'Your crew gather 50% faster.' },
   caravan:    { n: 'Caravan Rush', i: 'horns',   d: 'Yaks gather x2 and move faster.' },
   blessing:   { n: 'Blessing',     i: 'sparkle', d: '+25% to all gathering and brewing.' },
-  shot_spice: { n: 'Ginger Shot',  i: 'bottle',  d: '+50% Spice gathering.' },
-  shot_ice:   { n: 'Glacier Shard',i: 'crystal', d: '+50% Ice gathering.' },
-  shot_cloud: { n: 'Yak Cheese',   i: 'cheese',  d: '+50% Cloud gathering.' },
+  shot_spice: { n: 'Chili Extract',i: 'bottle',  d: 'Spice gathering x1.25.' },
+  shot_ice:   { n: 'Berry Extract',i: 'crystal', d: 'Ice gathering x1.25.' },
+  shot_cloud: { n: 'Apple Extract',i: 'cheese',  d: 'Cloud gathering x1.25.' },
+  gtea:       { n: 'Golden Tea',   i: 'cup',     d: 'All gathering x1.15.' },
+  masala:     { n: 'Masala Tonic', i: 'bottle',  d: '+8% instant conversion.' },
   incense:    { n: 'Incense',      i: 'incense', d: 'Ability cooldowns run twice as fast.' },
   wildfire:   { n: 'Wildfire',     i: 'flame',   d: 'Spice gathering x3.' },
   polar:      { n: 'Polar Power',  i: 'snow',    d: 'Ice gathering x3 and +15% crit chance.' },
@@ -307,23 +329,22 @@ const BUFFS = {
 };
 
 const ITEMS = {
-  teaLeaf: { n: 'Tea Leaf', i: 'leaf', d: 'Material. Drops in the Tea Garden.', mat: true },
-  ginger: { n: 'Ginger Root', i: 'root', d: 'Material. Drops in Ginger Terraces.', mat: true },
-  ice: { n: 'Glacier Ice', i: 'ice', d: 'Material. Drops in Glacier Spring.', mat: true },
-  petal: { n: 'Rhodo Petal', i: 'petal', d: 'Material. Drops in Rhododendron Forest.', mat: true },
-  wool: { n: 'Yak Wool', i: 'wool', d: 'Material. Drops in Yak Meadow.', mat: true },
-  berry: { n: 'Juniper Berry', i: 'berry', d: 'Material. Drops in Juniper Ridge.', mat: true },
-  saffron: { n: 'Saffron', i: 'thread', d: 'Material. Drops in Saffron Cliffs.', mat: true },
-  bead: { n: 'Prayer Bead', i: 'bead', d: 'Material. Drops in Prayer Flag Pass.', mat: true },
-  gem: { n: 'Summit Gem', i: 'gem', d: 'Material. Drops in Summit Snowfield.', mat: true },
+  chili: { n: 'Chili', i: 'chili', d: 'Fruit. Drops from red Spice flowers. Blend it or craft with it.', mat: true },
+  berry: { n: 'Glacier Berry', i: 'berry', d: 'Fruit. Drops from blue Ice flowers.', mat: true },
+  apple: { n: 'Mustang Apple', i: 'apple', d: 'Fruit. Drops from white Cloud flowers.', mat: true },
+  walnut: { n: 'Walnut', i: 'walnut', d: 'Rare fruit. Drops in the High Pasture and above.', mat: true },
+  gem: { n: 'Summit Gem', i: 'gem', d: 'Very rare. Drops on the Summit Glacier.', mat: true },
   momo:        { n: 'Momo',          i: 'momo', d: 'Crew food. +10 bond.', price: 40 },
   selroti:     { n: 'Sel Roti',      i: 'ring', d: 'Crew food. +40 bond.', price: 200 },
   dalbhat:     { n: 'Dal Bhat',      i: 'bowl', d: 'Crew food. +200 bond. Dal bhat power, 24 hour.', price: 1200 },
-  butterTea:   { n: 'Butter Tea',    i: 'cup', d: 'Haste ×3 for 30s.', price: 600, use: true },
-  spiceShot:   { n: 'Ginger Shot',   i: 'bottle', d: '+50% Spice gathering for 60s.', price: 2500, use: true },
-  glacierShard:{ n: 'Glacier Shard', i: 'crystal', d: '+50% Ice gathering for 60s.', price: 2500, use: true },
-  yakCheese:   { n: 'Yak Cheese',    i: 'cheese', d: '+50% Cloud gathering for 60s.', price: 2500, use: true },
-  incense:     { n: 'Incense',       i: 'incense', d: 'All ability cooldowns −50% for 60s.', price: 8000, use: true },
+  butterTea:   { n: 'Butter Tea',    i: 'cup', d: 'Haste x3 for 3 minutes. Using more adds time.', price: 600, use: true },
+  spiceShot:   { n: 'Chili Extract', i: 'bottle', d: 'Spice gathering x1.25 for 10 minutes. Using more adds time (up to 1 hour).', price: 2500, use: true },
+  glacierShard:{ n: 'Berry Extract', i: 'crystal', d: 'Ice gathering x1.25 for 10 minutes. Using more adds time (up to 1 hour).', price: 2500, use: true },
+  yakCheese:   { n: 'Apple Extract', i: 'cheese', d: 'Cloud gathering x1.25 for 10 minutes. Using more adds time (up to 1 hour).', price: 2500, use: true },
+  incense:     { n: 'Incense',       i: 'incense', d: 'Abilities recharge twice as fast for 5 minutes. Using more adds time.', price: 8000, use: true },
+  goldenTea:   { n: 'Golden Tea',    i: 'cup', d: 'All gathering x1.15 for 15 minutes. Blend only.', use: true },
+  masala:      { n: 'Masala Tonic',  i: 'bottle', d: '+8% instant conversion for 10 minutes. Blend only.', use: true },
+  lotusSeed:   { n: 'Lotus Seed',    i: 'leaf', d: 'Plant it to grow a sprout in the field you stand in.', use: true },
   butterDrop:  { n: 'Butter Drop',   i: 'drop',    d: 'Drops a pool of yak butter (radius 110) where you stand for 40s. Gathering inside x2, and Cloud crew gather x1.5 more.', price: 15000, use: true },
   permit:      { n: 'Trekking Permit', i: 'ticket', d: 'Recruit a random crew member into an empty bed.' },
   mysticWheel: { n: 'Mystic Wheel',  i: 'wheel', d: 'Reroll a crew member. Never gives Commons.' },

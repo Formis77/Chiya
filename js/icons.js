@@ -58,6 +58,9 @@ const ICONS = {
   scythe:   'M6 21L14 4M14 4c4 0 7 3 7 7-3-3-6-3-8-2',
   fan:      'M12 20L4 8a11 11 0 0 1 16 0zM12 20V9M12 20L8 9.5M12 20l4-10.5',
   banner:   'M6 21V3M6 4h12l-3 4 3 4H6M6 8h9',
+  apple:    'M12 7c-3-2.5-8-1.5-8 4.5 0 5 3 9.5 6 9.5 1 0 1.3-.5 2-.5s1 .5 2 .5c3 0 6-4.5 6-9.5C20 5.5 15 4.5 12 7zM12 7c0-2 1-3.5 3-4',
+  walnut:   'M12 3c4.5 0 7.5 4 7.5 9s-3 9-7.5 9-7.5-4-7.5-9 3-9 7.5-9zM12 3v18M8 8c1 1 1 3 0 4s-1 3 0 4M16 8c-1 1-1 3 0 4s1 3 0 4',
+  blender:  'M7 3h10l-1.5 11h-7zM8.5 14h7l1 7h-9zM10 18h4M17 6h2.5',
   gear:     circle(12, 12, 3) + 'M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1' + circle(12, 12, 6.5),
   refresh:  'M20 11.5A8 8 0 0 0 5.6 7M4 4v4h4M4 12.5A8 8 0 0 0 18.4 17M20 20v-4h-4',
   download: 'M12 3.5v12M7 11l5 5 5-5M4.5 20.5h15',
@@ -124,6 +127,7 @@ function drawIcon(c, name, x, y, size, col, lw = 2.2) {
 
 /* accent color per icon, for item tiles */
 const ICOL = {
+  apple: '#e5484d', walnut: '#a0522d', chili: '#f05a3a', blender: '#2ea4dc',
   leaf: '#4cb782', root: '#e0a43c', ice: '#4fb6e6', petal: '#ef5b6b', wool: '#9aa3c7', berry: '#5a6fd6', thread: '#e5484d', bead: '#c8913e', gem: '#9b6ef3', hat: '#ff8a3d', amulet: '#3fae6b',
   trowel: '#8aa0b5', hook: '#6dbb63', broom: '#b58b56', pick: '#4fb6e6', talon: '#f06b4a', scythe: '#4fb6e6', fan: '#8e9bd6', banner: '#f0b429',
   momo: '#e8a25b', ring: '#d9822b', bowl: '#e2b04a', cup: '#b0784a', bottle: '#f08a3c', crystal: '#4fb6e6', cheese: '#e8c341',

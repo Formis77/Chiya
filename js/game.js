@@ -18,6 +18,7 @@ const GLIDERS = [
 ];
 const GLIDE_GATE = 10;
 const MSHRINE = { x: 1780, y: 3250 };
+const BLENDER = { x: 330, y: 4120 };
 const VIEW_W = 360;
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -106,7 +107,7 @@ function buildWorld() {
   PATHPTS = pts;
   const nearPath = (x, y, m) => { for (let i = 0; i < TRAIL.length; i += 2) { const t = TRAIL[i]; if (Math.abs(t.x - x) < m && Math.abs(t.y - y) < m && Math.hypot(t.x - x, t.y - y) < m) return true; } return false; };
   const nearPlaza = (x, y) => Math.hypot((x - PLAZA.x) / 290, (y - PLAZA.y) / 170) < 1;
-  const blocked = (x, y, m) => inField(x, y, m) || nearPath(x, y, m + 12) || nearPlaza(x, y) || Object.values(NPCS()).some(g => Math.hypot(x - g.x, y - g.y) < 60) || GLIDERS.some(g => Math.hypot(x - g.x, y - g.y) < 70) || SHOPS.some(g => Math.hypot(x - g.x, y - g.y + 20) < 95) || Math.hypot(x - MSHRINE.x, y - MSHRINE.y + 20) < 100;
+  const blocked = (x, y, m) => inField(x, y, m) || nearPath(x, y, m + 12) || nearPlaza(x, y) || Object.values(NPCS()).some(g => Math.hypot(x - g.x, y - g.y) < 60) || GLIDERS.some(g => Math.hypot(x - g.x, y - g.y) < 70) || SHOPS.some(g => Math.hypot(x - g.x, y - g.y + 20) < 95) || Math.hypot(x - MSHRINE.x, y - MSHRINE.y + 20) < 100 || Math.hypot(x - BLENDER.x, y - BLENDER.y + 20) < 90;
   // gates where the trail crosses each zone border
   GATES = [];
   for (let z = 1; z < ZONES.length; z++) { const top = ZONES[z - 1].top, p = TRAIL.find(t => t.y < top) || TRAIL[0]; GATES.push({ z, x: p.x, y: top }); }
@@ -182,7 +183,8 @@ function gMult(col, isTool) {
   if (D.syn.has('rainbow')) m *= 1.15;
   if (D.syn.has('fullHouse')) m *= 1.1;
   if (col === 'spice' && B.spiceRush) m *= 1 + .5 * (D.syn.has('kitchen') ? 1.5 : 1);
-  if (B['shot_' + col]) m *= 1.5;
+  if (B['shot_' + col]) m *= 1.25;
+  if (B.gtea) m *= 1.15;
   if (B.wildfire && col === 'spice') m *= 3;
   if (col === 'ice' && doko().pas === 'deepfreeze' && S.doko > capMax() * .5) m *= 1.4;
   if (B.polar && col === 'ice') m *= 3;
@@ -217,6 +219,7 @@ function zoneMult(x, y, col, src) {
   }
   return z * FROST_MUL[frost];
 }
+function addTimed(id, dur, cap = 3600) { if (B[id]) B[id].t = Math.min(cap, B[id].t + dur); else B[id] = { t: dur, st: 1 }; }
 function addBuff(id, dur, max = 1) {
   const b = B[id];
   if (b) { b.t = Math.max(b.t, dur); b.st = Math.min(max, b.st + 1); } else B[id] = { t: dur, st: 1 };
@@ -241,7 +244,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   if (S.pilgrim && t.f === S.pilgrim.f) amt *= 1.6;
   if (isTool && t.col === 'cloud' && mpas('cloudStar')) amt *= 1.5;
   const inTea = E.decals.some(d => d.kind === 'teamark' && dist(t.x, t.y, d.x, d.y) < d.r);
-  const conv = Math.min(.8, bp('conv') + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
+  const conv = Math.min(.8, bp('conv') + (B.masala ? .08 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
   if (conv > 0) { const inst = amt * conv, val = inst * brewValue(); S.rp += val; S.stats.earn += val; amt -= inst; }
   if (D.k.skyLantern) { const room = Math.max(0, capMax() * 3 - (S.balloon || 0)), toB = Math.min(room, amt * .12); S.balloon = (S.balloon || 0) + toB; amt -= toB; }
   const add = Math.min(space, amt);
@@ -602,6 +605,7 @@ function update(dt) {
   for (const g of GLIDERS) { const d = dist(player.x, player.y, g.x, g.y); if (d < nd) { nd = d; nn = g.id; } }
   for (const sh of SHOPS) { const d = dist(player.x, player.y, sh.x, sh.y + 20); if (d < nd + 15) { nd = d; nn = 'shop:' + sh.id; } }
   { const d = dist(player.x, player.y, MSHRINE.x, MSHRINE.y + 20); if (d < nd + 15) { nd = d; nn = 'mandala'; } }
+  { const d = dist(player.x, player.y, BLENDER.x, BLENDER.y + 20); if (d < nd + 15) { nd = d; nn = 'blender'; } }
   if (player.fly) nn = null;
   if (nn !== nearNpc) { nearNpc = nn; updateTalk(); }
   // Pilgrim Star: a random open field gets +60% for 10 minutes
@@ -795,6 +799,7 @@ function render() {
   for (const sp of S.spr.placed) if (vis(sp.x, sp.y, 60)) objs.push({ y: sp.y, f: () => drawSprinkler(c, sp) });
   for (const g of GATES) if (vis(g.x, g.y, 140)) objs.push({ y: g.y, f: () => drawGate(c, g) });
   for (const g of GLIDERS) if (vis(g.x, g.y, 80)) objs.push({ y: g.y, f: () => drawGlider(c, g) });
+  if (vis(BLENDER.x, BLENDER.y, 120)) objs.push({ y: BLENDER.y, f: () => { c.save(); c.translate(BLENDER.x, BLENDER.y); drawBlender(c, now); c.restore(); } });
   if (vis(MSHRINE.x, MSHRINE.y, 120)) objs.push({ y: MSHRINE.y, f: () => { c.save(); c.translate(MSHRINE.x, MSHRINE.y); drawMandalaShrine(c, now); c.restore(); } });
   for (const sh of SHOPS) if (vis(sh.x, sh.y, 120)) objs.push({ y: sh.y, f: () => { c.save(); c.translate(sh.x, sh.y); drawShop(c, sh, now); c.restore(); } });
   if (vis(STALL.x, STALL.y, 120)) objs.push({ y: STALL.y, f: () => { c.save(); c.translate(STALL.x, STALL.y); drawStall(c, now, brewing); c.restore(); } });
@@ -1129,9 +1134,10 @@ function addFlame(fi, x, y, base) {
   E.decals.push({ kind: 'flame', x, y, r: 38, age: 0, dur: 6, fi, base, tick: 0 });
 }
 function dropMat(fi) {
-  const k = FIELD_MAT[FIELDS[fi].id]; if (!k) return;
+  const f = FIELDS[fi], r = Math.random();
+  let k; if (f.z === 4 && r < .08) k = 'gem'; else if (f.z >= 2 && r < .2) k = 'walnut'; else { let q = Math.random(); k = 'apple'; for (const c2 in f.cw) { q -= f.cw[c2]; if (q <= 0) { k = { spice: 'chili', ice: 'berry', cloud: 'apple' }[c2]; break; } } }
   S.items[k] = (S.items[k] || 0) + 1;
-  pop(player.x, player.y - 62, '+1 ' + MATS[k].n, '#d6b4ff', true);
+  pop(player.x, player.y - 62, '+1 ' + ITEMS[k].n, '#d6b4ff', true);
   burst(player.x, player.y - 30, 8, { type: 'star', col: '#d6b4ff', spd: 80, life: .7, size: 2 });
 }
 let combo = { n: 0, t: -99 }, bullHits = 0;
@@ -1188,6 +1194,7 @@ function boot() {
   if (S.charms && S.charms.length) { let refund = 0; for (const id of S.charms) { const ch = CHARMS.find(c2 => c2.id === id); if (ch) refund += ch.cost; } S.rp += refund; S.charms = []; S.charm = null; S.charmRefund = refund; }
   if (S.mandala === undefined) S.mandala = null;
   for (const k of ['comet', 'gstar', 'cswing', 'pops', 'heat', 'popcap', 'balloon']) if (!S[k]) S[k] = 0;
+  for (const k in OLD_MAT) if (S.items[k]) { S.items[OLD_MAT[k]] = (S.items[OLD_MAT[k]] || 0) + S.items[k]; delete S.items[k]; }
   buildWorld();
   if (S.mapv !== 2) { S.mapv = 2; S.px = PLAZA.x; S.py = PLAZA.y + 30; if (S.spr) S.spr.placed = []; }
   player.x = S.px || BREW.x; player.y = S.py || BREW.y - 30;
