@@ -262,3 +262,10 @@ html.gapfix #toast{bottom:150px}
 .rwi.perm{background:#fff4d6;color:#a5700a}
 .bdots{display:flex;gap:4px;margin:4px 0 6px}.bdots i{width:18px;height:6px;border-radius:3px;display:block}
 .item.badge .qbar{margin:2px 0 4px}
+.ibtn{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;border:1.6px solid #b9b3c2;background:#fff;color:#7d7689;font:italic 800 11px Georgia,serif;padding:0;vertical-align:middle;margin-left:3px;cursor:pointer}
+.ibtn:active{background:#eef6fc;border-color:#2ea4dc;color:#2ea4dc}
+.chip.frostc{background:#e3f6ff;color:#2a8fc4}
+#sheet.fit{overflow-y:hidden;touch-action:pan-x}
+#sheet.fit .gcard{max-height:calc(76vh - 150px);overflow:hidden}
+.car{overflow-y:hidden;overscroll-behavior:contain}
+.gcard{touch-action:pan-x}

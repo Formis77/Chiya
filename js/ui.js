@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '18';
+const VERSION = '19';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['gear', 'backpack', 'Gear'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -37,6 +37,7 @@ function uiTick(dt) {
   $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>Lv ${FIELDS[fi].lv[0]}${FIELDS[fi].lv[1] > FIELDS[fi].lv[0] ? "-" + FIELDS[fi].lv[1] : ""}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
   const bf = [];
   const BI = { gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
+  { const fl = frostAt(player.x, player.y); if (fl) bf.push(`<button class="chip frostc" data-b="frostmark">${ic('snow')}<b>x${FROST_MUL[fl]}</b></button>`); }
   for (const k in B) bf.push(`<button class="chip" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
@@ -79,6 +80,7 @@ function closePanel() { panel = null; crewSel = null; $('sheet').classList.remov
 function renderPanel() {
   const fn = { tihar: pTihar, badges: pBadges, blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
   if (!fn) return;
+  $('sheet').classList.toggle('fit', panel === 'shop');
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
   document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel));
 }
@@ -91,9 +93,28 @@ function refreshCosts() {
   const r = document.getElementById('sheetRp'); if (r) r.textContent = fmt(S.rp);
 }
 
+/* --- info buttons: descriptions live behind a small i --- */
+function infoOf(kind, id) {
+  if (kind === 'ab') return [ABIL[id].n, ABIL[id].d];
+  if (kind === 'pas') return [PASSIVES[id].n, PASSIVES[id].d];
+  if (kind === 'mp') return [MANDALA_PAS[id].n, MANDALA_PAS[id].d];
+  if (kind === 'syn') { const q = SYN.find(x => x.id === id); return [q.n, q.d + ' Needs: ' + q.req]; }
+  if (kind === 'hive') return [HIVE[id].n, HIVE[id].d];
+  if (kind === 'it') return [ITEMS[id].n, ITEMS[id].d];
+  if (kind === 'cp') return [CREW[id].n, CREW[id].pas];
+  if (kind === 'cd') return [CREW[id].n, CREW[id].d];
+  return ['', ''];
+}
+const info = (kind, id) => `<button class="ibtn" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation();showInfo('${kind}','${id}')" aria-label="Info">i</button>`;
+function showInfo(kind, id) {
+  const [n, d] = infoOf(kind, id), t = $('tip');
+  t.innerHTML = `${ib('info', '#2ea4dc')}<div><b>${n}</b><span>${d}</span></div>`;
+  t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 6000);
+}
+
 /* --- costs --- */
-const permitCost = () => Math.round(250 * Math.pow(1.55, S.recruits));
-const bedCost = () => Math.round(600 * Math.pow(1.6, S.beds - 5));
+const permitCost = () => Math.min(1e7, Math.round(1000 * Math.pow(1.42, S.recruits)));
+const bedCost = () => Math.round(1e6 * Math.pow(1.32, Math.max(0, S.beds - 25)));
 const wheelCost = (n = 0) => Math.min(2.5e6, Math.round(3000 * Math.pow(1.3, S.wheels + n)));
 const wheelBulk = n => { let t = 0; for (let i = 0; i < n; i++) t += wheelCost(i); return t; };
 const xpNeed = l => Math.round(30 * Math.pow(1.75, l - 1));
@@ -124,19 +145,19 @@ function pCrew() {
 function hiveBox() {
   const n = S.crew.length, c = D.cnt;
   const bar = ['spice', 'ice', 'cloud'].map(k => `<i class="cb-${k}" style="width:${n ? c[k] / n * 100 : 0}%"></i>`).join('');
-  return `<div class="hive"><div class="hbar">${bar}</div>${D.hive ? `<div class="hrow">${ib(HIVE[D.hive].i, icol(HIVE[D.hive].i))}<div><b>${HIVE[D.hive].n}</b><div class="mut small">${HIVE[D.hive].d}</div></div></div>` : `<span class="mut small">No teahouse color yet. When half your crew (8+) share a color, you unlock Spice, Ice or Cloud bonuses.</span>`}</div>`;
+  return `<div class="hive"><div class="hbar">${bar}</div>${D.hive ? `<div class="hrow">${ib(HIVE[D.hive].i, icol(HIVE[D.hive].i))}<div><b>${HIVE[D.hive].n}</b> ${info('hive', D.hive)}</div></div>` : `<span class="mut small">No teahouse color yet. When half your crew (8+) share a color, you unlock Spice, Ice or Cloud bonuses.</span>`}</div>`;
 }
 function pCrewDetail(i) {
   const m = S.crew[i], d = CREW[m.id], need = xpNeed(m.lvl), ab = d.ab ? ABIL[d.ab] : null;
   let h = `<button class="back" onclick="crewSel=null;renderPanel()">${ic('back')}Crew</button>`;
   h += `<div class="cdet ${m.bl ? 'bl' : ''}" style="--rc:${RAR[d.r].c}"><img src="${portrait(m.id, m.bl)}" alt=""><div>
-    <h2>${d.n}</h2><div class="badges">${rarBadge(d.r)}${colBadge(d.c)}${m.bl ? `<span class="rb gold">${ic('star')}Blessed</span>` : ''}</div><p class="mut small">${d.d}</p></div></div>`;
+    <h2>${d.n}</h2><div class="badges">${rarBadge(d.r)}${colBadge(d.c)}${m.bl ? `<span class="rb gold">${ic('star')}Blessed</span>` : ''}</div></div></div>`;
   h += `<div class="lvl"><div class="lrow"><b>Level ${m.lvl}</b>${m.lvl < 20 ? `<span class="mut small">${fmt(m.xp)} / ${fmt(need)} bond</span>` : '<span class="mut small">Max level</span>'}</div>${m.lvl < 20 ? `<div class="qbar"><i style="width:${m.xp / need * 100}%"></i></div>` : ''}</div>`;
   h += `<div class="stats">
     <div><span>Gather</span><b>${(d.amt * lvlMult(m)).toFixed(1)}</b></div><div><span>Speed</span><b>${d.spd}</b></div>
     <div><span>Every</span><b>${d.gt}s</b></div><div><span>Brew</span><b>${(d.brew * lvlMult(m)).toFixed(1)}/s</b></div></div>`;
-  if (ab) h += `<div class="abil">${ib(ab.i, TOKEN_COL[d.c])}<div><b>${ab.n}</b> <span class="mut small">every ${d.cd}s</span><p class="small">${ab.d}</p></div></div>`;
-  if (d.pas) h += `<div class="abil">${ib('leaf', '#4cb782')}<div><b>Passive</b><p class="small">${d.pas}</p></div></div>`;
+  if (ab) h += `<div class="abil">${ib(ab.i, TOKEN_COL[d.c])}<div><b>${ab.n}</b> ${info('ab', d.ab)} <span class="mut small">every ${d.cd}s</span></div></div>`;
+  if (d.pas) h += `<div class="abil">${ib('leaf', '#4cb782')}<div><b>Passive</b> ${info('cp', m.id)}</div></div>`;
   h += `<div class="abil ${m.bl ? 'gold' : ''}">${ib('star', '#f0b429')}<div><b>Blessed passive</b> <span class="mut small">${m.bl ? 'Active' : 'Locked'}</span><p class="small">+${d.bp[1]}% ${STATN[d.bp[0]]} for the whole teahouse</p></div></div>`;
   h += `<h3>Feed <span class="mut small">Favorite: ${FOOD[d.fav].n} (x3)</span></h3><div class="row3">`;
   for (const f in FOOD) h += `<button class="btn ${f === d.fav ? 'fav' : ''}" ${(S.items[f] || 0) && m.lvl < 20 ? '' : 'disabled'} onclick="feed(${i},'${f}')">${ic(FOOD[f].i)}<span>${S.items[f] || 0}</span><small>+${FOOD[f].xp * (f === d.fav ? 3 : 1)}</small></button>`;
@@ -153,7 +174,7 @@ const STATN = { cdr: 'ability recharge', conv: 'instant conversion', cap: 'doko 
 
 function rollOdds(odds) { let r = Math.random(), acc = 0; for (const k in odds) { acc += odds[k]; if (r < acc) return k; } return Object.keys(odds)[1]; }
 function rollCrew(odds) { const r = rollOdds(odds); return pick(CREW_IDS.filter(id => CREW[id].r === r)); }
-const blessChance = () => Math.min(.15, .01 + .03 * (D.k.lama || 0));
+const blessChance = (wheel) => (wheel ? 1 / 250 : 1 / 287) + .002 * (D.k.lama || 0);
 function doRecruit() {
   if (S.crew.length >= S.beds) { toast('No free bed. Buy a new one first.', 'bed'); return; }
   if ((S.items.permit || 0) > 0) S.items.permit--;
@@ -172,7 +193,7 @@ function reveal(id, bl, isNew, title) {
   const d = CREW[id];
   showModal(`<div class="reveal" style="--rc:${RAR[d.r].c}"><div class="burst"></div><img src="${portrait(id, bl)}" alt=""></div>
     ${isNew ? '<div class="new">New</div>' : ''}<h2>${d.n}</h2><div class="badges center">${rarBadge(d.r)}${colBadge(d.c)}${bl ? `<span class="rb gold">${ic('star')}Blessed</span>` : ''}</div>
-    <p class="mut small">${d.ab ? `<b>${ABIL[d.ab].n}.</b> ${ABIL[d.ab].d}` : d.pas || d.d}</p>
+    <p class="mut small">${d.ab ? `<b>${ABIL[d.ab].n}</b> ${info('ab', d.ab)}` : d.pas ? `Passive ${info('cp', id)}` : ''}</p>
     <button class="btn primary" onclick="closeModal()"><span>${title || 'Welcome aboard'}</span></button>`);
 }
 function buyBed() {
@@ -196,7 +217,7 @@ function feed(i, f) {
 }
 function rollOnce(i) {
   S.items.mysticWheel--;
-  const m = S.crew[i], id = rollCrew(WHEEL_ODDS), bl = Math.random() < blessChance();
+  const m = S.crew[i], id = rollCrew(WHEEL_ODDS), bl = Math.random() < blessChance(true);
   const isNew = !S.found[id]; S.found[id] = true;
   m.id = id; m.bl = bl; S.stats.rerolls++; if (bl) S.stats.blessed++;
   return { id, bl, isNew };
@@ -245,7 +266,7 @@ function pShop() {
     h += `<div class="car" id="car">` + list.map(it => {
       const own = ownedOf(t).includes(it.id), eq = equippedOf(t) === it.id, ok = canAfford(it), gc = gearCol(it);
       const req = !own && it.req ? `<div class="req">${Object.entries(it.req).map(([k, n]) => `<span class="${(S.items[k] || 0) >= n ? 'ok' : 'no'}">${ic(ITEMS[k].i)}${Math.min(S.items[k] || 0, n)}/${n} ${ITEMS[k].n}</span>`).join('')}</div>` : '';
-      const pas = it.pas ? `<div class="pas">${ic('sparkle')}<span><b>${PASSIVES[it.pas].n}.</b> ${PASSIVES[it.pas].d}</span></div>` : '';
+      const pas = it.pas ? `<div class="pas">${ic('sparkle')}<span><b>${PASSIVES[it.pas].n}</b> ${info('pas', it.pas)}</span></div>` : '';
       const btn = eq ? `<span class="tag big">Equipped</span>` : own ? `<button class="btn" onclick="equip('${t}','${it.id}')"><span>Equip</span></button>` : `<button class="btn primary" data-cost="${it.cost}" ${ok ? '' : 'disabled'} onclick="buyGear('${t}','${it.id}')">${it.cost ? money(it.cost) : '<span>Free</span>'}</button>`;
       return `<div class="gcard ${eq ? 'eq' : ''}"><div class="gart" style="--c:${gc}">${ic(it.i)}${it.col ? `<span class="gcol cb-${it.col}"></span>` : ''}</div>
         <h3>${it.n}</h3><div class="mut small">${SLOT_N[t].replace(/s$/, '')}${it.col ? ' · ' + COL[it.col].n : ''}</div>
@@ -277,7 +298,7 @@ function shopExtra(t) {
     h += `<div class="item">${ib('wheel', icol('wheel'))}<div class="it"><b>Mystic Wheel</b><span class="mut small">Reroll a crew member. No Commons. Price stops rising at 2.5M.</span></div><div class="buyrow"><button class="btn sm primary" data-cost="${wheelCost()}" onclick="buyItem('mysticWheel',${wheelCost()})">${money(wheelCost())}</button><button class="btn sm" data-cost="${wheelBulk(10)}" onclick="buyItem('mysticWheel',${wheelBulk(10)},10)"><span>x10</span></button><button class="btn sm" data-cost="${wheelBulk(100)}" onclick="buyItem('mysticWheel',${wheelBulk(100)},100)"><span>x100</span></button></div></div>`;
     for (const k of ['momo', 'selroti', 'dalbhat', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'butterDrop', 'goldenMomo']) {
       const it = ITEMS[k];
-      h += `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k] || 0}</span></b><span class="mut small">${it.d}</span></div><div class="buyrow"><button class="btn sm primary" data-cost="${it.price}" onclick="buyItem('${k}',${it.price})">${money(it.price)}</button>${it.price * 10 < 1e9 ? `<button class="btn sm" data-cost="${it.price * 10}" onclick="buyItem('${k}',${it.price * 10},10)"><span>x10</span></button>` : ''}</div></div>`;
+      h += `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k] || 0}</span> ${info('it', k)}</b></div><div class="buyrow"><button class="btn sm primary" data-cost="${it.price}" onclick="buyItem('${k}',${it.price})">${money(it.price)}</button>${it.price * 10 < 1e9 ? `<button class="btn sm" data-cost="${it.price * 10}" onclick="buyItem('${k}',${it.price * 10},10)"><span>x10</span></button>` : ''}</div></div>`;
     }
   }
   if (t === 'lodge') {
@@ -326,7 +347,7 @@ function pItems() {
   h += keys.map(k => {
     const it = ITEMS[k];
     const action = it.mat ? '<span class="tag dim">Material</span>' : it.use ? `<button class="btn sm primary" onclick="useItem('${k}')"><span>Use</span></button>` : FOOD[k] ? `<button class="btn sm" onclick="openPanel('crew')"><span>Feed</span></button>` : k === 'permit' ? `<button class="btn sm" onclick="doRecruit()"><span>Recruit</span></button>` : `<button class="btn sm" onclick="openPanel('crew')"><span>Crew</span></button>`;
-    return `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k]}</span></b><span class="mut small">${it.d}</span></div>${action}</div>`;
+    return `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k]}</span> ${info('it', k)}</b></div>${action}</div>`;
   }).join('');
   return h;
 }
@@ -353,7 +374,7 @@ const npcLocked = id => S.crew.length < npcOf(id).gate;
 /* repeatable odd jobs */
 function rqMake(id) {
   const cap = capMax(), open = FIELDS.filter((f, i) => fieldOpen(i));
-  const kinds = ['gather', 'field', 'field', 'col', 'col', 'feed'], lv = S.stats.leo || 0, hard = 1 + Math.min(3, lv * .03);
+  const kinds = ['field', 'field', 'field', 'col'], lv = S.stats.leo || 0, hard = 1 + Math.min(3, lv * .03);
   if (E.crew.some(e => CREW[e.m.id].ab && ABIL[CREW[e.m.id].ab].tok)) kinds.push('tokens');
   const k = pick(kinds), f = pick(open), round = n => { const p = Math.pow(10, Math.max(0, Math.floor(Math.log10(n)) - 1)); return Math.max(1, Math.round(n / p) * p); };
   const q = { k, rw: npcOf(id).rw(), cd: 0 };
@@ -371,7 +392,7 @@ function rq(id) {
   return S.rq[id];
 }
 function curQuest(gid) {
-  if (REPEAT[gid]) { const q = rq(gid); return Date.now() < q.cd ? null : { t: q.t, rw: { items: q.rw, perm: REPEAT[gid].perm }, rep: true }; }
+  if (REPEAT[gid]) { const q = rq(gid); return Date.now() < q.cd ? null : { t: q.t, rw: { items: q.rw, perm: q.k === 'col' ? { [q.c]: .005 } : null, fperm: q.k === 'field' ? { [q.f]: .01 } : null }, rep: true }; }
   return QUESTS[gid][S.q[gid] || 0];
 }
 function qProg(gid) {
@@ -411,9 +432,9 @@ function giverState(gid) {
   const cq = curQuest(gid); if (cq && cq.line != null && S.crew.length < QLINES[cq.line].need) return 'wait';
   const p = qProg(gid); return !p ? 'done' : p.cur >= p.goal ? 'ready' : 'active';
 }
-const permTxt = p => Object.entries(p || {}).map(([k, v]) => `+${Math.round(v * 100)}% ${STATN[k]} forever`);
-const rwHtml = rw => [rw.rp ? money(rw.rp) : '', ...permTxt(rw.perm).map(t => `<span class="rwi perm">${ic('star')}${t}</span>`), ...Object.entries(rw.items || {}).map(([k, n]) => `<span class="rwi">${ic(ITEMS[k].i)}${ITEMS[k].n} x${n}</span>`), rw.crew ? `<span class="rwi">${ic('crew')}${CREW[rw.crew].n}</span>` : ''].filter(Boolean).join('');
-const rwText = rw => [rw.rp ? fmt(rw.rp) + ' rupees' : '', ...permTxt(rw.perm), ...Object.entries(rw.items || {}).map(([k, n]) => `${ITEMS[k].n} x${n}`), rw.crew ? CREW[rw.crew].n : ''].filter(Boolean).join(', ');
+const permTxt = (p, fp) => [...Object.entries(p || {}).map(([k, v]) => `+${+(v * 100).toFixed(1)}% ${STATN[k]} forever`), ...Object.entries(fp || {}).map(([k, v]) => `+${+(v * 100).toFixed(1)}% in ${FIELDS.find(f => f.id === k).n} forever`)];
+const rwHtml = rw => [rw.rp ? money(rw.rp) : '', ...permTxt(rw.perm, rw.fperm).map(t => `<span class="rwi perm">${ic('star')}${t}</span>`), ...Object.entries(rw.items || {}).map(([k, n]) => `<span class="rwi">${ic(ITEMS[k].i)}${ITEMS[k].n} x${n}</span>`), rw.crew ? `<span class="rwi">${ic('crew')}${CREW[rw.crew].n}</span>` : ''].filter(Boolean).join('');
+const rwText = rw => [rw.rp ? fmt(rw.rp) + ' rupees' : '', ...permTxt(rw.perm, rw.fperm), ...Object.entries(rw.items || {}).map(([k, n]) => `${ITEMS[k].n} x${n}`), rw.crew ? CREW[rw.crew].n : ''].filter(Boolean).join(', ');
 const mmss = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function qLabel(gid) {
   const i = S.q[gid] || 0, q = QUESTS[gid][i];
@@ -444,7 +465,7 @@ function giverRow(gid) {
 function pQuests() {
   let h = `<div class="ph"><h2>Quests</h2></div><p class="mut small">Quest givers live on the mountain. Walk up to them to talk and claim rewards.</p>`;
   h += `<h3>Story</h3>` + Object.keys(GIVERS).map(giverRow).join('');
-  h += `<h3>Endless</h3><p class="mut small">The Old Snow Leopard Lady never runs out of favours. Each one gives a little fruit and +1% to all gathering, forever. You have +${Math.round((S.perm.gather || 0) * 100)}% from quests so far.</p>` + Object.keys(REPEAT).map(giverRow).join('');
+  h += `<h3>Endless</h3><p class="mut small">The Old Snow Leopard Lady never runs out of favours. Each one gives a little fruit and a permanent boost: +1% gathering in that quest's field, or +0.5% to that color.</p>` + Object.keys(REPEAT).map(giverRow).join('');
   return h;
 }
 const gliderOf = id => GLIDERS.find(g => g.id === id);
@@ -497,6 +518,7 @@ function claimQuest(gid) {
   if (q.rw.rp) S.rp += q.rw.rp;
   for (const k in q.rw.items || {}) S.items[k] = (S.items[k] || 0) + q.rw.items[k];
   for (const k in q.rw.perm || {}) S.perm[k] = (S.perm[k] || 0) + q.rw.perm[k];
+  for (const k in q.rw.fperm || {}) S.fperm[k] = (S.fperm[k] || 0) + q.rw.fperm[k];
   if (q.rw.perm) rebuildCrew();
   if (REPEAT[gid]) { S.rq[gid].cd = Date.now() + 1; S.stats.leo = (S.stats.leo || 0) + 1; }
   else { S.stats.quests++; S.q[gid] = (S.q[gid] || 0) + 1; S.qb[gid] = qBaseNow(gid); }
@@ -518,18 +540,18 @@ function pCodex() {
       CREW_IDS.filter(id => CREW[id].r === r).forEach(id => {
         const d = CREW[id], f = S.found[id];
         h += `<div class="dex ${f ? '' : 'unfound'}" style="--rc:${RAR[r].c}"><img src="${portrait(id)}" alt=""><div><div class="dn"><b>${f ? d.n : '???'}</b>${colBadge(d.c)}</div>
-          <div class="small">${d.ab ? `<b>${ABIL[d.ab].n}.</b> ${ABIL[d.ab].d}` : d.pas || 'No ability. Pure hard work.'}</div>
+          <div class="small">${d.ab ? `<b>${ABIL[d.ab].n}</b> ${info('ab', d.ab)}` : d.pas ? `Passive ${info('cp', id)}` : 'No ability. Pure hard work.'}</div>
           <div class="mut small">Favorite: ${FOOD[d.fav].n} · Blessed: +${d.bp[1]}% ${STATN[d.bp[0]]}</div></div></div>`;
       });
     });
   }
   if (t === 'syn') {
     h += `<p class="mut small">Synergies switch on automatically when the right crew live in your teahouse. ${D.syn.size} of ${SYN.length} active.</p>`;
-    h += SYN.map(s => `<div class="syn ${D.syn.has(s.id) ? 'on' : ''}">${ib(s.i, D.syn.has(s.id) ? '#4cb782' : '#9aa0ad')}<div><div class="dn"><b>${s.n}</b>${D.syn.has(s.id) ? `<span class="tag ok">${ic('check')}Active</span>` : ''}</div><div class="small"><span class="mut">Needs</span> ${s.req}</div><div class="small">${s.d}</div></div></div>`).join('');
+    h += SYN.map(s => `<div class="syn ${D.syn.has(s.id) ? 'on' : ''}">${ib(s.i, D.syn.has(s.id) ? '#4cb782' : '#9aa0ad')}<div><div class="dn"><b>${s.n}</b>${D.syn.has(s.id) ? `<span class="tag ok">${ic('check')}Active</span>` : ''}</div><div class="small"><span class="mut">Needs</span> ${s.req} ${info('syn', s.id)}</div></div></div>`).join('');
   }
   if (t === 'colors') {
     h += `<p class="mut small">When at least half of your crew (8+ crew) share a color, your teahouse takes that color. Each one plays differently.</p>` + hiveBox();
-    h += Object.entries(HIVE).map(([k, v]) => `<div class="syn ${D.hive === k ? 'on' : ''}">${ib(v.i, icol(v.i))}<div><b>${v.n}</b><div class="small">${v.d}</div></div></div>`).join('');
+    h += Object.entries(HIVE).map(([k, v]) => `<div class="syn ${D.hive === k ? 'on' : ''}">${ib(v.i, icol(v.i))}<div><b>${v.n}</b> ${info('hive', k)}</div></div>`).join('');
     h += `<p class="mut small">Crew gather x1.5 on tiles of their own color. Neutral crew get x1.15 everywhere.</p>`;
   }
   return h;
@@ -549,22 +571,23 @@ function drawWorldMap() {
   const W = cv.parentElement.clientWidth, sc = W / WORLD.w, H = WORLD.h * sc, dpr = Math.min(2.5, devicePixelRatio || 1);
   cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
   const c = cv.getContext('2d'); c.scale(dpr * sc, dpr * sc);
-  c.fillStyle = ZONES[0].col; c.fillRect(0, 0, WORLD.w, WORLD.h);
-  ZONES.forEach((z, i) => { const y0 = i === ZONES.length - 1 ? 0 : ZONES[i].top, y1 = i === 0 ? WORLD.h : ZONES[i - 1].top; c.fillStyle = z.col; c.fillRect(0, y0, WORLD.w, y1 - y0); });
-  c.lineCap = 'round'; c.lineJoin = 'round'; P(c); PATHPTS.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.strokeStyle = '#c9a26e'; c.lineWidth = 34; c.stroke();
+  const ZC = ['#e3efd9', '#d8e9cf', '#e6e8d6', '#eceff3', '#f7f8fb'];
+  ZONES.forEach((z, i) => { const y0 = i === ZONES.length - 1 ? 0 : ZONES[i].top, y1 = i === 0 ? WORLD.h : ZONES[i - 1].top; c.fillStyle = ZC[i] || ZC[4]; c.fillRect(0, y0, WORLD.w, y1 - y0); });
+  c.lineCap = 'round'; c.lineJoin = 'round'; P(c); PATHPTS.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.strokeStyle = '#d9cbb4'; c.lineWidth = 26; c.stroke();
   for (const f of FIELDS) {
-    const open = fieldOpen(FIELDS.indexOf(f)), col = f.c === 'mix' ? '#b98af5' : f.c === 'cloud' ? '#f4f6ff' : COL[f.c].c;
-    P(c); c.roundRect(f.x, f.yy, f.w, f.h, 30); c.fillStyle = open ? col : '#9aa0ad'; c.globalAlpha = open ? .95 : .55; c.fill(); c.globalAlpha = 1; c.strokeStyle = OUT; c.lineWidth = 8; c.stroke();
-    c.fillStyle = OUT; c.font = '800 64px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.fillText(f.n, f.x + f.w / 2, f.yy + f.h / 2 + 10);
-    c.font = '700 52px -apple-system,system-ui,sans-serif'; c.fillStyle = 'rgba(43,34,51,.7)'; c.fillText(`Lv ${f.lv[0]}${f.lv[1] > f.lv[0] ? '-' + f.lv[1] : ''}`, f.x + f.w / 2, f.yy + f.h / 2 + 72);
+    const open = fieldOpen(FIELDS.indexOf(f)), col = f.c === 'mix' ? '#9b6ef3' : f.c === 'cloud' ? '#8e9bd6' : COL[f.c].c;
+    P(c); c.roundRect(f.x, f.yy, f.w, f.h, 40); c.fillStyle = open ? '#ffffff' : '#e4e4e8'; c.fill(); c.strokeStyle = open ? '#cfd3da' : '#d6d6dc'; c.lineWidth = 6; c.stroke();
+    if (open) { P(c); c.arc(f.x + 52, f.yy + 52, 22, 0, TAU); c.fillStyle = col; c.fill(); }
+    c.fillStyle = open ? '#3b3443' : '#9a9aa4'; c.font = '700 58px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.fillText(f.n, f.x + f.w / 2, f.yy + f.h / 2 + 10);
+    c.font = '600 46px -apple-system,system-ui,sans-serif'; c.fillStyle = '#9a96a3'; c.fillText(open ? `Lv ${f.lv[0]}${f.lv[1] > f.lv[0] ? '-' + f.lv[1] : ''}` : `${f.gate} crew`, f.x + f.w / 2, f.yy + f.h / 2 + 70);
   }
-  ZONES.forEach((z, i) => { if (!i) return; const y = ZONES[i - 1].top; c.setLineDash(zoneOpen(i) ? [] : [40, 30]); P(c); c.moveTo(0, y); c.lineTo(WORLD.w, y); c.strokeStyle = zoneOpen(i) ? 'rgba(43,34,51,.35)' : '#e5484d'; c.lineWidth = 10; c.stroke(); c.setLineDash([]); });
-  const dot = (x, y, r, fill, icon) => { P(c); c.arc(x, y, r, 0, TAU); c.fillStyle = fill; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 10; c.stroke(); if (icon) drawIcon(c, icon, x, y, r * 1.2, '#fff', 3); };
-  dot(HOUSE.x, HOUSE.y, 70, '#ff8a3d', 'home');
-  for (const g of GLIDERS) dot(g.x, g.y, 48, '#2ea4dc', 'wind');
-  for (const g of GATES) if (!zoneOpen(g.z)) dot(g.x, g.y, 48, '#e5484d', 'lock');
-  const all = NPCS(); for (const id in all) { const n = all[id]; dot(n.x, n.y, 40, npcLocked(id) ? '#9aa0ad' : n.col); }
-  P(c); c.arc(player.x, player.y, 60, 0, TAU); c.fillStyle = '#2b2233'; c.fill(); c.strokeStyle = '#ffd24a'; c.lineWidth = 16; c.stroke();
+  ZONES.forEach((z, i) => { if (!i) return; const y = ZONES[i - 1].top; c.setLineDash([30, 26]); P(c); c.moveTo(0, y); c.lineTo(WORLD.w, y); c.strokeStyle = zoneOpen(i) ? 'rgba(59,52,67,.18)' : 'rgba(59,52,67,.4)'; c.lineWidth = 6; c.stroke(); c.setLineDash([]); });
+  const dot = (x, y, r, fill, icon) => { P(c); c.arc(x, y, r, 0, TAU); c.fillStyle = fill; c.fill(); if (icon) drawIcon(c, icon, x, y, r * 1.15, '#fff', 3); };
+  dot(HOUSE.x, HOUSE.y, 58, '#3b3443', 'home');
+  for (const g of GLIDERS) dot(g.x, g.y, 40, '#8a8794', 'wind');
+  for (const g of GATES) if (!zoneOpen(g.z)) dot(g.x, g.y, 40, '#b7b4bd', 'lock');
+  const all = NPCS(); for (const id in all) dot(all[id].x, all[id].y, 26, npcLocked(id) ? '#c9c7cf' : '#8a8794');
+  P(c); c.arc(player.x, player.y, 52, 0, TAU); c.fillStyle = '#ff8a3d'; c.fill(); c.strokeStyle = '#ffffff'; c.lineWidth = 14; c.stroke();
   cv.onclick = ev => { const r = cv.getBoundingClientRect(); goTo((ev.clientX - r.left) / sc, (ev.clientY - r.top) / sc); };
 }
 function goTo(x, y) { player.auto = { x, y }; closePanel(); }
@@ -623,7 +646,7 @@ function pStats() {
   const days = Math.max(1, Math.ceil((Date.now() - S.start) / 864e5));
   let h = `<div class="ph"><h2>Stats</h2><span class="pill">${ic('clock')}Day ${days}</span></div><p class="mut small">All-time records for your teahouse.</p>`;
   { const rdy = BADGES.filter(b => badgeReady(b)).length, got = Object.values(S.badges).reduce((a, b) => a + b, 0);
-    h += `<div class="item gear">${ib('badge', '#f0b429')}<div class="it"><b>Badges</b><span class="mut small">${got} of ${BADGES.length * 5} tiers earned. Each tier adds +0.25% to all gathering.</span></div><button class="btn sm ${rdy ? 'primary' : ''}" onclick="openPanel('badges','x')"><span>${rdy ? rdy + ' ready' : 'Open'}</span></button></div>`; }
+    h += `<div class="item gear">${ib('badge', '#f0b429')}<div class="it"><b>Badges</b><span class="mut small">${got} of ${BADGES.length * 5} tiers earned. Field badges boost their own field.</span></div><button class="btn sm ${rdy ? 'primary' : ''}" onclick="openPanel('badges','x')"><span>${rdy ? rdy + ' ready' : 'Open'}</span></button></div>`; }
   h += `<h3>Overview</h3><div class="sgrid">
     ${tile('coin', '#ff8a3d', 'Rupees earned', fmt(st.earn))}
     ${tile('leaf', '#3fae6b', 'Ingredients gathered', fmt(st.gather))}
@@ -663,7 +686,9 @@ function buySprinkler() { const c = sprCountCost(S.spr.n); if (S.rp < c || S.spr
 function upgradeSprinkler() { const c = sprLevelCost(S.spr.lv); if (S.rp < c || !SPRINKLERS[S.spr.lv + 1]) return; spend(c); S.spr.lv++; refreshWet(); toast(`Upgraded to ${SPRINKLERS[S.spr.lv].n}`, 'drop'); save(); renderPanel(); }
 let tipT = null;
 function buffTip(k) {
-  const b = BUFFS[k], t = $('tip'); if (!b || !B[k]) return;
+  const t = $('tip');
+  if (k === 'frostmark') { const fl = frostAt(player.x, player.y); t.innerHTML = `${ib('snow', '#2ea4dc')}<div><b>Frost Mark level ${fl}</b><span>Ice flowers inside this frost mark are gathered at x${FROST_MUL[fl]}.</span></div>`; t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 3200); return; }
+  const b = BUFFS[k]; if (!b || !B[k]) return;
   t.innerHTML = `${ib(b.i, '#ff8a3d')}<div><b>${b.n}${B[k].st > 1 ? ' x' + B[k].st : ''}</b><span>${b.d}</span><small>${Math.ceil(B[k].t)}s left</small></div>`;
   t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 3200);
 }
@@ -683,7 +708,7 @@ function mandalaCard(m, label) {
   const tr = MANDALA_TIERS.find(q => q.id === m.tier);
   return `<div class="mcardm" style="--tc:${tr.col}"><div class="mart">${ic('wheel')}</div><div class="it"><div class="dn"><b>${tr.n}</b>${label ? `<span class="tag">${label}</span>` : ''}</div>
     <div class="mlines">${m.lines.map(([k, v]) => `<span>+${pct(v)} ${STATN2[k]}</span>`).join('')}</div>
-    ${m.pas.map(p => `<div class="pas">${ic('star')}<span><b>${MANDALA_PAS[p].n}.</b> ${MANDALA_PAS[p].d}</span></div>`).join('')}</div></div>`;
+    ${m.pas.map(p => `<div class="pas">${ic('star')}<span><b>${MANDALA_PAS[p].n}</b> ${info('mp', p)}</span></div>`).join('')}</div></div>`;
 }
 function pMandala() {
   const bl = blessedCount();
@@ -694,10 +719,10 @@ function pMandala() {
   h += `<h3>Generate</h3>` + MANDALA_TIERS.map((tr, i) => {
     const okBl = bl >= tr.bl, ok = okBl && S.rp >= tr.cost && Object.entries(tr.req).every(([k, n]) => (S.items[k] || 0) >= n);
     return `<div class="item gear"><span class="ib" style="--c:${tr.col}">${ic('wheel')}</span><div class="it"><b>${tr.n}</b><span class="mut small">${tr.lines} bonus lines${tr.star ? ' + main passive' : ''} · needs ${tr.bl} Blessed</span>
-      <div class="req"><span class="${okBl ? 'ok' : 'no'}">${ic('star')}${Math.min(bl, tr.bl)}/${tr.bl} Blessed</span>${Object.entries(tr.req).map(([k, n]) => `<span class="${(S.items[k] || 0) >= n ? 'ok' : 'no'}">${ic(ITEMS[k].i)}${Math.min(S.items[k] || 0, n)}/${n} ${ITEMS[k].n}</span>`).join('')}</div></div>
+      <div class="req"><span class="${okBl ? 'ok' : 'no'}">${ic('star')}${Math.min(bl, tr.bl)}/${tr.bl} Blessed</span></div></div>
       <button class="btn sm primary" ${ok ? '' : 'disabled'} onclick="genMandala(${i})">${money(tr.cost)}</button></div>`;
   }).join('');
-  h += `<h3>Main passives</h3>` + Object.values(MANDALA_PAS).map(p => `<div class="syn">${ib('star', p.col === 'any' ? '#9b6ef3' : TOKEN_COL[p.col])}<div><b>${p.n}</b><div class="small">${p.d}</div></div></div>`).join('');
+  h += `<h3>Main passives</h3>` + Object.entries(MANDALA_PAS).map(([id, p]) => `<div class="syn">${ib('star', p.col === 'any' ? '#9b6ef3' : TOKEN_COL[p.col])}<div><b>${p.n}</b> ${info('mp', id)}</div></div>`).join('');
   return h;
 }
 function rollMandala(i) {
@@ -724,7 +749,7 @@ const canBlend = (b, n = 1) => Object.entries(b.req).every(([k, q]) => (S.items[
 function pBlender() {
   let h = `<div class="ph"><h2>Blender</h2></div><p class="mut small">Blend fruit and treats into boosts. Fruit drops while you gather: Chili from red flowers, Glacier Berries from blue, Mustang Apples from white, and Walnuts higher up.</p>`;
   h += `<div class="fruits">${Object.keys(FRUITS).map(k => `<span>${ib(ITEMS[k].i, icol(ITEMS[k].i))}<b>${S.items[k] || 0}</b></span>`).join('')}</div>`;
-  h += BLENDS.map((b, i) => { const it = ITEMS[b.out]; return `<div class="item gear">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[b.out] || 0}</span></b><span class="mut small">${it.d}</span>
+  h += BLENDS.map((b, i) => { const it = ITEMS[b.out]; return `<div class="item gear">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[b.out] || 0}</span> ${info('it', b.out)}</b>
     <div class="req">${Object.entries(b.req).map(([k, q]) => `<span class="${(S.items[k] || 0) >= q ? 'ok' : 'no'}">${ic(ITEMS[k].i)}${Math.min(S.items[k] || 0, q)}/${q} ${ITEMS[k].n}</span>`).join('')}</div></div>
     <div class="buyrow col"><button class="btn sm primary" ${canBlend(b) ? '' : 'disabled'} onclick="blend(${i},1)"><span>Blend</span></button><button class="btn sm" ${canBlend(b, 5) ? '' : 'disabled'} onclick="blend(${i},5)"><span>x5</span></button></div></div>`; }).join('');
   return h;
@@ -743,7 +768,7 @@ const badgeReady = b => badgeTier(b) < 5 && b.get() >= b.t[badgeTier(b)];
 const bfmt = (b, v) => b.unit ? (v < 10 ? v.toFixed(1) : Math.floor(v)) + b.unit : fmt(v);
 function pBadges() {
   const tot = Object.values(S.badges).reduce((a, b) => a + b, 0);
-  let h = `<div class="ph"><h2>Badges</h2><span class="pill">${ic('badge')}+${(tot * BADGE_BONUS * 100).toFixed(2).replace(/\.?0+$/, '')}% gathering</span></div><p class="mut small">Every badge has five tiers: Bronze, Silver, Gold, Diamond and Himalayan. Claim each tier for items and a permanent +0.25% to all gathering.</p>`;
+  let h = `<div class="ph"><h2>Badges</h2><span class="pill">${ic('badge')}${tot} tiers</span></div><p class="mut small">Every badge has five tiers: Bronze, Silver, Gold, Diamond and Himalayan. Each tier gives items. Field badges also add +4% gathering in their field per tier.</p>`;
   const row = b => { const tr = badgeTier(b), v = b.get(), done = tr >= 5, goal = done ? b.t[4] : b.t[tr], col = tr ? BADGE_T[tr - 1].c : '#c9c3cf';
     return `<div class="item gear badge">${ib(b.i, col)}<div class="it"><b>${b.n} <span class="mut small">${tr ? BADGE_T[tr - 1].n : 'Not started'}</span></b>
       <div class="bdots">${BADGE_T.map((t, i) => `<i style="background:${i < tr ? t.c : '#ece7f0'}"></i>`).join('')}</div>
@@ -767,7 +792,7 @@ function pTihar() {
     <p class="mut small">The festival of lights runs until the end of January. Marigolds drop while you and your crew gather, and sprouts can drop them too. Every few minutes the mountain goes dark for a Diyo Night: walk into the floating lamps to collect lots of marigolds.</p>
     <div class="item gear">${ib('diya', '#ff9f1a')}<div class="it"><b>${night ? 'Diyo Night is on' : 'Next Diyo Night'}</b><span class="mut small">${night ? `Ends in ${mmss(left * 1000)}` : `Starts in ${mmss(left * 1000)}`}</span></div></div><h3>Festival goods</h3>`;
   h += TIHAR_SHOP.map((g, i) => { const it = ITEMS[g.k], ok = (S.items.marigold || 0) >= g.p;
-    return `<div class="item gear">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[g.k] || 0}</span></b><span class="mut small">${it.d}</span></div>
+    return `<div class="item gear">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[g.k] || 0}</span> ${info('it', g.k)}</b></div>
       <button class="btn sm ${ok ? 'primary' : ''}" ${ok ? '' : 'disabled'} onclick="buyTihar(${i})">${ic('marigold')}<span>${fmt(g.p)}</span></button></div>`; }).join('');
   return h;
 }

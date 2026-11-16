@@ -43,7 +43,7 @@ const NPCS = () => Object.assign({}, GIVERS, REPEAT);
 const mk = (id, bl) => ({ id, lvl: 1, xp: 0, bl: !!bl });
 function newSave() {
   return {
-    v: 1, rp: 0, doko: 0, beds: 5, crew: [mk('porter'), mk('porter')],
+    v: 1, rp: 0, doko: 0, beds: 25, crew: [mk('porter'), mk('porter')],
     items: { momo: 5, permit: 1 },
     tool: 'sickle', tools: ['sickle'], dokoId: 'basket', dokos: ['basket'], boots: 'sandals', bootsOwned: ['sandals'],
     lodge: 0, recruits: 0, wheels: 0, spr: { n: 0, lv: 0, placed: [] }, hats: [], hat: null, charms: [], charm: null, pas: {}, q: { didi: 0, pemba: 0, dolma: 0, norbu: 0, yeti: 0 }, qb: {},
@@ -162,7 +162,6 @@ function recompute() {
   const bpm = syn.has('blessedTrio') ? 1.5 : 1, bp = {};
   S.crew.forEach(m => { if (m.bl) { const [st, v] = CREW[m.id].bp; bp[st] = (bp[st] || 0) + v * bpm / 100; } });
   for (const k in S.perm || {}) bp[k] = (bp[k] || 0) + S.perm[k];
-  { let n = 0; for (const k in S.badges || {}) n += S.badges[k]; bp.gather = (bp.gather || 0) + n * BADGE_BONUS; }
   for (const g of equippedGear()) for (const k in g.st || {}) bp[k] = (bp[k] || 0) + g.st[k];
   if (S.mandala) for (const [k, v] of S.mandala.lines) bp[k] = (bp[k] || 0) + v;
   if (S.mandala && S.mandala.pas.includes('kilnStar')) bp.conv = (bp.conv || 0) + .08;
@@ -175,7 +174,7 @@ const equippedGear = () => [tool(), doko(), HEADGEAR.find(h => h.id === S.hat)].
 const mpas = id => !!(S.mandala && S.mandala.pas.includes(id));
 const lvlMult = m => (1 + .1 * (m.lvl - 1)) * (m.bl ? 1.25 : 1);
 function capMax() {
-  let m = 1 + bp('cap') + (D.syn.has('porterUnion') ? .25 : 0) + (D.syn.has('herd') ? .1 : 0) + (D.hive === 'cloud' ? .15 : 0) + .05 * (D.k.dzo || 0);
+  let m = 1 + bp('cap') + (D.syn.has('rainbow') ? .15 : 0) + (D.syn.has('porterUnion') ? .25 : 0) + (D.syn.has('herd') ? .1 : 0) + (D.hive === 'cloud' ? .15 : 0) + .05 * (D.k.dzo || 0);
   if (doko().pas === 'nimbus') m *= 1 + Math.min(.6, (S.nimbus || 0) * .01);
   if (mpas('glacierStar')) m *= 1 + Math.min(.5, (S.gstar || 0) * .01);
   if (S.popcap) m *= 1 + S.popcap / 100;
@@ -185,8 +184,6 @@ function moveSpeed() { return BOOTS.find(b => b.id === S.boots).spd * (1 + bp('s
 function gMult(col, isTool) {
   let m = 1 + bp('gather') + bp(col);
   if (B.blessing) m *= 1.25;
-  if (D.syn.has('rainbow')) m *= 1.15;
-  if (D.syn.has('fullHouse')) m *= 1.1;
   if (col === 'spice' && B.spiceRush) m *= 1 + .5 * (D.syn.has('kitchen') ? 1.5 : 1);
   if (B['shot_' + col]) m *= 1.25;
   if (B.gtea) m *= 1.15;
@@ -224,6 +221,7 @@ function zoneMult(x, y, col, src) {
   }
   return z * FROST_MUL[frost];
 }
+const fieldBonus = fi => { const id = FIELDS[fi].id; return 1 + ((S.fperm && S.fperm[id]) || 0) + ((S.badges && S.badges['f_' + id]) || 0) * BADGE_FIELD; };
 function addTimed(id, dur, cap = 3600) { if (B[id]) B[id].t = Math.min(cap, B[id].t + dur); else B[id] = { t: dur, st: 1 }; }
 function addBuff(id, dur, max = 1) {
   const b = B[id];
@@ -247,9 +245,10 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   let crit = false;
   if (Math.random() < critChance()) { amt *= critMul(); crit = true; S.stats.crits++; if (mpas('cometStar') && !B.comet && ++S.comet >= 40) { S.comet = 0; addBuff('comet', 6); pop(player.x, player.y - 70, 'Comet!', '#ffd24a', true); ring(player.x, player.y, 110, '#ffd24a', .6, 6); } }
   if (S.pilgrim && t.f === S.pilgrim.f) amt *= 1.6;
+  amt *= fieldBonus(t.f);
   if (isTool && t.col === 'cloud' && mpas('cloudStar')) amt *= 1.5;
   const inTea = E.decals.some(d => d.kind === 'teamark' && dist(t.x, t.y, d.x, d.y) < d.r);
-  const conv = Math.min(.8, bp('conv') + (B.masala ? .08 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
+  const conv = Math.min(.8, bp('conv') + (B.masala ? .08 : 0) + (D.syn.has('fullHouse') ? .05 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
   if (conv > 0) { const inst = amt * conv, val = inst * brewValue(); S.rp += val; S.stats.earn += val; amt -= inst; }
   if (D.k.skyLantern) { const room = Math.max(0, capMax() * 3 - (S.balloon || 0)), toB = Math.min(room, amt * .12); S.balloon = (S.balloon || 0) + toB; amt -= toB; }
   const add = Math.min(space, amt);
@@ -734,7 +733,7 @@ function resize() {
   cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
   scale = cv.width / VIEW_W; viewH = cv.height / scale;
 }
-const teaTier = () => S.beds >= 40 ? 4 : S.beds >= 30 ? 3 : S.beds >= 20 ? 2 : S.beds >= 10 ? 1 : 0;
+const teaTier = () => { const n = S.crew.length; return n >= 40 ? 4 : n >= 30 ? 3 : n >= 20 ? 2 : n >= 10 ? 1 : 0; };
 const houseTop = () => (teaTier() >= 2 ? -132 : -92);
 const teaChimney = () => [120, 140, 150, 160, 170][teaTier()] / 2 - 29;
 
@@ -782,6 +781,7 @@ function render() {
     c.save(); P(c); c.roundRect(f.x, f.yy, f.w, f.h, 20); c.clip();
     for (let j = 0; j < f.h; j += TILE * 2) { c.fillStyle = 'rgba(0,0,0,.05)'; c.fillRect(f.x, f.yy + j, f.w, TILE); }
     P(c); c.roundRect(f.x + 5, f.yy + 5, f.w - 10, f.h - 10, 16); c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 3; c.stroke();
+    drawFrostSheet(c, fi);
     for (const t of TILES[fi]) {
       if (!vis(t.x, t.y, 30)) continue;
       const s = TILE * 1.1 * (.3 + .7 * t.v), img = flowerSprite(t.col, t.lv);
@@ -989,6 +989,23 @@ function drawCrewEnt(c, e) {
   if (e.m.lvl > 1) { c.font = '800 8px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.lineWidth = 2.4; c.strokeStyle = 'rgba(20,24,40,.85)'; c.strokeText(e.m.lvl, e.x + 11, e.y + 3); c.fillStyle = '#fff'; c.fillText(e.m.lvl, e.x + 11, e.y + 3); }
 }
 
+function frostAt(x, y) { let lv = 0; for (const d of E.decals) if (d.kind === 'frost' && dist(x, y, d.x, d.y) < 56) lv = Math.max(lv, d.lv || 1); return lv; }
+function drawFrostSheet(c, fi) {
+  const ms = E.decals.filter(d => d.kind === 'frost' && fieldAt(d.x, d.y) === fi); if (!ms.length) return;
+  const R2 = d => 56 * Math.min(1, d.age * 5, Math.max(0, d.dur - d.age) * 2);
+  const shapes = [];
+  ms.forEach(d => { const r = R2(d); if (r > 1) shapes.push(p => { p.moveTo(d.x + r, d.y); p.arc(d.x, d.y, r, 0, TAU); }); });
+  for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) {
+    const a = ms[i], b = ms[j], L = dist(a.x, a.y, b.x, b.y), w = Math.min(R2(a), R2(b)) * .55; if (L > 160 || w < 2) continue;
+    const nx = -(b.y - a.y) / L * w, ny = (b.x - a.x) / L * w;
+    shapes.push(p => { p.moveTo(a.x + nx, a.y + ny); p.lineTo(b.x + nx, b.y + ny); p.lineTo(b.x - nx, b.y - ny); p.lineTo(a.x - nx, a.y - ny); p.closePath(); });
+  }
+  c.save(); c.lineJoin = 'round';
+  for (const sh of shapes) { P(c); sh(c); c.strokeStyle = '#6cc3ea'; c.lineWidth = 6; c.stroke(); }
+  for (const sh of shapes) { P(c); sh(c); c.fillStyle = '#d6f2ff'; c.fill(); }
+  for (const d of ms) { const r = R2(d), lv = d.lv || 1; if (lv >= 2) circ(c, d.x, d.y, r * .72, '#bfe8fb', false); if (lv >= 3) circ(c, d.x, d.y, r * .46, '#a6dcf6', false); if (lv >= 4) circ(c, d.x, d.y, r * .22, '#8dd0f2', false); }
+  c.restore();
+}
 function drawDecalGround(c, d) {
   const u = d.age / d.dur, a = 1 - u;
   const fadeIO = Math.min(1, d.age * 3, (d.dur - d.age) * 1.5);
@@ -1010,10 +1027,8 @@ function drawDecalGround(c, d) {
   } else if (d.kind === 'frost') {
     const fade = Math.min(1, d.age * 4, (d.dur - d.age));
     const lv = d.lv || 1;
-    c.save(); c.translate(d.x, d.y); c.globalAlpha = fade * .9; c.rotate(now * .3);
-    circ(c, 0, 0, 56, `rgba(120,210,255,${.12 + lv * .08})`, false);
-    for (let k = 0; k < lv; k++) { P(c); c.arc(0, 0, 56 - k * 7, 0, TAU); c.strokeStyle = 'rgba(210,245,255,.85)'; c.lineWidth = 2; c.stroke(); }
-    for (let i = 0; i < 6; i++) { const an = i / 6 * TAU; line(c, 0, 0, Math.cos(an) * 40, Math.sin(an) * 40, 'rgba(210,245,255,.95)', 3); line(c, Math.cos(an) * 22, Math.sin(an) * 22, Math.cos(an + .45) * 32, Math.sin(an + .45) * 32, 'rgba(210,245,255,.9)', 2); line(c, Math.cos(an) * 22, Math.sin(an) * 22, Math.cos(an - .45) * 32, Math.sin(an - .45) * 32, 'rgba(210,245,255,.9)', 2); }
+    c.save(); c.translate(d.x, d.y); c.globalAlpha = fade * .55; c.rotate(now * .3); const k2 = .55 + lv * .12;
+    for (let i = 0; i < 6; i++) { const an = i / 6 * TAU; line(c, 0, 0, Math.cos(an) * 40 * k2, Math.sin(an) * 40 * k2, '#ffffff', 3); line(c, Math.cos(an) * 22 * k2, Math.sin(an) * 22 * k2, Math.cos(an + .45) * 32 * k2, Math.sin(an + .45) * 32 * k2, '#ffffff', 2); line(c, Math.cos(an) * 22 * k2, Math.sin(an) * 22 * k2, Math.cos(an - .45) * 32 * k2, Math.sin(an - .45) * 32 * k2, '#ffffff', 2); }
     c.restore();
   } else if (d.kind === 'foot') {
     c.save(); c.translate(d.x, d.y); c.rotate(d.rot); c.globalAlpha = Math.min(1, (d.dur - d.age));
@@ -1280,6 +1295,10 @@ function boot() {
   buildWorld();
   if (S.qv !== 2) { const old = S.q.didi || 0; S.q.didi = [0, 1, 3, 5, 7, 8, 11, 14, 16, 24, 32, 40][Math.min(11, old)]; S.qb.didi = 0; S.qv = 2; S.qfix = true; }
   if (!S.perm) S.perm = {};
+  if (!S.fperm) S.fperm = {};
+  if (S.bv !== 2) { S.bv = 2; S.beds = Math.max(25, S.beds || 0);
+    S.perm = {}; for (let i = 0; i < Math.min(S.q.prof || 0, Q_PROF.length); i++) for (const k in Q_PROF[i].rw.perm) S.perm[k] = (S.perm[k] || 0) + Q_PROF[i].rw.perm[k];
+    if (S.stats.leo) { const top = FIELDS.map(f => f.id).sort((a, b) => (S.stats.field[b] || 0) - (S.stats.field[a] || 0))[0]; S.fperm[top] = (S.fperm[top] || 0) + S.stats.leo * .01; } }
   if (!S.sprouts) S.sprouts = []; if (!S.badges) S.badges = {};
   if (S.mapv !== 2) { S.mapv = 2; S.px = PLAZA.x; S.py = PLAZA.y + 30; if (S.spr) S.spr.placed = []; }
   player.x = S.px || BREW.x; player.y = S.py || BREW.y - 30;
