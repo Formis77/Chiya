@@ -352,3 +352,4 @@ body.dragging #sheet{overflow:hidden}
 body.panel #hud .hcard,body.panel #buffs,body.panel #toast,body.panel #tip{left:calc(var(--sl) + 62px + var(--pw) + (100vw - var(--sl) - 62px - var(--pw)) / 2)}
 body.panel #hud .hcard{width:min(300px,30vw)}
 body.panel #quest{display:none}
+#place{right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 64px)}

@@ -47,7 +47,7 @@ const CREW = {
   yakKing:      { n: 'Yak King',            r: 'legendary', c: 'cloud',   spd: 80,  amt: 12, gt: 3.4, brew: 14, fav: 'selroti', bp: ['cap', 25],    tags: ['yak'],   ab: 'caravan', cd: 24, d: 'Ruler of every herd above 4000 m.' },
   lama:         { n: 'Lama',                r: 'legendary', c: 'neutral', spd: 85,  amt: 6,  gt: 2.8, brew: 12, fav: 'dalbhat', bp: ['cdr', 10],   tags: ['human'], ab: 'blessing', cd: 35, pas: 'Each Lama adds +0.2% Blessed chance on permits and Mystic Wheels.', d: 'Wise, calm, and slightly mischievous.' },
   yeti:         { n: 'Yeti',                r: 'mythic',    c: 'ice',     spd: 100, amt: 14, gt: 2.6, brew: 15, fav: 'momo',    bp: ['ice', 40],    tags: ['beast'], ab: 'footprints', cd: 26, d: 'Real. Very real. And surprisingly gentle.' },
-  danphe:       { n: 'Golden Danphe',       r: 'mythic',    c: 'spice',   spd: 140, amt: 12, gt: 2.2, brew: 12, fav: 'selroti', bp: ['spice', 40],  tags: ['bird'],  ab: 'dive', cd: 22, d: 'The rainbow pheasant of Nepal, wreathed in fire.' },
+  danphe:       { n: 'Golden Danphe',       r: 'mythic',    c: 'spice',   spd: 140, amt: 14, gt: 2.2, brew: 12, fav: 'selroti', bp: ['spice', 40],  tags: ['bird'],  ab: 'dive', cd: 22, d: 'The rainbow pheasant of Nepal, wreathed in fire.' },
   leopard:      { n: 'Snow Leopard Spirit', r: 'mythic',    c: 'cloud',   spd: 150, amt: 12, gt: 2.2, brew: 12, fav: 'dalbhat', bp: ['cloud', 40],  tags: ['cat'],   ab: 'pounce', cd: 18, d: 'The ghost of the mountains.' },
   fireKid:      { n: 'Firecracker Kid',     r: 'rare',      c: 'neutral', spd: 100, amt: 2,  gt: 3.0, brew: 3,  fav: 'selroti', bp: ['crit', 3],    tags: ['human'], ab: 'firecracker', cd: 14, d: 'Saves every Tihar firecracker for the fields.' },
   iceFisher:    { n: 'Ice Fisher',          r: 'epic',      c: 'ice',     spd: 85,  amt: 5,  gt: 2.8, brew: 7,  fav: 'momo',    bp: ['ice', 15],    tags: ['human'], ab: 'iceBoost', cd: 15, d: 'Patient as a frozen lake.' },
@@ -55,7 +55,7 @@ const CREW = {
   ropeFixer:    { n: 'Rope Fixer',          r: 'legendary', c: 'neutral', spd: 110, amt: 6,  gt: 2.6, brew: 9,  fav: 'dalbhat', bp: ['cap', 15],   tags: ['human'], ab: 'link', cd: 30, d: 'Fixes the ropes so everyone else can climb.' },
   littleMonk:   { n: 'Little Monk',         r: 'legendary', c: 'cloud',   spd: 95,  amt: 6,  gt: 2.6, brew: 10, fav: 'momo',    bp: ['cloud', 25],  tags: ['human'], ab: 'littleLove', cd: 28, d: 'Tiny, cheerful, and somehow everyone works harder around him.' },
   teaMaster:    { n: 'Tea Master',          r: 'legendary', c: 'cloud',   spd: 90,  amt: 7,  gt: 2.6, brew: 16, fav: 'dalbhat', bp: ['brew', 20],   tags: ['human'], ab: 'teaMark', cd: 24, d: 'Can brew chiya from the air itself.' },
-  gurkha:       { n: 'Gurkha Marksman',     r: 'mythic',    c: 'spice',   spd: 130, amt: 12, gt: 2.2, brew: 12, fav: 'dalbhat', bp: ['crit', 8],    tags: ['human'], ab: 'bullseye', cd: 20, d: 'Never misses. Asks you not to either.' },
+  gurkha:       { n: 'Gurkha Marksman',     r: 'mythic',    c: 'spice',   spd: 130, amt: 14, gt: 2.2, brew: 12, fav: 'dalbhat', bp: ['crit', 8],    tags: ['human'], ab: 'bullseye', cd: 20, d: 'Never misses. Asks you not to either.' },
   naga:         { n: 'Lake Naga',           r: 'mythic',    c: 'ice',     spd: 110, amt: 13, gt: 2.4, brew: 14, fav: 'selroti', bp: ['ice', 40],    tags: ['spirit'], ab: 'bubbles', cd: 20, d: 'Serpent spirit of the turquoise lakes.' },
   skyLantern:   { n: 'Sky Lantern',         r: 'mythic',    c: 'ice',     spd: 120, amt: 11, gt: 2.4, brew: 14, fav: 'momo',    bp: ['cap', 40],    tags: ['spirit'], pas: 'Fills a floating balloon with 12% of everything you gather (outside your doko). The balloon is brewed at x1.5 when you sell.', d: 'Drifts above the teahouse on festival nights.' },
   mistYak:      { n: 'Mist Yak',            r: 'mythic',    c: 'cloud',   spd: 95,  amt: 15, gt: 2.6, brew: 16, fav: 'selroti', bp: ['cloud', 40],  tags: ['yak'], ab: 'mist', cd: 22, d: 'Walks out of the clouds and leaves them behind.' },
@@ -69,31 +69,31 @@ const ABIL = {
   spiceRush:   { n: 'Spice Rush',    i: 'chili', tok: true,  d: 'Bubble. Collect it for Spice Rush: red Spice flowers give +50% for 15s (x1.5 stronger and longer with Kitchen Crew).' },
   random:      { n: 'Wild Card',     i: 'dice', tok: true,  d: 'Bubble. One random effect: Chili Burst, Wild Honey, Haste or 2 Momos, or just a selfie. With Lost & Found it never fails and fires twice.' },
   haste:       { n: 'Haste',         i: 'speed', tok: true,  d: 'Bubble. +20% move speed for you and your crew for 10s. Stacks up to x3 (x5 with Trail Team). Can appear anywhere, even off the fields.' },
-  burst:       { n: 'Chili Burst',   i: 'burst', tok: true,  d: 'Bubble. Explodes where it lies: every flower within 95 range is gathered at x3.' },
-  focus:       { n: 'Focus',         i: 'focus', tok: true,  d: 'Bubble. For 12s: +20% crit chance, and crits give x3 instead of x2 (x4 with Frozen Focus).' },
+  burst:       { n: 'Chili Burst',   i: 'burst', tok: true,  d: 'Bubble. Explodes where it lies: every flower within 95 range is gathered at x2.5. Leaves 3 flames. Anything gathered inside a flame counts x1.5.' },
+  focus:       { n: 'Focus',         i: 'focus', tok: true,  d: 'Bubble. For 12s: +15% crit chance, and crits give x2.5 instead of x2 (x3 with Frozen Focus).' },
   prayerWheel: { n: 'Prayer Wheel',  i: 'wheel', tok: true,  d: 'Bubble. Sets a golden wheel (radius 80) where it lies for 10s. Everything gathered inside counts double. Sacred Ground makes it 50% bigger and twice as long.' },
   honey:       { n: 'Wild Honey',    i: 'honey', tok: true,  d: 'Bubble. Instantly gives rupees worth 20% of your doko capacity (brewing bonuses apply), with a 25% chance of a free Momo.' },
-  petalStorm:  { n: 'Petal Storm',   i: 'flower', tok: true,  d: 'Bubble. 30 petals fly from it to random flowers in the field and gather each one at x2.' },
-  frostMark:   { n: 'Frost Mark',    i: 'snow', tok: true,  d: 'Bubble. Leaves a frost mark (radius 56) on the nearest flower. Ice flowers inside give x1.25. A new mark on top of it upgrades it to x1.5, then x2 (max level 3). Lasts 15s and refreshes on upgrade.' },
+  petalStorm:  { n: 'Petal Storm',   i: 'flower', tok: true,  d: 'Bubble. 30 petals fly from it to random flowers in the field and gather each one at x2. One in five petals sets a flame.' },
+  frostMark:   { n: 'Frost Mark',    i: 'snow', tok: true,  d: 'Bubble. Leaves a frost mark (radius 56) on the nearest flower. Ice flowers inside give x1.25. A new mark on top of it upgrades it to x1.5, then x2 (max level 3). Lasts 15s and refreshes on upgrade. A bubble rises on every new mark.' },
   roar:        { n: 'Roar',          i: 'roar', tok: true,  d: 'Bubble. A shockwave from where it lies: your whole crew gathers 50% faster for 10s (20s with Big Cats).' },
   caravan:     { n: 'Caravan Rush',  i: 'horns', tok: true,  d: 'Bubble. Every yak in your crew (Yak Calf, Dzo, Yak King) gathers x2 and moves 50% faster for 12s.' },
   blessing:    { n: 'Blessing',      i: 'sparkle', tok: true,  d: 'Bubble. +25% to all gathering and brewing for 15s.' },
-  footprints:  { n: 'Yeti Steps',    i: 'foot', tok: true,  d: 'Bubble. Six giant footprints stomp in a line starting from it. Each stomp gathers every flower within 72 range at x4.' },
-  dive:        { n: 'Danphe Dive',   i: 'feather', tok: true,  d: 'Bubble. The Danphe dives in a straight line through the bubble across the whole field, gathering every flower within 40 of its path at x4.' },
-  pounce:      { n: 'Shadow Pounce', i: 'claw', tok: true,  d: 'Bubble. The Snow Leopard pounces to 5 random flowers in the field (8 with Big Cats). Each landing gathers everything within 62 range at x3.' },
+  footprints:  { n: 'Yeti Steps',    i: 'foot', tok: true,  d: 'Bubble. Six giant footprints stomp in a line starting from it. Each stomp gathers every flower within 72 range at x3. Every stomp leaves a bubble behind.' },
+  dive:        { n: 'Danphe Dive',   i: 'feather', tok: true,  d: 'Bubble. The Danphe dives in a straight line through the bubble across the whole field, gathering every flower within 40 of its path at x3.' },
+  pounce:      { n: 'Shadow Pounce', i: 'claw', tok: true,  d: 'Bubble. The Snow Leopard pounces to 5 random flowers in the field (8 with Big Cats). Each landing gathers everything within 62 range at x2.5. Every landing leaves butter.' },
   sniff:       { n: 'Sniff',         i: 'paw', tok: true,  d: 'Bubble. Digs up a random item: food (most often), Butter Tea, Incense, and rarely a Mystic Wheel, Permit or Golden Momo.' },
-  spiceBoost:  { n: 'Spice Boost',   i: 'flame',  tok: true,  d: 'Bubble. Spice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer.' },
-  iceBoost:    { n: 'Ice Boost',     i: 'snow',   tok: true,  d: 'Bubble. Ice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer.' },
-  cloudBoost:  { n: 'Cloud Boost',   i: 'cloud',  tok: true,  d: 'Bubble. Cloud gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer.' },
-  firecracker: { n: 'Firecracker',   i: 'burst',  tok: true,  d: 'Bubble. Explodes on pickup, gathering every flower within 60 range at x2. Each firecracker within 12s of the last adds +1 combo (max 10): +6 range and +0.3x per combo.' },
+  spiceBoost:  { n: 'Spice Boost',   i: 'flame',  tok: true,  d: 'Bubble. Spice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also leaves a flame where the bubble lay.' },
+  iceBoost:    { n: 'Ice Boost',     i: 'snow',   tok: true,  d: 'Bubble. Ice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also releases 2 bubbles.' },
+  cloudBoost:  { n: 'Cloud Boost',   i: 'cloud',  tok: true,  d: 'Bubble. Cloud gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also spills a butter puddle where the bubble lay.' },
+  firecracker: { n: 'Firecracker',   i: 'burst',  tok: true,  d: 'Bubble. Explodes on pickup, gathering every flower within 60 range at x2. Each firecracker within 12s of the last adds +1 combo (max 10): +6 range and +0.3x per combo. Combos of 5 or more leave a flame.' },
   link:        { n: 'Fixed Rope',    i: 'compass', tok: true, d: 'Bubble. Pulls in and collects every other bubble lying in the field at once.' },
   littleLove:  { n: 'Little Love',   i: 'heart',  tok: true,  d: 'Bubble. All gathering x1.5 for 12s.' },
   teaMark:     { n: 'Tea Mark',      i: 'cup',    tok: true,  d: 'Bubble. Leaves a tea mark (radius 64) for 15s. 35% of everything gathered inside is brewed into rupees instantly.' },
-  bullseye:    { n: 'Bullseye',      i: 'focus',  tok: true,  d: 'Skill. Three targets appear in the field for 7s. Step on each one: every target hit gives a Super Crit stack for 12s (+8% crit chance and +1x crit power each, max 3). Hit all three for a bonus burst.' },
-  bubbles:     { n: 'Bubble Bloom',  i: 'drop',   tok: true,  d: 'Skill. Eight bubbles float up around the field for 12s. Walk into them to pop them: each pop gathers every flower within 52 range at x3 (Ice flowers count double).' },
-  mist:        { n: 'Mountain Mist', i: 'cloud',  tok: true,  d: 'Bubble. A mist cloud (radius 90, growing to 140) settles for 20s. Every flower inside counts as one level higher (max 5).' },
+  bullseye:    { n: 'Bullseye',      i: 'focus',  tok: true,  d: 'Skill. Three targets appear in the field for 7s. Step on each one: every target hit gives a Super Crit stack for 12s (+8% crit chance and +1x crit power each, max 3). Hit all three for a bonus burst. Every target you hit ignites 2 flames.' },
+  bubbles:     { n: 'Bubble Bloom',  i: 'drop',   tok: true,  d: 'Skill. Eight bubbles float up around the field for 12s. Walk into them to pop them: each pop gathers every flower within 52 range at x1.5 (Ice flowers x2.5). Bubbles popped inside a Frost Mark gather 50% further.' },
+  mist:        { n: 'Mountain Mist', i: 'cloud',  tok: true,  d: 'Bubble. A mist cloud (radius 90, growing to 140) settles for 20s. Every flower inside counts as one level higher (max 5). Butter settles in the middle of the mist.' },
   bearMorph:   { n: 'Bear Morph',    i: 'paw',    tok: true,  d: 'Bubble. You turn into a bear for 15s: your tool gathers x2, reaches 30% further, and you move 20% faster.' },
-  gust:        { n: 'Kite Gust',     i: 'wind', tok: true,  d: 'Bubble. A wind band 92 tall sweeps across the whole field at the bubble\'s height, gathering every flower in it at x2.5.' }
+  gust:        { n: 'Kite Gust',     i: 'wind', tok: true,  d: 'Bubble. A wind band 92 tall sweeps across the whole field at the bubble\'s height, gathering every flower in it at x2.' }
 };
 
 /* Fields sit along the switchback trail up the mountain.
@@ -119,7 +119,7 @@ const FIELDS = [
   { id: 'ember',   n: 'Ember Rocks',         z: 3, c: 'spice', y: 3,   lv: [3, 4], w: { spice: .75, cloud: .25 },             x: 140,  yy: 1800, w_: 460, h: 320 },
   { id: 'frost',   n: 'Frost Hollow',        z: 3, c: 'ice',   y: 3,   lv: [3, 4], w: { ice: .75, cloud: .25 },               x: 1600, yy: 1800, w_: 460, h: 320 },
   // zone 5 (glacier summit)
-  { id: 'summit',  n: 'Summit Glacier',      z: 4, c: 'mix',   y: 5,   lv: [4, 5], w: { spice: .5, ice: .5 },                 x: 700,  yy: 520,  w_: 800, h: 460 }
+  { id: 'summit',  n: 'Summit Glacier',      z: 4, c: 'mix',   y: 5,   lv: [4, 5], w: { spice: .34, ice: .33, cloud: .33 },   x: 700,  yy: 520,  w_: 800, h: 460 }
 ];
 const ZONES = [
   { n: 'Foothills',    alt: '2,800 m', top: 4400, gate: 0,  col: '#86c763', lip: '#6aab50' },
@@ -173,10 +173,10 @@ const CHARMS = [
 ];
 /* passives charge up as abilities of a color fire (auto abilities and bubbles you collect) */
 const PASSIVES = {
-  wildfire:    { n: 'Wildfire',        col: 'spice', need: 30, d: 'Every 30 Spice abilities: Spice gathering x3 for 15s.' },
-  polar:       { n: 'Polar Power',     col: 'ice',   need: 30, d: 'Every 30 Ice abilities: Ice gathering x3 and +15% crit for 15s.' },
-  cloudburst:  { n: 'Cloud Burst',     col: 'cloud', need: 30, d: 'Every 30 Cloud abilities: tool reach x1.5 and tool gathering x3 for 15s.' },
-  spirit:      { n: 'Mountain Spirit', col: 'any',   need: 50, d: 'Every 50 abilities: all gathering x2 for 20s.' },
+  wildfire:    { n: 'Inferno',         col: 'spice', need: 30, d: 'Every 30 Spice abilities: every flame in your field erupts (x3 around it) and +100% Spice gathering for 15s.' },
+  polar:       { n: 'Polar Power',     col: 'ice',   need: 30, d: 'Every 30 Ice abilities: +100% Ice gathering and +10% crit for 15s, and 6 bubbles rise around you.' },
+  cloudburst:  { n: 'Cloud Burst',     col: 'cloud', need: 30, d: 'Every 30 Cloud abilities: tool reach x1.5 and tool gathering x2 for 15s, and butter spills where you stand.' },
+  spirit:      { n: 'Mountain Spirit', col: 'any',   need: 50, d: 'Every 50 abilities: +100% to all gathering for 20s.' },
   herd:        { n: 'Herd Call',       col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: your crew move 50% faster for 15s.' },
   spark:       { n: 'Spark',           col: 'spice', need: 20, d: 'Every 20 Spice abilities: a Chili Burst explodes around you.' },
   freeze:      { n: 'Freeze',          col: 'ice',   need: 20, d: 'Every 20 Ice abilities: 3 Frost Marks appear around you.' },
@@ -186,9 +186,9 @@ const PASSIVES = {
   stomp:       { n: 'Yeti Stomp',      col: 'ice',   need: 20, d: 'Every 20 Ice abilities: giant Yeti Steps around you.' },
   dance:       { n: 'Wind Dance',      col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: two Kite Gusts sweep your field.' },
   summitBless: { n: 'Summit Blessing', col: 'any',   need: 30, d: 'Every 30 abilities: a free Blessing (+25% everything for 15s).' },
-  kiln:        { n: 'Kiln',            col: 'always', need: 0, d: 'Every 20 seconds while you gather, 6% of your doko is brewed into rupees on the spot (with all brewing bonuses).' },
-  deepfreeze:  { n: 'Deep Freeze',     col: 'always', need: 0, d: 'While your doko is more than half full, Ice gathering x1.4.' },
-  nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Capacity grows +1% for every ability that fires, up to +60%. Resets when you finish brewing.' }
+  kiln:        { n: 'Kiln',            col: 'always', need: 0, d: '15% of everything your flames gather is brewed into rupees on the spot, and every 20s while you gather 6% of your doko is brewed too.' },
+  deepfreeze:  { n: 'Deep Freeze',     col: 'always', need: 0, d: 'Chill stacks last 60s instead of 30 and you can hold 40 instead of 20. Popping a bubble inside a Frost Mark gives 2 stacks.' },
+  nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Every Cloud ability adds a Nimbus stack: +2% capacity for 60s, up to 30 stacks (+60%).' }
 };
 /* crafting materials drop while gathering in each field */
 /* fruits: drop while gathering (by flower color), from quests and sprouts */
@@ -232,10 +232,10 @@ const DOKOS = [
   { id: 'saddle', n: 'Yak Saddlebag',   i: 'backpack', cost: 2.5e5, cap: 30000 },
   { id: 'exped',  n: 'Expedition Pack', i: 'backpack', cost: 3e6,   cap: 1.5e5 },
   { id: 'glacier',n: 'Glacier Pack',    i: 'backpack', cost: 4e7,   cap: 6e5 },
-  { id: 'spirit', n: 'Spirit Satchel',  i: 'backpack', cost: 2.5e8,   cap: 2.4e6 },
-  { id: 'kiln',   n: 'Ember Kiln Pack', i: 'backpack', col: 'spice', cost: 1.2e9, cap: 5e6,   pas: 'kiln',       req: { chili: 150, walnut: 80, goldenMomo: 3 } },
-  { id: 'vault',  n: 'Glacier Vault',   i: 'backpack', col: 'ice',   cost: 1.2e9, cap: 8e6, pas: 'deepfreeze', req: { berry: 230, goldenMomo: 3 } },
-  { id: 'nimbus', n: 'Nimbus Bag',      i: 'backpack', col: 'cloud', cost: 1.2e9, cap: 5.5e6,   pas: 'nimbus',     req: { apple: 150, walnut: 80, goldenMomo: 3 } }
+  { id: 'spirit', n: 'Spirit Satchel',  i: 'backpack', cost: 2.5e8,   cap: 4e6 },
+  { id: 'kiln',   n: 'Ember Kiln Pack', i: 'backpack', col: 'spice', cost: 1.2e9, cap: 1.4e7,   pas: 'kiln',       req: { chili: 150, walnut: 80, goldenMomo: 3 } },
+  { id: 'vault',  n: 'Glacier Vault',   i: 'backpack', col: 'ice',   cost: 1.2e9, cap: 1.6e7, pas: 'deepfreeze', req: { berry: 230, goldenMomo: 3 } },
+  { id: 'nimbus', n: 'Nimbus Bag',      i: 'backpack', col: 'cloud', cost: 1.2e9, cap: 1.1e7,   pas: 'nimbus',     req: { apple: 150, walnut: 80, goldenMomo: 3 } }
 ];
 const BOOTS = [
   { id: 'sandals', n: 'Sandals',      i: 'boot', cost: 0,   spd: 120 },
@@ -274,17 +274,17 @@ const MANDALA_STATS = [
   ['spice', .05, .12], ['ice', .05, .12], ['cloud', .05, .12], ['cap', .05, .12],
   ['crit', .01, .03], ['brew', .05, .1], ['cdr', .02, .05], ['conv', .01, .03], ['speed', .02, .05], ['tool', .05, .12]
 ];
+/* six star passives (Celestial only). Main stars power a color, side stars help everyone.
+   A double always pairs one main with one side. */
 const MANDALA_PAS = {
-  kilnStar:    { n: 'Kiln Star',    col: 'spice', d: '8% of everything you gather is brewed into rupees instantly, skipping the doko.' },
-  cometStar:   { n: 'Comet Star',   col: 'spice', d: 'Every 40 crits charges a comet: for 6s every crit hits x5.' },
-  glacierStar: { n: 'Glacier Star', col: 'ice',   d: 'Every Ice ability adds +1% capacity, up to +50%. Resets when you finish brewing.' },
-  frostStar:   { n: 'Frost Star',   col: 'ice',   d: 'Frost Marks can reach level 4 (x3 Ice) and last 25s.' },
-  cloudStar:   { n: 'Cloud Star',   col: 'cloud', d: 'Your tool gathers Cloud flowers x1.5. Every 60 swings that gather: Cloud Burst for 10s.' },
-  pilgrimStar: { n: 'Pilgrim Star', col: 'any',   d: 'Every 10 minutes a random open field becomes your pilgrimage: +60% gathering there.' },
-  blazingStar: { n: 'Blazing Star', col: 'spice', d: 'Standing in flames builds Heat. At 100 Heat: Spice gathering x2.5 for 15s.' },
-  bubbleStar:  { n: 'Bubble Star',  col: 'ice',   d: 'Popping bubbles fills a meter. After 25 pops: Ice x2 for 30s, and each pop adds +2% capacity until you brew.' },
-  butterStar:  { n: 'Butter Star',  col: 'cloud', d: 'Butter Drops last twice as long and boost gathering x3 instead of x2.' }
+  blazingStar: { n: 'Blazing Star', col: 'spice', main: true, d: 'Flames last twice as long, burn twice as often, and anything gathered inside a flame counts x2 instead of x1.5. Every burn adds a Heat stack: +2% Spice gathering each, up to 50 stacks, 20s.' },
+  glacierStar: { n: 'Glacier Star', col: 'ice',   main: true, d: 'Chill stacks are 50% stronger (+1.5% Ice gathering and +1.5% capacity each), and every Ice ability also releases a bubble next to you.' },
+  butterStar:  { n: 'Butter Star',  col: 'cloud', main: true, d: 'Butter gathers x3 instead of x2 and lasts 50% longer. Every 150 flowers gathered in butter drops a Butter Bomb that covers the field in butter for 20s.' },
+  guidingStar: { n: 'Guiding Star', col: 'any',   main: false, d: 'Every 10 minutes a random open field becomes your guided field: +50% gathering there.' },
+  starSaw:     { n: 'Star Saw',     col: 'any',   main: false, d: 'A spinning star circles you in fields and gathers every flower it touches with your tool power.' },
+  starShower:  { n: 'Star Shower',  col: 'any',   main: false, d: 'While you gather, a shooting star lands near you every 1.2s and gathers everything around it at x2 tool power.' }
 };
+const OLD_STAR = { kilnStar: 'blazingStar', cometStar: 'blazingStar', blazingStar: 'blazingStar', glacierStar: 'glacierStar', frostStar: 'glacierStar', bubbleStar: 'glacierStar', cloudStar: 'butterStar', butterStar: 'butterStar', pilgrimStar: 'guidingStar' };
 
 /* sprinklers: water a circle of flowers (faster regrowth + gathering bonus) */
 const SPRINKLERS = [
@@ -302,7 +302,7 @@ const sprLevelCost = l => Math.round(20000 * Math.pow(6, l));
 const BUFFS = {
   haste:      { n: 'Haste',        i: 'speed',   d: 'You and your crew move 20% faster per stack.' },
   spiceRush:  { n: 'Spice Rush',   i: 'chili',   d: '+50% gathering from Spice (red) flowers.' },
-  focus:      { n: 'Focus',        i: 'focus',   d: '+20% crit chance, and crits give x3.' },
+  focus:      { n: 'Focus',        i: 'focus',   d: '+15% crit chance, and crits give x2.5.' },
   roar:       { n: 'Roar',         i: 'roar',    d: 'Your crew gather 50% faster.' },
   caravan:    { n: 'Caravan Rush', i: 'horns',   d: 'Yaks gather x2 and move faster.' },
   blessing:   { n: 'Blessing',     i: 'sparkle', d: '+25% to all gathering and brewing.' },
@@ -312,19 +312,21 @@ const BUFFS = {
   gtea:       { n: 'Golden Tea',   i: 'cup',     d: 'All gathering x1.15.' },
   masala:     { n: 'Masala Tonic', i: 'bottle',  d: '+8% instant conversion.' },
   incense:    { n: 'Incense',      i: 'incense', d: 'Ability cooldowns run twice as fast.' },
-  wildfire:   { n: 'Wildfire',     i: 'flame',   d: 'Spice gathering x3.' },
-  polar:      { n: 'Polar Power',  i: 'snow',    d: 'Ice gathering x3 and +15% crit chance.' },
-  cloudburst: { n: 'Cloud Burst',  i: 'cloud',   d: 'Tool reach x1.5 and tool gathering x3.' },
-  spirit:     { n: 'Mountain Spirit', i: 'mountain', d: 'All gathering x2.' },
+  wildfire:   { n: 'Inferno',      i: 'flame',   d: '+100% Spice gathering.' },
+  heat:       { n: 'Heat',         i: 'flame',   d: '+2% Spice gathering per stack.' },
+  chill:      { n: 'Chill',        i: 'snow',    d: '+1% Ice gathering and +1% capacity per stack (+1.5% with Glacier Star).' },
+  nimbusb:    { n: 'Nimbus',       i: 'cloud',   d: '+2% capacity per stack.' },
+  butterbomb: { n: 'Butter Bomb',  i: 'drop',    d: 'The whole field counts as butter.' },
+  polar:      { n: 'Polar Power',  i: 'snow',    d: '+100% Ice gathering and +10% crit chance.' },
+  cloudburst: { n: 'Cloud Burst',  i: 'cloud',   d: 'Tool reach x1.5 and tool gathering x2.' },
+  spirit:     { n: 'Mountain Spirit', i: 'mountain', d: '+100% to all gathering.' },
   herd:       { n: 'Herd Call',    i: 'horns',   d: 'Your crew move 50% faster.' },
   comet:      { n: 'Comet',        i: 'star',    d: 'Every crit hits x5.' },
   boost_spice:{ n: 'Spice Boost',  i: 'flame',   d: 'Spice gathering +10% per stack.' },
   boost_ice:  { n: 'Ice Boost',    i: 'snow',    d: 'Ice gathering +10% per stack.' },
   boost_cloud:{ n: 'Cloud Boost',  i: 'cloud',   d: 'Cloud gathering +10% per stack.' },
   love:       { n: 'Little Love',  i: 'heart',   d: 'All gathering x1.5.' },
-  supercrit:  { n: 'Super Crit',   i: 'focus',   d: '+8% crit chance and +1x crit power per stack.' },
-  blaze:      { n: 'Blazing',      i: 'flame',   d: 'Spice gathering x2.5.' },
-  popstar:    { n: 'Bubble Star',  i: 'drop',    d: 'Ice x2, and every bubble you pop adds +2% capacity until you brew.' },
+  supercrit:  { n: 'Super Crit',   i: 'focus',   d: '+6% crit chance and +0.5x crit power per stack.' },
   bear:       { n: 'Bear Morph',   i: 'paw',     d: 'Tool x2, reach +30%, speed +20%.' }
 };
 

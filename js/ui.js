@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '20';
+const VERSION = '21';
 const NAV = [['home', 'home', 'Home'], ['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['gear', 'backpack', 'Gear'], ['map', 'map', 'Map'], ['badges', 'badge', 'Badges'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -41,7 +41,7 @@ function uiTick(dt) {
   const fi = fieldAt(player.x, player.y);
   $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>Lv ${FIELDS[fi].lv[0]}${FIELDS[fi].lv[1] > FIELDS[fi].lv[0] ? "-" + FIELDS[fi].lv[1] : ""}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
   const bf = [];
-  const BI = { gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
+  const BI = { heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   { const fl = frostAt(player.x, player.y); if (fl) bf.push(`<button class="chip frostc" data-b="frostmark">${ic('snow')}<b>x${FROST_MUL[fl]}</b></button>`); }
   for (const k in B) bf.push(`<button class="chip" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
@@ -165,7 +165,7 @@ function pCrewDetail(i) {
     <div><span>Every</span><b>${d.gt}s</b></div><div><span>Brew</span><b>${(d.brew * lvlMult(m)).toFixed(1)}/s</b></div></div>`;
   if (ab) h += `<div class="abil">${ib(ab.i, TOKEN_COL[d.c])}<div><b>${ab.n}</b> ${info('ab', d.ab)} <span class="mut small">every ${d.cd}s</span></div></div>`;
   if (d.pas) h += `<div class="abil">${ib('leaf', '#4cb782')}<div><b>Passive</b> ${info('cp', m.id)}</div></div>`;
-  h += `<div class="abil ${m.bl ? 'gold' : ''}">${ib('star', '#f0b429')}<div><b>Blessed passive</b> <span class="mut small">${m.bl ? 'Active' : 'Locked'}</span><p class="small">+${d.bp[1]}% ${STATN[d.bp[0]]} for the whole teahouse</p></div></div>`;
+  h += `<div class="abil ${m.bl ? 'gold' : ''}">${ib('star', '#f0b429')}<div><b>Blessed passive</b> <span class="mut small">${m.bl ? 'Active' : 'Locked'}</span><p class="small">+${d.bp[1]}% ${STATN[d.bp[0]]} for the whole teahouse (counts once per crew type)</p></div></div>`;
   h += `<h3>Feed <span class="mut small">Favorite: ${FOOD[d.fav].n} (x3)</span></h3><div class="row3">`;
   for (const f in FOOD) h += `<button class="btn ${f === d.fav ? 'fav' : ''}" ${(S.items[f] || 0) && m.lvl < 20 ? '' : 'disabled'} onclick="feed(${i},'${f}')">${ic(FOOD[f].i)}<span>${S.items[f] || 0}</span><small>+${FOOD[f].xp * (f === d.fav ? 3 : 1)}</small></button>`;
   h += `</div><div class="row2">
@@ -367,6 +367,7 @@ function pItems() {
 /* ---------------- HOTBAR ---------------- */
 let hbSig = '';
 function renderHotbar() {
+  if (!S.hotbar) S.hotbar = ['permit', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
   const sig = S.hotbar.map(k => k ? k + ':' + (S.items[k] || 0) : '-').join('|') + (dragS ? 'd' : '');
   if (sig === hbSig) return; hbSig = sig;
   $('hotbar').innerHTML = S.hotbar.map((k, i) => { if (!k) return `<button class="hslot empty" data-i="${i}"><small>${i + 1}</small></button>`;
@@ -684,6 +685,8 @@ function pSettings() {
     let d = cur ? S : null; if (!cur) try { d = JSON.parse(localStorage.getItem(slotKey(n))); } catch (e) {}
     h += `<div class="item ${cur ? 'eq' : ''}">${ib('crew', cur ? '#ff8a3d' : '#9aa0ad')}<div class="it"><b>Profile ${n}</b><span class="mut small">${d ? `${d.crew.length} crew · ${fmt(d.stats.earn)} rupees earned` : 'Empty. Start fresh.'}</span></div>${cur ? '<span class="tag">Playing</span>' : `<button class="btn sm" onclick="switchProfile(${n})"><span>${d ? 'Play' : 'Start'}</span></button>`}</div>`;
   }
+  h += `<h3>Test builds</h3><p class="mut small">Temporary maxed profiles for testing each color: 50 crew at level 20, best gear, best mandala. Rebuilt fresh every time you tap.</p><div class="row3">${[['spice', 7], ['ice', 8], ['cloud', 9]].map(([c2, n]) => `<button class="btn" onclick="testProfile('${c2}',${n})">${ic(COL[c2].i)}<span>${COL[c2].n}</span></button>`).join('')}</div>`;
+  if (curSlot() >= 7) h += `<div class="item eq">${ib('star', '#9b6ef3')}<div class="it"><b>Playing a test build</b></div><button class="btn sm" onclick="switchProfile(1)"><span>Back to Profile 1</span></button></div>`;
   h += `<h3>Game</h3><div class="item">${ib('cup', '#ff8a3d')}<div class="it"><b>How to play</b><span class="mut small">Show the intro again</span></div><button class="btn sm" onclick="closePanel();showIntro()"><span>Show</span></button></div>`;
   h += `<div class="item">${ib('trash', '#ef4d5f')}<div class="it"><b>Reset progress</b><span class="mut small">Deletes your teahouse and crew. Cannot be undone.</span></div><button class="btn sm ${resetArm ? 'danger' : ''}" onclick="resetProgress()"><span>${resetArm ? 'Tap again' : 'Reset'}</span></button></div>`;
   return h;
@@ -764,36 +767,36 @@ function mandalaCard(m, label) {
 function pMandala() {
   const bl = blessedCount();
   let h = `<div class="ph"><h2>Mandala Shrine</h2><span class="pill">${ic('star')}${bl} Blessed</span></div>`;
-  h += `<p class="mut small">Generate a mandala with random bonuses. Each tier needs more Blessed crew. Only the Celestial Mandala rolls a main passive, sometimes two. You choose whether to keep the new one.</p>`;
+  h += `<p class="mut small">Generate a mandala with random bonuses. Each tier costs rupees and needs more Blessed crew. You choose whether to keep the new one.</p>`;
   if (S.charmRefund) { h += `<div class="item eq">${ib('coin', '#ff8a3d')}<div class="it"><b>Charms were retired</b><span class="mut small">You got ${fmt(S.charmRefund)} rupees back for the charms you owned.</span></div></div>`; S.charmRefund = 0; }
   h += S.mandala ? mandalaCard(S.mandala, 'Current') : '<p class="mut small">You have no mandala yet.</p>';
   h += `<h3>Generate</h3>` + MANDALA_TIERS.map((tr, i) => {
-    const okBl = bl >= tr.bl, ok = okBl && S.rp >= tr.cost && Object.entries(tr.req).every(([k, n]) => (S.items[k] || 0) >= n);
-    return `<div class="item gear"><span class="ib" style="--c:${tr.col}">${ic('wheel')}</span><div class="it"><b>${tr.n}</b><span class="mut small">${tr.lines} bonus lines${tr.star ? ' + main passive' : ''} · needs ${tr.bl} Blessed</span>
+    const okBl = bl >= tr.bl, ok = okBl && S.rp >= tr.cost, ok2 = okBl && S.rp >= tr.cost * 10;
+    return `<div class="item gear"><span class="ib" style="--c:${tr.col}">${ic('wheel')}</span><div class="it"><b>${tr.n}</b><span class="mut small">${tr.lines} bonus lines${tr.star ? ' + a star passive' : ''} · needs ${tr.bl} Blessed</span>
       <div class="req"><span class="${okBl ? 'ok' : 'no'}">${ic('star')}${Math.min(bl, tr.bl)}/${tr.bl} Blessed</span></div></div>
-      <button class="btn sm primary" ${ok ? '' : 'disabled'} onclick="genMandala(${i})">${money(tr.cost)}</button></div>`;
+      <div class="buyrow col"><button class="btn sm primary" ${ok ? '' : 'disabled'} onclick="genMandala(${i})">${money(tr.cost)}</button>${tr.star ? `<button class="btn sm gold" ${ok2 ? '' : 'disabled'} onclick="genMandala(${i},true)"><span>Double</span>${money(tr.cost * 10)}</button>` : ''}</div></div>`;
   }).join('');
-  h += `<h3>Main passives</h3>` + Object.entries(MANDALA_PAS).map(([id, p]) => `<div class="syn">${ib('star', p.col === 'any' ? '#9b6ef3' : TOKEN_COL[p.col])}<div><b>${p.n}</b> ${info('mp', id)}</div></div>`).join('');
+  h += `<p class="mut small">Celestial rolls one of six stars. Double costs 10x and always gives one main star plus one side star.</p><h3>Star passives</h3>` + Object.entries(MANDALA_PAS).map(([id, p]) => `<div class="syn">${ib('star', p.col === 'any' ? '#9b6ef3' : TOKEN_COL[p.col])}<div><b>${p.n}</b> <span class="mut small">${p.main ? 'Main · ' + COL[p.col].n : 'Side'}</span> ${info('mp', id)}</div></div>`).join('');
   return h;
 }
-function rollMandala(i) {
+function rollMandala(i, dbl) {
   const tr = MANDALA_TIERS[i], pool = MANDALA_STATS.slice().sort(() => Math.random() - .5).slice(0, tr.lines);
   const lines = pool.map(([k, a, b]) => [k, Math.round((a + Math.random() * (b - a)) * tr.mul * 1000) / 1000]);
-  const pas = [];
-  if (tr.star) { const ids = Object.keys(MANDALA_PAS); pas.push(pick(ids)); if (Math.random() < .15) { const rest = ids.filter(x => x !== pas[0]); pas.push(pick(rest)); } }
+  const ids = Object.keys(MANDALA_PAS), mains = ids.filter(p => MANDALA_PAS[p].main), sides = ids.filter(p => !MANDALA_PAS[p].main);
+  const pas = !tr.star ? [] : dbl ? [pick(mains), pick(sides)] : [pick(ids)];
   return { tier: tr.id, lines, pas };
 }
 let pendingMandala = null;
-function genMandala(i) {
-  const tr = MANDALA_TIERS[i];
-  if (blessedCount() < tr.bl || S.rp < tr.cost || !Object.entries(tr.req).every(([k, n]) => (S.items[k] || 0) >= n)) return;
-  spend(tr.cost); for (const k in tr.req) S.items[k] -= tr.req[k];
-  pendingMandala = rollMandala(i); S.stats.mandalas = (S.stats.mandalas || 0) + 1; save();
+function genMandala(i, dbl) {
+  const tr = MANDALA_TIERS[i], cost = tr.cost * (dbl ? 10 : 1);
+  if (blessedCount() < tr.bl || S.rp < cost) return;
+  spend(cost);
+  pendingMandala = rollMandala(i, dbl); S.stats.mandalas = (S.stats.mandalas || 0) + 1; save();
   showModal(`<div class="reveal" style="--rc:${tr.col}"><div class="burst"></div><div class="mbig" style="--tc:${tr.col}">${ic('wheel')}</div></div><h2>${tr.n}</h2>${pendingMandala.pas.length > 1 ? '<div class="new">Double passive</div>' : ''}
     ${mandalaCard(pendingMandala, 'New')}${S.mandala ? mandalaCard(S.mandala, 'Current') : ''}
     <div class="row2"><button class="btn primary" onclick="keepMandala(true)"><span>Keep new</span></button><button class="btn" onclick="keepMandala(false)"><span>${S.mandala ? 'Keep current' : 'Discard'}</span></button></div>`);
 }
-function keepMandala(yes) { if (yes && pendingMandala) { S.mandala = pendingMandala; S.comet = S.gstar = S.cswing = 0; recompute(); toast('Mandala equipped', 'wheel'); } pendingMandala = null; closeModal(); save(); if (panel) renderPanel(); }
+function keepMandala(yes) { if (yes && pendingMandala) { S.mandala = pendingMandala; S.butter = 0; recompute(); toast('Mandala equipped', 'wheel'); } pendingMandala = null; closeModal(); save(); if (panel) renderPanel(); }
 
 /* ---------------- BLENDER ---------------- */
 const canBlend = (b, n = 1) => Object.entries(b.req).every(([k, q]) => (S.items[k] || 0) >= q * n);
@@ -852,4 +855,32 @@ function buyTihar(i) {
   S.items.marigold -= g.p; S.items[g.k] = (S.items[g.k] || 0) + 1;
   if (g.k === 'mysticWheel') S.wheels++;
   toast(`+1 ${ITEMS[g.k].n}`, ITEMS[g.k].i); save(); renderPanel();
+}
+
+/* ---------------- TEST BUILDS (best composition per color) ---------------- */
+const TEST_BUILDS = {
+  spice: { crew: { danphe: 10, gurkha: 9, rhodoSpirit: 8, chiliCook: 6, gingerFarmer: 3, fireKid: 2, littleMonk: 4, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, monk: 1 },
+           tool: 'talon', doko: 'kiln', hat: 'emberCrown', stars: ['blazingStar', 'starShower'], lines: [['spice', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'ember' },
+  ice:   { crew: { naga: 9, yeti: 9, skyLantern: 4, iceClimber: 7, iceFisher: 4, glacierGuide: 3, littleMonk: 4, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, monk: 3 },
+           tool: 'scythe', doko: 'vault', hat: 'frostCrown', stars: ['glacierStar', 'starShower'], lines: [['ice', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'frost' },
+  cloud: { crew: { leopard: 9, mistYak: 9, snowLion: 4, littleMonk: 6, woolSpinner: 5, yakKing: 3, teaMaster: 2, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, teaPicker: 5 },
+           tool: 'fan', doko: 'nimbus', hat: 'cloudCrown', stars: ['butterStar', 'starShower'], lines: [['cloud', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'flags' }
+};
+function buildTestSave(col) {
+  const b = TEST_BUILDS[col], s2 = newSave();
+  s2.beds = 50; s2.crew = [];
+  for (const id in b.crew) for (let k = 0; k < b.crew[id]; k++) { const m = mk(id, CREW[id].r !== 'event'); m.lvl = 20; s2.crew.push(m); }
+  s2.rp = 1e12; s2.tools = TOOLS.map(t => t.id); s2.tool = b.tool; s2.dokos = DOKOS.map(d => d.id); s2.dokoId = b.doko; s2.bootsOwned = BOOTS.map(x => x.id); s2.boots = 'wind';
+  s2.hats = HEADGEAR.map(x => x.id); s2.hat = b.hat; s2.lodge = LODGE.length - 1;
+  s2.mandala = { tier: 'celestial', lines: b.lines, pas: b.stars };
+  s2.spr = { n: SPR_MAX, lv: SPRINKLERS.length - 1, placed: [] };
+  s2.items = {}; for (const k in ITEMS) s2.items[k] = 500;
+  s2.found = {}; for (const id of CREW_IDS) s2.found[id] = true;
+  s2.q = { didi: 48, pemba: 99, dolma: 99, norbu: 99, yeti: 99, prof: 0 }; s2.qv = 2; s2.bv = 2; s2.perm = {}; s2.fperm = {}; s2.badges = {}; s2.sprouts = [];
+  const f = FIELDS.find(x => x.id === b.field); s2.px = f.x + f.w / 2; s2.py = f.yy + f.h / 2; s2.mapv = 2;
+  return s2;
+}
+function testProfile(col, n) {
+  save(); try { localStorage.setItem(slotKey(n), JSON.stringify(buildTestSave(col))); localStorage.setItem('chiya_slot', String(n)); } catch (e) {}
+  S = null; location.reload();
 }
