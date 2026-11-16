@@ -105,7 +105,7 @@ function buildWorld() {
   PATHPTS = pts;
   const nearPath = (x, y, m) => { for (let i = 0; i < TRAIL.length; i += 2) { const t = TRAIL[i]; if (Math.abs(t.x - x) < m && Math.abs(t.y - y) < m && Math.hypot(t.x - x, t.y - y) < m) return true; } return false; };
   const nearPlaza = (x, y) => Math.hypot((x - PLAZA.x) / 290, (y - PLAZA.y) / 170) < 1;
-  const blocked = (x, y, m) => inField(x, y, m) || nearPath(x, y, m + 12) || nearPlaza(x, y) || Object.values(NPCS()).some(g => Math.hypot(x - g.x, y - g.y) < 60) || GLIDERS.some(g => Math.hypot(x - g.x, y - g.y) < 70);
+  const blocked = (x, y, m) => inField(x, y, m) || nearPath(x, y, m + 12) || nearPlaza(x, y) || Object.values(NPCS()).some(g => Math.hypot(x - g.x, y - g.y) < 60) || GLIDERS.some(g => Math.hypot(x - g.x, y - g.y) < 70) || SHOPS.some(g => Math.hypot(x - g.x, y - g.y + 20) < 95);
   // gates where the trail crosses each zone border
   GATES = [];
   for (let z = 1; z < ZONES.length; z++) { const top = ZONES[z - 1].top, p = TRAIL.find(t => t.y < top) || TRAIL[0]; GATES.push({ z, x: p.x, y: top }); }
@@ -132,7 +132,7 @@ function buildWorld() {
     const ln = new Path2D(); ln.moveTo(-50, edge(-50)); for (let x = -50; x <= WORLD.w + 50; x += 20) ln.lineTo(x, edge(x));
     return { lipP: mk(0), mainP: mk(-8), line: ln, col: z.col, lip: z.lip, y0 };
   });
-  DECOR.push({ type: 'chorten', x: 860, y: 5150 }, { type: 'chorten', x: 560, y: 3800 }, { type: 'chorten', x: 1640, y: 2840 }, { type: 'chorten', x: 560, y: 1300 }, { type: 'flagpole', x: PEAK.x, y: PEAK.y + 60 });
+  DECOR.push({ type: 'chorten', x: 1450, y: 5150 }, { type: 'chorten', x: 560, y: 3800 }, { type: 'chorten', x: 400, y: 2700 }, { type: 'chorten', x: 260, y: 1330 }, { type: 'flagpole', x: PEAK.x, y: PEAK.y + 60 });
   FLAGS = GATES.map(g => [g.x - 90, g.y - 70, g.x + 90, g.y - 70]).concat([[PEAK.x - 220, PEAK.y + 40, PEAK.x + 220, PEAK.y + 40]]);
 }
 let DECOR = [], FLAGS = [], SCATTER = [], BANDS = [], STONES = [], TRAIL = [], PATHPTS = [];
@@ -543,6 +543,7 @@ function update(dt) {
   let nn = null, nd = 75;
   const all = NPCS(); for (const id in all) { const g = all[id], d = dist(player.x, player.y, g.x, g.y); if (d < nd) { nd = d; nn = id; } }
   for (const g of GLIDERS) { const d = dist(player.x, player.y, g.x, g.y); if (d < nd) { nd = d; nn = g.id; } }
+  for (const sh of SHOPS) { const d = dist(player.x, player.y, sh.x, sh.y + 20); if (d < nd + 15) { nd = d; nn = 'shop:' + sh.id; } }
   if (player.fly) nn = null;
   if (nn !== nearNpc) { nearNpc = nn; updateTalk(); }
   // Kiln bag: instant conversion while gathering
@@ -705,6 +706,7 @@ function render() {
   for (const sp of S.spr.placed) if (vis(sp.x, sp.y, 60)) objs.push({ y: sp.y, f: () => drawSprinkler(c, sp) });
   for (const g of GATES) if (vis(g.x, g.y, 140)) objs.push({ y: g.y, f: () => drawGate(c, g) });
   for (const g of GLIDERS) if (vis(g.x, g.y, 80)) objs.push({ y: g.y, f: () => drawGlider(c, g) });
+  for (const sh of SHOPS) if (vis(sh.x, sh.y, 120)) objs.push({ y: sh.y, f: () => { c.save(); c.translate(sh.x, sh.y); drawShop(c, sh, now); c.restore(); } });
   if (vis(STALL.x, STALL.y, 120)) objs.push({ y: STALL.y, f: () => { c.save(); c.translate(STALL.x, STALL.y); drawStall(c, now, brewing); c.restore(); } });
   for (const e of E.crew) if (vis(e.x, e.y, 40)) objs.push({ y: e.y, f: () => drawCrewEnt(c, e) });
   objs.push({ y: player.y, f: () => {
@@ -714,9 +716,10 @@ function render() {
     if (player.h) { P(c); c.moveTo(-30, -44); c.quadraticCurveTo(0, -72, 30, -44); c.quadraticCurveTo(0, -58, -30, -44); fs(c, '#ff8a3d', 2); line(c, -24, -46, -4, -24, OUT, 1); line(c, 24, -46, 4, -24, OUT, 1); }
     c.scale(player.face, 1);
     const dc = ['#c8913e', '#b5651d', '#8d6e63', '#6d4c41', '#2e86de', '#74b9ff', '#a29bfe'][DOKOS.findIndex(d => d.id === S.dokoId)];
-    drawPlayer(c, player.anim, player.mv, player.swing, dc);
+    const tl = tool(); drawPlayer(c, player.anim, player.mv, player.swing, dc, { hat: S.hat, toolIcon: tl.i, toolCol: tl.col ? TOKEN_COL[tl.col] : '#5d6670' });
     c.restore();
     const fillF = Math.min(1, S.doko / capMax());
+    if (S.charm) { const ch = CHARMS.find(q => q.id === S.charm), a = now * 2.2, ox = player.x + Math.cos(a) * 20, oy = player.y - 22 - (player.h || 0) + Math.sin(a) * 7; circ(c, ox, oy, 5.5, ch && ch.col ? TOKEN_COL[ch.col] : '#3fae6b'); circ(c, ox - 1.5, oy - 1.5, 1.6, 'rgba(255,255,255,.8)', false); }
     if (player.h) return;
     rr(c, player.x - 14, player.y + 7, 28, 4, 2, 'rgba(0,0,0,.35)', false);
     rr(c, player.x - 14, player.y + 7, 28 * fillF, 4, 2, fillF >= 1 ? '#ff5a6e' : '#ffd24a', false);

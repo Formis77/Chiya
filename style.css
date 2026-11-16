@@ -227,3 +227,24 @@ html.gapfix #toast{bottom:150px}
 .lg-you i{background:#2b2233;box-shadow:0 0 0 2px #ffd24a}
 #talk .gl{width:44px;height:44px;border-radius:14px;background:#e0f3fc;color:#2ea4dc;display:flex;align-items:center;justify-content:center}
 #talk .gl .ic{width:24px;height:24px}
+.car{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 6% 10px;margin:0 -16px;touch-action:pan-x;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.car::-webkit-scrollbar{display:none}
+.gcard{flex:0 0 82%;scroll-snap-align:center;background:var(--card);border-radius:24px;padding:16px;box-shadow:0 2px 10px rgba(43,34,51,.08);display:flex;flex-direction:column;align-items:center;text-align:center;border:2px solid transparent}
+.gcard.eq{border-color:#ffc79a}
+.gart{position:relative;width:120px;height:120px;border-radius:36px;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--c) 30%,#fff),color-mix(in srgb,var(--c) 12%,#fff));color:var(--c);display:flex;align-items:center;justify-content:center;margin:4px 0 10px;box-shadow:inset 0 -6px 0 color-mix(in srgb,var(--c) 18%,transparent)}
+.gart .ic{width:64px;height:64px;stroke-width:1.9}
+.gcol{position:absolute;right:10px;top:10px;width:14px;height:14px;border-radius:50%;border:2.5px solid #fff}
+.gcard h3{margin:0;font-size:19px}
+.gst{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin:10px 0 4px}
+.gst span{font-size:12px;font-weight:800;background:var(--soft);padding:4px 9px;border-radius:9px}
+.gcard .pas,.gcard .req{text-align:left;width:100%}
+.gcard .req{justify-content:center}
+.gbuy{width:100%;margin-top:12px}
+.tag.big{display:flex;justify-content:center;padding:12px;font-size:14px;border-radius:15px}
+.dots{display:flex;justify-content:center;gap:6px;margin:2px 0 6px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--acc2);width:18px;border-radius:4px}
+.gown{display:flex;flex-wrap:wrap;gap:7px}
+.gchip{display:flex;align-items:center;gap:7px;padding:5px 11px 5px 5px;border-radius:14px;background:var(--card);font-weight:800;font-size:13px;border:2px solid transparent}
+.gchip.on{border-color:var(--acc2);background:#fff6ec}
+.gchip .ib{width:30px;height:30px;border-radius:10px}.gchip .ib .ic{width:17px;height:17px}

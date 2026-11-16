@@ -5,8 +5,8 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '12';
-const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
+const VERSION = '13';
+const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['gear', 'backpack', 'Gear'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
   $('rpi').innerHTML = ic('coin'); $('dki').innerHTML = ic('basket');
@@ -77,7 +77,7 @@ function openPanel(name, tab) {
 }
 function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
-  const fn = { crew: pCrew, shop: pShop, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
+  const fn = { crew: pCrew, shop: pShop, gear: pGear, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
   if (!fn) return;
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
   document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel));
@@ -205,22 +205,49 @@ function bless(i) {
 }
 
 /* ---------------- SHOP ---------------- */
+const GEARLIST = { tool: TOOLS, doko: DOKOS, boots: BOOTS, hat: HEADGEAR, charm: CHARMS };
+const ownedOf = k => ({ tool: S.tools, doko: S.dokos, boots: S.bootsOwned, hat: S.hats, charm: S.charms })[k];
+const equippedOf = k => ({ tool: S.tool, doko: S.dokoId, boots: S.boots, hat: S.hat, charm: S.charm })[k];
+const gearCol = it => it.col ? TOKEN_COL[it.col] : icol(it.i);
+function gearStats(k, it) {
+  const st = Object.entries(it.st || {}).map(([s2, v]) => `+${Math.round(v * 100)}% ${STATN2[s2]}`);
+  if (k === 'tool') return [`Reach ${it.r}`, `${it.amt} per tile`, `Every ${it.sw}s`, it.col ? `+${Math.round((it.cb || .6) * 100)}% ${COL[it.col].n}` : '', it.crit ? '+10% crit' : '', ...st].filter(Boolean);
+  if (k === 'doko') return [`Holds ${fmt(it.cap)}`, ...st];
+  if (k === 'boots') return [`Speed ${it.spd}`];
+  return st;
+}
+let curShop = null;
+function openShop(id) { curShop = SHOPS.find(s2 => s2.id === id); panelTab = null; openPanel('shop', 'x'); }
 function pShop() {
-  const t = panelTab && ['tools', 'hats', 'charms', 'dokos', 'boots', 'sprinklers', 'supplies', 'lodge'].includes(panelTab) ? panelTab : 'tools';
-  let h = `<div class="ph"><h2>Bazaar</h2><span class="pill">${ic('coin')}<span id="sheetRp">${fmt(S.rp)}</span></span></div>` + tabs([['tools', 'Tools'], ['hats', 'Hats'], ['charms', 'Charms'], ['dokos', 'Dokos'], ['boots', 'Boots'], ['sprinklers', 'Sprinklers'], ['supplies', 'Supplies'], ['lodge', 'Lodge']], t);
-  const gear = (list, owned, cur, key, stat) => list.map(it => {
-    const own = owned.includes(it.id), eq = cur === it.id, ok = canAfford(it);
-    const pas = it.pas ? `<div class="pas">${ic('sparkle')}<span><b>${PASSIVES[it.pas].n}.</b> ${PASSIVES[it.pas].d}</span></div>` : '';
-    const req = !own && it.req ? `<div class="req">${Object.entries(it.req).map(([k, n]) => `<span class="${(S.items[k] || 0) >= n ? 'ok' : 'no'}">${ic(ITEMS[k].i)}${Math.min(S.items[k] || 0, n)}/${n} ${ITEMS[k].n}</span>`).join('')}</div>` : '';
-    return `<div class="item gear ${eq ? 'eq' : ''}">${ib(it.i, it.col ? TOKEN_COL[it.col] : icol(it.i))}<div class="it"><b>${it.n}</b><span class="mut small">${stat(it)}</span>${pas}${req}</div>
-      ${eq ? (key === 'hat' || key === 'charm' ? `<button class="btn sm" onclick="equip('${key}',null)"><span>Remove</span></button>` : '<span class="tag">Equipped</span>') : own ? `<button class="btn sm" onclick="equip('${key}','${it.id}')"><span>Equip</span></button>` : `<button class="btn sm primary" data-cost="${it.cost}" ${ok ? '' : 'disabled'} onclick="buyGear('${key}','${it.id}')">${money(it.cost)}</button>`}</div>`;
-  }).join('');
-  const stl = it => Object.entries(it.st || {}).map(([k, v]) => `+${Math.round(v * 100)}% ${STATN2[k]}`).join(' · ');
-  if (t === 'tools') h += gear(TOOLS, S.tools, S.tool, 'tool', it => [`Reach ${it.r}`, `${it.amt} per tile`, `every ${it.sw}s`, it.col ? `+${Math.round((it.cb || .6) * 100)}% ${COL[it.col].n}` : '', it.crit ? '+10% crit' : '', stl(it)].filter(Boolean).join(' · '));
-  if (t === 'hats') h += `<p class="mut small">Hats boost your gathering. Crowns and masks have passives that charge as your crew's abilities fire.</p>` + gear(HEADGEAR, S.hats, S.hat, 'hat', stl);
-  if (t === 'charms') h += `<p class="mut small">Charms add bonuses and passives. Materials drop while you gather in each field.</p>` + gear(CHARMS, S.charms, S.charm, 'charm', stl);
-  if (t === 'dokos') h += gear(DOKOS, S.dokos, S.dokoId, 'doko', it => `Holds ${fmt(it.cap)}`);
-  if (t === 'boots') h += gear(BOOTS, S.bootsOwned, S.boots, 'boots', it => `Speed ${it.spd}`);
+  const sh = curShop; if (!sh) return pGear();
+  const cats = Object.keys(sh.sells).concat(sh.extra || []);
+  const t = cats.includes(panelTab) ? panelTab : cats[0];
+  let h = `<div class="ph"><h2>${sh.n}</h2><span class="pill">${ic('coin')}<span id="sheetRp">${fmt(S.rp)}</span></span></div>`;
+  h += tabs(cats.map(c2 => [c2, SLOT_N[c2] || { supplies: 'Supplies', lodge: 'Lodge', sprinklers: 'Sprinklers' }[c2]]), t);
+  if (sh.sells[t]) {
+    const list = sh.sells[t].map(id => GEARLIST[t].find(g => g.id === id));
+    h += `<div class="car" id="car">` + list.map(it => {
+      const own = ownedOf(t).includes(it.id), eq = equippedOf(t) === it.id, ok = canAfford(it), gc = gearCol(it);
+      const req = !own && it.req ? `<div class="req">${Object.entries(it.req).map(([k, n]) => `<span class="${(S.items[k] || 0) >= n ? 'ok' : 'no'}">${ic(ITEMS[k].i)}${Math.min(S.items[k] || 0, n)}/${n} ${ITEMS[k].n}</span>`).join('')}</div>` : '';
+      const pas = it.pas ? `<div class="pas">${ic('sparkle')}<span><b>${PASSIVES[it.pas].n}.</b> ${PASSIVES[it.pas].d}</span></div>` : '';
+      const btn = eq ? `<span class="tag big">Equipped</span>` : own ? `<button class="btn" onclick="equip('${t}','${it.id}')"><span>Equip</span></button>` : `<button class="btn primary" data-cost="${it.cost}" ${ok ? '' : 'disabled'} onclick="buyGear('${t}','${it.id}')">${it.cost ? money(it.cost) : '<span>Free</span>'}</button>`;
+      return `<div class="gcard ${eq ? 'eq' : ''}"><div class="gart" style="--c:${gc}">${ic(it.i)}${it.col ? `<span class="gcol cb-${it.col}"></span>` : ''}</div>
+        <h3>${it.n}</h3><div class="mut small">${SLOT_N[t].replace(/s$/, '')}${it.col ? ' · ' + COL[it.col].n : ''}</div>
+        <div class="gst">${gearStats(t, it).map(x => `<span>${x}</span>`).join('')}</div>${pas}${req}<div class="gbuy">${btn}</div></div>`;
+    }).join('') + `</div><div class="dots">${list.map((_, i) => `<i data-i="${i}"></i>`).join('')}</div>`;
+    setTimeout(carouselInit, 0);
+  } else h += shopExtra(t);
+  return h;
+}
+function carouselInit() {
+  const car = $('car'); if (!car) return;
+  const dots = [...document.querySelectorAll('.dots i')];
+  const upd = () => { const i = Math.round(car.scrollLeft / (car.firstElementChild.offsetWidth + 12)); dots.forEach((d, j) => d.classList.toggle('on', j === i)); };
+  car.onscroll = upd; upd();
+  if (car.dataset.pos) car.scrollLeft = +car.dataset.pos;
+}
+function shopExtra(t) {
+  let h = '';
   if (t === 'sprinklers') {
     const sp = S.spr, cur = SPRINKLERS[sp.lv], nx = SPRINKLERS[sp.lv + 1];
     h += `<p class="mut small">Sprinklers water a circle of flowers: they regrow faster and give more when gathered. Stand in a field and tap <b>Place</b> to set one down. Placing more than you own moves the oldest one.</p>`;
@@ -246,6 +273,16 @@ function pShop() {
   }
   return h;
 }
+/* gear panel: what you wear, what you own, where the shops are */
+function pGear() {
+  let h = `<div class="ph"><h2>Gear</h2></div>`;
+  for (const k of ['tool', 'doko', 'boots', 'hat', 'charm']) {
+    const own = ownedOf(k), cur = equippedOf(k);
+    h += `<h3>${SLOT_N[k]}</h3><div class="gown">` + (own.length ? own.map(id => { const it = GEARLIST[k].find(g => g.id === id); if (!it) return ''; return `<button class="gchip ${cur === id ? 'on' : ''}" onclick="equip('${k}', ${cur === id && (k === 'hat' || k === 'charm') ? 'null' : `'${id}'`})">${ib(it.i, gearCol(it))}<span>${it.n}</span></button>`; }).join('') : `<span class="mut small">None yet. Find one at a shop.</span>`) + `</div>`;
+  }
+  h += `<h3>Shops</h3><p class="mut small">Shops are on the map. Walk up to one to browse its gear.</p>` + SHOPS.map(sh => { const open = zoneOpen(sh.z); return `<div class="item ${open ? '' : 'dim'}">${ib(open ? 'shop' : 'lock', open ? sh.col : '#9aa0ad')}<div class="it"><b>${sh.n}</b><span class="mut small">${ZONES[sh.z].n} · ${Object.keys(sh.sells).map(k => SLOT_N[k]).concat((sh.extra || []).map(e => ({ supplies: 'Supplies', lodge: 'Lodge', sprinklers: 'Sprinklers' })[e])).join(', ')}</span></div>${open ? `<button class="btn sm" onclick="goTo(${sh.x},${sh.y + 40})"><span>Go</span></button>` : ''}</div>`; }).join('');
+  return h;
+}
 const STATN2 = { cap: 'capacity', gather: 'all gathering', spice: 'Spice', ice: 'Ice', cloud: 'Cloud', brew: 'brewing', speed: 'speed', crit: 'crit', offline: 'offline', tool: 'tool', cdr: 'faster abilities', yak: 'yak gathering' };
 const canAfford = it => S.rp >= it.cost && Object.entries(it.req || {}).every(([k, n]) => (S.items[k] || 0) >= n);
 function buyGear(key, id) {
@@ -256,7 +293,7 @@ function buyGear(key, id) {
   ({ tool: S.tools, doko: S.dokos, boots: S.bootsOwned, hat: S.hats, charm: S.charms })[key].push(id);
   equip(key, id); toast(`${it.n} crafted`, it.i); save();
 }
-function equip(key, id) { if (key === 'tool') S.tool = id; if (key === 'doko') S.dokoId = id; if (key === 'boots') S.boots = id; if (key === 'hat') S.hat = id; if (key === 'charm') S.charm = id; recompute(); renderPanel(); }
+function equip(key, id) { const car = $('car'), pos = car ? car.scrollLeft : 0; setTimeout(() => { const c2 = $('car'); if (c2) c2.scrollLeft = pos; }, 0); if (key === 'tool') S.tool = id; if (key === 'doko') S.dokoId = id; if (key === 'boots') S.boots = id; if (key === 'hat') S.hat = id; if (key === 'charm') S.charm = id; recompute(); renderPanel(); }
 function buyItem(k, cost, n = 1) {
   if (S.rp < cost) return; spend(cost); S.items[k] = (S.items[k] || 0) + n;
   if (k === 'permit') S.recruits++; if (k === 'mysticWheel') S.wheels++;
@@ -379,6 +416,7 @@ const gliderOf = id => GLIDERS.find(g => g.id === id);
 function updateTalk() {
   const t = $('talk');
   if (!nearNpc) { t.classList.remove('on'); return; }
+  if (nearNpc.startsWith('shop:')) { const sh = SHOPS.find(q => 'shop:' + q.id === nearNpc); t.innerHTML = `<span class="gl" style="background:${sh.col}22;color:${sh.col}">${ic('shop')}</span><span><small>Shop</small>${sh.n}</span>`; t.classList.add('on'); return; }
   if (gliderOf(nearNpc)) { t.innerHTML = `<span class="gl">${ic('wind')}</span><span><small>Glider pad</small>Fly somewhere</span>`; t.classList.add('on'); return; }
   const g = npcOf(nearNpc), st = giverState(nearNpc);
   t.innerHTML = `<img src="${npcPortrait(nearNpc)}" alt=""><span><small>${g.role}</small>Talk to ${g.n}</span>${st === 'ready' ? `<b class="dotg"></b>` : ''}`;
@@ -393,6 +431,7 @@ function gliderMenu(id) {
 }
 function talk(gid) {
   gid = gid || nearNpc; if (!gid) return;
+  if (gid.startsWith('shop:')) { openShop(gid.slice(5)); return; }
   if (gliderOf(gid)) { gliderMenu(gid); return; }
   const g = npcOf(gid), st = giverState(gid);
   let h = `<div class="npc-head" style="--gc:${g.col}"><img src="${npcPortrait(gid)}" alt=""></div><h2>${g.n}</h2><div class="mut small">${g.role}</div>`;

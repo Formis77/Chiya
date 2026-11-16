@@ -29,6 +29,8 @@ const HATS = {
   sunhat(c) { ell(c, 0, -30, 9.5, 2.6, '#f7f1e3'); P(c); c.arc(0, -30.5, 5.6, Math.PI, 0); fs(c, '#f7f1e3'); rr(c, 1, -27.5, 7, 2.6, 1.2, '#1e272e'); },
   bandana(c) { P(c); c.arc(0, -27, 7.3, Math.PI, 0); fs(c, '#8e44ad'); poly(c, [-7, -27, -12, -25, -10, -29], '#8e44ad'); },
   bowl(c) { P(c); c.arc(0, -27.5, 7.4, Math.PI * 1.05, -0.05); fs(c, '#2d1e14'); },
+  crown(c, o) { poly(c, [-7, -31, -7, -38, -3.5, -34, 0, -40, 3.5, -34, 7, -38, 7, -31], '#ffd24a'); circ(c, 0, -34.5, 1.8, o.hatC || '#e5484d'); circ(c, -5, -32.5, 1, o.hatC || '#e5484d', false); circ(c, 5, -32.5, 1, o.hatC || '#e5484d', false); },
+  mask(c, o) { P(c); c.ellipse(1.5, -26.5, 7.5, 6.5, 0, 0, TAU); fs(c, o.hatC || '#9b6ef3'); ell(c, 3, -27.5, 1.6, 1, '#fff', false); ell(c, 6.5, -27.5, 1.6, 1, '#fff', false); line(c, -6, -33, -9, -38, '#ffd24a', 1.8); line(c, 6, -33, 9, -38, '#ffd24a', 1.8); },
   bun(c) { circ(c, -6.5, -31, 3.6, '#2d1e14'); P(c); c.arc(0, -27, 7.5, Math.PI * 1.08, -0.15); fs(c, '#2d1e14'); rr(c, -9, -32.6, 5, 1.6, .8, '#e5484d', false); },
   furhat(c) { circ(c, -6.5, -24, 3.5, '#c8a27a'); circ(c, 0, -30, 8.4, '#c8a27a'); for (let i = 0; i < 7; i++) circ(c, -7 + i * 2.4, -35.5 + Math.abs(i - 3) * .9, 1.8, '#e6cfae', false); rr(c, -8.5, -29.5, 17, 4, 2, '#a5814f'); },
   braids(c) { P(c); c.arc(0, -27, 7.5, Math.PI * 1.05, -0.05); fs(c, '#1f1610'); line(c, -6, -24, -7.5, -14, OUT, 4.4); line(c, -6, -24, -7.5, -14, '#1f1610', 2.6); circ(c, -7.6, -13.5, 1.6, '#1abc9c'); rr(c, -5, -33.2, 10, 2, 1, '#e84393', false); circ(c, 0, -33.2, 1.4, '#1abc9c', false); }
@@ -240,12 +242,31 @@ function drawCrewArt(c, id, t, mv, act) {
 }
 
 /* ---------------- player ---------------- */
-function drawPlayer(c, t, mv, swing, dokoCol) {
+const PLAYER_HAT = { woolCap: ['beanie', '#9aa3c7'], gingerTopi: ['topi'], iceHood: ['beanie', '#4fb6e6'], sherpaHat: ['furhat'], emberCrown: ['crown', '#e5484d'], frostCrown: ['crown', '#4fb6e6'], cloudCrown: ['crown', '#ffffff'], spiritMask: ['mask', '#9b6ef3'] };
+function drawPlayer(c, t, mv, swing, dokoCol, gear) {
+  gear = gear || {};
+  const ph = PLAYER_HAT[gear.hat] || ['beanie', '#273c75'];
   human(c, {
-    body: '#ff8a3d', trim: '#c0392b', hat: 'beanie', hatC: '#273c75', pants: '#2d3436', skin: '#e3a87a',
+    body: '#ff8a3d', trim: '#c0392b', hat: ph[0], hatC: ph[1], pants: '#2d3436', skin: '#e3a87a',
     back(c) { rr(c, -15, -32, 10, 24, 3, dokoCol || '#c8913e'); line(c, -14, -24, -6, -24, 'rgba(0,0,0,.25)', 1); line(c, -14, -16, -6, -16, 'rgba(0,0,0,.25)', 1); },
-    hand(c, tt) { c.save(); c.rotate(swing > 0 ? -2.2 + swing * 3 : -.4); line(c, 0, 0, 0, -12, '#6d4c41', 1.8); P(c); c.arc(3, -12, 4, Math.PI, Math.PI * 1.9); c.strokeStyle = '#dfe6e9'; c.lineWidth = 2; c.stroke(); c.restore(); }
+    hand(c, tt) { c.save(); c.rotate(swing > 0 ? -2.2 + swing * 3 : -.4); circ(c, 2, -8, 8, 'rgba(255,255,255,.85)', false); drawIcon(c, gear.toolIcon || 'sickle', 2, -8, 13, gear.toolCol || '#5d6670', 2.6); c.restore(); }
   }, t, mv, false);
+}
+
+/* ---------------- shops ---------------- */
+function drawShop(c, sh, t) {
+  ell(c, 0, 4, 66, 14, 'rgba(0,0,0,.15)', false);
+  rr(c, -54, -46, 108, 46, 6, '#f2e3c6');
+  rr(c, -46, -30, 26, 22, 3, '#ffe6a3'); line(c, -33, -30, -33, -8, '#9a6a45', 1.6);
+  P(c); c.roundRect(-8, -38, 24, 38, [9, 9, 2, 2]); fs(c, '#9a6a45', 2);
+  rr(c, 24, -30, 22, 18, 3, '#ffe6a3');
+  P(c); c.moveTo(-64, -46); c.lineTo(64, -46); c.lineTo(52, -70); c.lineTo(-52, -70); c.closePath(); fs(c, sh.col, 2.4);
+  for (let i = 0; i < 8; i++) { P(c); c.arc(-56 + i * 16, -46, 8, 0, Math.PI); fs(c, i % 2 ? sh.col : '#fff6e6', 2); }
+  rr(c, -50, -70, 100, 5, 2.5, 'rgba(255,255,255,.35)', false);
+  c.font = '900 10px -apple-system,system-ui,sans-serif'; const tw = c.measureText(sh.n).width + 30;
+  P(c); c.roundRect(-tw / 2, -100 + Math.sin(t * 2) * 1.5, tw, 22, 11); fs(c, '#ffffff', 1.8);
+  drawIcon(c, 'shop', -tw / 2 + 13, -89 + Math.sin(t * 2) * 1.5, 12, sh.col, 2.4);
+  c.fillStyle = OUT; c.textAlign = 'left'; c.fillText(sh.n, -tw / 2 + 23, -85 + Math.sin(t * 2) * 1.5);
 }
 
 /* ---------------- field tiles (cached sprites) ---------------- */
