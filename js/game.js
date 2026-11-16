@@ -701,7 +701,7 @@ function update(dt) {
       E.decals.splice(i, 1); let sum = 0; const fz = frostAt(d.x, d.y), vault = doko().pas === 'deepfreeze';
       tilesNear(d.fi, d.x, d.y, fz ? 78 : 52).forEach(t => sum += collect(t, d.base, 'ice', t.col === 'ice' ? 2.5 : 1.5));
       for (let k = 0; k < (fz && vault ? 2 : 1); k++) addBuff('chill', vault ? 60 : 30, vault ? 40 : 20);
-      if (B.popstar && d.mine !== false) { B.popstar.st++; addTimed('swell', 8, 3600); }
+      if (B.popstar && d.mine !== false) { B.popstar.st++; addTimed('swell', 4, 3600); }
       burst(d.x, d.y - 10, 14, { type: 'snow', col: '#bfe6ff', spd: 120, life: .6, size: 2.4 }); ring(d.x, d.y, 52, '#9be7ff', .35, 3);
       if (sum) pop(d.x, d.y - 26, '+' + fmt(sum), '#bfefff');
     }
