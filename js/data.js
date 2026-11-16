@@ -69,17 +69,17 @@ const ABIL = {
   spiceRush:   { n: 'Spice Rush',    i: 'chili', tok: true,  d: 'Bubble. Collect it for Spice Rush: red Spice flowers give +50% for 15s (x1.5 stronger and longer with Kitchen Crew).' },
   random:      { n: 'Wild Card',     i: 'dice', tok: true,  d: 'Bubble. One random effect: Chili Burst, Wild Honey, Haste or 2 Momos, or just a selfie. With Lost & Found it never fails and fires twice.' },
   haste:       { n: 'Haste',         i: 'speed', tok: true,  d: 'Bubble. +20% move speed for you and your crew for 10s. Stacks up to x3 (x5 with Trail Team). Can appear anywhere, even off the fields.' },
-  burst:       { n: 'Chili Burst',   i: 'burst', tok: true,  d: 'Bubble. Explodes where it lies: every flower within 95 range is gathered at x2.5. Leaves 3 flames. Anything gathered inside a flame counts x1.5.' },
+  burst:       { n: 'Chili Burst',   i: 'burst', tok: true,  d: 'Bubble. Explodes where it lies: every flower within 95 range is gathered at x2.5. Leaves 2 flames. Anything gathered inside a flame counts x1.5, and standing in one builds Heat.' },
   focus:       { n: 'Focus',         i: 'focus', tok: true,  d: 'Bubble. For 12s: +15% crit chance, and crits give x2.5 instead of x2 (x3 with Frozen Focus).' },
   prayerWheel: { n: 'Prayer Wheel',  i: 'wheel', tok: true,  d: 'Bubble. Sets a golden wheel (radius 80) where it lies for 10s. Everything gathered inside counts double. Sacred Ground makes it 50% bigger and twice as long.' },
   honey:       { n: 'Wild Honey',    i: 'honey', tok: true,  d: 'Bubble. Instantly gives rupees worth 20% of your doko capacity (brewing bonuses apply), with a 25% chance of a free Momo.' },
-  petalStorm:  { n: 'Petal Storm',   i: 'flower', tok: true,  d: 'Bubble. 30 petals fly from it to random flowers in the field and gather each one at x2. One in five petals sets a flame.' },
+  petalStorm:  { n: 'Petal Storm',   i: 'flower', tok: true,  d: 'Bubble. 30 petals fly from it to random flowers in the field and gather each one at x2. Now and then a petal sets a flame.' },
   frostMark:   { n: 'Frost Mark',    i: 'snow', tok: true,  d: 'Bubble. Leaves a frost mark (radius 56) on the nearest flower. Ice flowers inside give x1.25. A new mark on top of it upgrades it to x1.5, then x2 (max level 3). Lasts 15s and refreshes on upgrade. A bubble rises on every new mark.' },
   roar:        { n: 'Roar',          i: 'roar', tok: true,  d: 'Bubble. A shockwave from where it lies: your whole crew gathers 50% faster for 10s (20s with Big Cats).' },
   caravan:     { n: 'Caravan Rush',  i: 'horns', tok: true,  d: 'Bubble. Every yak in your crew (Yak Calf, Dzo, Yak King) gathers x2 and moves 50% faster for 12s.' },
   blessing:    { n: 'Blessing',      i: 'sparkle', tok: true,  d: 'Bubble. +25% to all gathering and brewing for 15s.' },
   footprints:  { n: 'Yeti Steps',    i: 'foot', tok: true,  d: 'Bubble. Six giant footprints stomp in a line starting from it. Each stomp gathers every flower within 72 range at x3. Every stomp leaves a bubble behind.' },
-  dive:        { n: 'Danphe Dive',   i: 'feather', tok: true,  d: 'Bubble. The Danphe dives in a straight line through the bubble across the whole field, gathering every flower within 40 of its path at x3.' },
+  dive:        { n: 'Danphe Dive',   i: 'feather', tok: true,  d: 'Bubble. The Danphe dives in a straight line across the whole field, gathering every flower within 40 of its path at x3. Every flame it flies over turns into a Dark Flame: burns twice as hard, counts x2.5 inside, builds Heat twice as fast, and gives a Dark Heat stack.' },
   pounce:      { n: 'Shadow Pounce', i: 'claw', tok: true,  d: 'Bubble. The Snow Leopard pounces to 5 random flowers in the field (8 with Big Cats). Each landing gathers everything within 62 range at x2.5. Every landing leaves butter.' },
   sniff:       { n: 'Kukur Puja',    i: 'paw', tok: true,  d: 'Bubble. The whole crew is honored: +50% to all gathering for 15s. The dog also digs up 1 to 3 items: food, extracts, Incense, and rarely a Mystic Wheel, Permit or Golden Momo.' },
   spiceBoost:  { n: 'Spice Boost',   i: 'flame',  tok: true,  d: 'Bubble. Spice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also leaves a flame where the bubble lay.' },
@@ -89,7 +89,7 @@ const ABIL = {
   link:        { n: 'Fixed Rope',    i: 'compass', tok: true, d: 'Bubble. Pulls in and collects every other bubble lying in the field at once.' },
   littleLove:  { n: 'Little Love',   i: 'heart',  tok: true,  d: 'Bubble. All gathering x1.5 for 12s.' },
   teaMark:     { n: 'Tea Mark',      i: 'cup',    tok: true,  d: 'Bubble. Leaves a tea mark (radius 64) for 15s. 35% of everything gathered inside is brewed into rupees instantly.' },
-  bullseye:    { n: 'Bullseye',      i: 'focus',  tok: true,  d: 'Skill. Three targets appear in the field for 7s. Step on each one: every target hit gives a Super Crit stack for 12s (+8% crit chance and +1x crit power each, max 3). Hit all three for a bonus burst. Every target you hit ignites 2 flames.' },
+  bullseye:    { n: 'Bullseye',      i: 'focus',  tok: true,  d: 'Skill. Three targets appear in the field for 7s (only one set at a time). Step on all three for a Precision stack: +0.5% chance that a crit becomes a Super Crit, which doubles again and is brewed straight into rupees. Up to 40 stacks (20%), 25s.' },
   bubbles:     { n: 'Bubble Bloom',  i: 'drop',   tok: true,  d: 'Skill. Eight bubbles float up around the field for 12s. Walk into them to pop them: each pop gathers every flower within 52 range at x1.5 (Ice flowers x2.5). Bubbles popped inside a Frost Mark gather 50% further.' },
   mist:        { n: 'Mountain Mist', i: 'cloud',  tok: true,  d: 'Bubble. A mist cloud (radius 90, growing to 140) settles for 20s. Every flower inside counts as one level higher (max 5). Butter settles in the middle of the mist.' },
   bearMorph:   { n: 'Bear Morph',    i: 'paw',    tok: true,  d: 'Bubble. You turn into a bear for 15s: your tool gathers x2, reaches 30% further, and you move 20% faster.' },
@@ -232,10 +232,10 @@ const DOKOS = [
   { id: 'saddle', n: 'Yak Saddlebag',   i: 'backpack', cost: 2.5e5, cap: 30000 },
   { id: 'exped',  n: 'Expedition Pack', i: 'backpack', cost: 3e6,   cap: 1.5e5 },
   { id: 'glacier',n: 'Glacier Pack',    i: 'backpack', cost: 4e7,   cap: 6e5 },
-  { id: 'spirit', n: 'Spirit Satchel',  i: 'backpack', cost: 2.5e8,   cap: 4e6 },
-  { id: 'kiln',   n: 'Ember Kiln Pack', i: 'backpack', col: 'spice', cost: 1.2e9, cap: 1.4e7,   pas: 'kiln',       req: { chili: 150, walnut: 80, goldenMomo: 3 } },
-  { id: 'vault',  n: 'Glacier Vault',   i: 'backpack', col: 'ice',   cost: 1.2e9, cap: 1.6e7, pas: 'deepfreeze', req: { berry: 230, goldenMomo: 3 } },
-  { id: 'nimbus', n: 'Nimbus Bag',      i: 'backpack', col: 'cloud', cost: 1.2e9, cap: 1.1e7,   pas: 'nimbus',     req: { apple: 150, walnut: 80, goldenMomo: 3 } }
+  { id: 'spirit', n: 'Spirit Satchel',  i: 'backpack', cost: 2.5e8,   cap: 8e6 },
+  { id: 'kiln',   n: 'Ember Kiln Pack', i: 'backpack', col: 'spice', cost: 1.2e9, cap: 3.2e7,   pas: 'kiln',       req: { chili: 150, walnut: 80, goldenMomo: 3 } },
+  { id: 'vault',  n: 'Glacier Vault',   i: 'backpack', col: 'ice',   cost: 1.2e9, cap: 4e7, pas: 'deepfreeze', req: { berry: 230, goldenMomo: 3 } },
+  { id: 'nimbus', n: 'Nimbus Bag',      i: 'backpack', col: 'cloud', cost: 1.2e9, cap: 4e7,   pas: 'nimbus',     req: { apple: 150, walnut: 80, goldenMomo: 3 } }
 ];
 const BOOTS = [
   { id: 'sandals', n: 'Sandals',      i: 'boot', cost: 0,   spd: 120 },
@@ -277,7 +277,7 @@ const MANDALA_STATS = [
 /* six star passives (Celestial only). Main stars power a color, side stars help everyone.
    A double always pairs one main with one side. */
 const MANDALA_PAS = {
-  blazingStar: { n: 'Blazing Star', col: 'spice', main: true, d: 'Flames last twice as long, burn twice as often, and anything gathered inside a flame counts x2 instead of x1.5. Every burn adds a Heat stack: +2% Spice gathering each, up to 50 stacks, 20s.' },
+  blazingStar: { n: 'Blazing Star', col: 'spice', main: true, d: 'Flames last twice as long, burn twice as often, count x2 inside instead of x1.5 (Dark Flames x3), and Heat builds 50% faster.' },
   glacierStar: { n: 'Glacier Star', col: 'ice',   main: true, d: 'Chill stacks are 50% stronger (+1.5% Ice gathering and +1.5% capacity each), and every Ice ability also releases a bubble next to you.' },
   butterStar:  { n: 'Butter Star',  col: 'cloud', main: true, d: 'Butter gathers x3 instead of x2 and lasts 50% longer. Every 150 flowers gathered in butter drops a Butter Bomb that covers the field in butter for 20s.' },
   guidingStar: { n: 'Guiding Star', col: 'any',   main: false, d: 'Every 10 minutes a random open field becomes your guided field: +50% gathering there.' },
@@ -313,7 +313,9 @@ const BUFFS = {
   masala:     { n: 'Masala Tonic', i: 'bottle',  d: '+8% instant conversion.' },
   incense:    { n: 'Incense',      i: 'incense', d: 'Ability cooldowns run twice as fast.' },
   wildfire:   { n: 'Inferno',      i: 'flame',   d: '+100% Spice gathering.' },
-  heat:       { n: 'Heat',         i: 'flame',   d: '+2% Spice gathering per stack.' },
+  heat:       { n: 'Heat',         i: 'flame',   d: '+1% Spice gathering per stack, up to 100. Builds while you stand in flames (twice as fast in Dark Flames).' },
+  darkheat:   { n: 'Dark Heat',    i: 'flame',   d: '+1% Super Crit chance and +0.5% instant conversion per stack, up to 50. Every flame the Danphe turns dark adds a stack.' },
+  precision:  { n: 'Precision',    i: 'focus',   d: '+0.5% chance per stack (up to 20%) that a crit becomes a Super Crit: it doubles again and is brewed straight into rupees.' },
   chill:      { n: 'Chill',        i: 'snow',    d: '+1% Ice gathering and +1% capacity per stack (+1.5% with Glacier Star).' },
   nimbusb:    { n: 'Nimbus',       i: 'cloud',   d: '+2% capacity per stack.' },
   kukur:      { n: 'Kukur Puja',   i: 'paw',     d: '+50% to all gathering.' },
@@ -328,7 +330,6 @@ const BUFFS = {
   boost_ice:  { n: 'Ice Boost',    i: 'snow',    d: 'Ice gathering +10% per stack.' },
   boost_cloud:{ n: 'Cloud Boost',  i: 'cloud',   d: 'Cloud gathering +10% per stack.' },
   love:       { n: 'Little Love',  i: 'heart',   d: 'All gathering x1.5.' },
-  supercrit:  { n: 'Super Crit',   i: 'focus',   d: '+6% crit chance and +0.5x crit power per stack.' },
   bear:       { n: 'Bear Morph',   i: 'paw',     d: 'Tool x2, reach +30%, speed +20%.' }
 };
 
@@ -352,7 +353,7 @@ const ITEMS = {
   marigold:    { n: 'Marigold',      i: 'marigold', d: 'Tihar festival flower. Earned by lighting diyas on Diyo Night (higher fields give more) and from sprouts. Spend it at the Tihar Stall.' },
   garland:     { n: 'Marigold Garland', i: 'garland', d: 'Welcomes the Tihar Dog into your crew. Needs a free bed.', use: true },
   tilak:       { n: 'Kukur Tilak',   i: 'paw', d: 'A red tilak from a stray dog you befriended on Diyo Night. The Tihar Stall needs 5 of them, plus marigolds, for a Marigold Garland.' },
-  butterDrop:  { n: 'Butter Drop',   i: 'drop',    d: 'Drops a pool of yak butter (radius 110) where you stand for 40s. Gathering inside x2, and Cloud crew gather x1.5 more.', price: 15000, use: true },
+  butterDrop:  { n: 'Butter Drop',   i: 'drop',    d: 'Drops a pool of yak butter (radius 110) where you stand for 40s. Gathering inside x2, and Cloud crew gather x1.8 more.', price: 15000, use: true },
   permit:      { n: 'Trekking Permit', i: 'ticket', d: 'Recruit a random crew member into an empty bed.' },
   mysticWheel: { n: 'Mystic Wheel',  i: 'wheel', d: 'Reroll a crew member. Never gives Commons.' },
   goldenMomo:  { n: 'Golden Momo',   i: 'star', d: 'Makes a crew member Blessed.', price: 2.5e5 }

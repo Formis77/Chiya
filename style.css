@@ -376,3 +376,5 @@ body.panel #quest{display:none}
 .item.badge.tier{background:color-mix(in srgb,var(--bc) 22%,#fff);border-color:color-mix(in srgb,var(--bc) 55%,#fff)}
 .item.badge.tier .ib{background:var(--bc)}
 .item.badge.tier .qbar{background:rgba(255,255,255,.6)}
+
+.chip.dark{background:#2b1a40;color:#d3b2ff}.chip.dark b,.chip.dark i{color:#fff}
