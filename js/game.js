@@ -197,6 +197,7 @@ function gMult(col, isTool) {
   if (B['shot_' + col]) m *= 1.25;
   if (B.gtea) m *= 1.15;
   if (B.love) m *= 1.5;
+  if (B.inspire) m *= 1 + B.inspire.st;
   if (isTool && B.bear) m *= 2;
   if (isTool && B.cloudburst) m *= 2;
   return m;
@@ -255,7 +256,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   if (Math.random() < critChance()) { amt *= critMul(); crit = true; S.stats.crits++;
     if (Math.random() < superChance()) { amt *= 2; sup = true; S.stats.supers = (S.stats.supers || 0) + 1; }
     if (t.col === 'spice' && Math.random() < .06 && E.decals.some(d => d.kind === 'flame' && dist(t.x, t.y, d.x, d.y) < d.r)) addFlame(t.f, t.x + rand(-30, 30), t.y + rand(-20, 20), base); }
-  if (S.pilgrim && t.f === S.pilgrim.f) amt *= 1.5;
+  if (S.pilgrim && t.f === S.pilgrim.f && Date.now() < S.pilgrim.until) amt *= 2.5;
   if (E.litF && E.litF[t.f]) amt *= 1.5;
   amt *= fieldBonus(t.f);
   const inTea = E.decals.some(d => d.kind === 'teamark' && dist(t.x, t.y, d.x, d.y) < d.r);
@@ -375,6 +376,7 @@ function useAbility(e, fi) {
     if (E.tokens.length > 30) return;
     if (fi < 0 && a !== 'haste') return;
     E.tokens.push({ x: e.x + rand(-18, 18), y: e.y + rand(-10, 10), ab: a, e, fi, life: 10, age: 0 });
+    if (e.m.bl && fi >= 0 && Math.random() < .035) E.tokens.push({ x: e.x + rand(-30, 30), y: e.y + rand(-20, 20), ab: 'inspire', e, fi, life: 10, age: 0 });
     burst(e.x, e.y - 20, 6, { type: 'star', col: '#fff6c8', spd: 60, life: .5, size: 2 });
   } else { FX[a](e, fi); S.stats.ab[a] = (S.stats.ab[a] || 0) + 1; abilityFired(CREW[e.m.id].c); }
 }
@@ -385,9 +387,14 @@ function takeToken(tk) {
   if (!abNameT[a] || now - abNameT[a] > 8) { abNameT[a] = now; pop(tk.x, tk.y - 22, ABIL[a].n, '#ffffff', true); }
   const src = a === 'pounce' ? tk.e : { x: tk.x, y: tk.y, m: tk.e.m, face: 1 };
   FX[a](src, tk.fi, tk);
+  if (a === 'inspire') return;
+  if ((a === 'spiceBoost' || a === 'iceBoost' || a === 'cloudBoost') && mpas('guidingStar') && ++S.guideN >= 250) {
+    S.guideN = 0; const open = FIELDS.map((f, i) => i).filter(fieldOpen); S.pilgrim = { f: pick(open), until: Date.now() + 6e5 };
+    toast(`Wayfinder Star: ${FIELDS[S.pilgrim.f].n} gathers x2.5 for 10 min`, 'star'); }
   abilityFired(CREW[tk.e.m.id].c);
 }
 const FX = {
+  inspire() { if (!B.inspire) B.inspire = { t: 5, st: 1 }; else B.inspire.t = 5; ring(player.x, player.y, 80, '#7ee08a', .5, 5); },
   spiceBoost(e, fi, tk) { if (tk && fi >= 0) addFlame(fi, tk.x, tk.y, crewAmount(e)); addBuff('boost_spice', 15, 10); ring(player.x, player.y, 70, '#ff6b4a', .5, 5); burst(player.x, player.y - 10, 16, { type: 'ember', col: '#ff7b3a', spd: 140, life: .8, size: 2.6, g: -60 }); },
   iceBoost(e, fi, tk) { if (tk && fi >= 0) for (let k = 0; k < 2; k++) spawnBubble(fi, tk.x + rand(-60, 60), tk.y + rand(-40, 40), crewAmount(e)); addBuff('boost_ice', 15, 10); ring(player.x, player.y, 70, '#4fb6e6', .5, 5); burst(player.x, player.y - 10, 16, { type: 'snow', col: '#d6f3ff', spd: 140, life: .8, size: 2.4 }); },
   cloudBoost(e, fi, tk) { if (tk && fi >= 0) addGoo(tk.x, tk.y, 55, 15); addBuff('boost_cloud', 15, 10); ring(player.x, player.y, 70, '#ffffff', .5, 5); burst(player.x, player.y - 10, 16, { type: 'leaf', col: '#ffffff', spd: 140, life: .8, size: 2.6 }); },
@@ -651,13 +658,18 @@ function update(dt) {
   if (player.fly) nn = null;
   if (nn !== nearNpc) { nearNpc = nn; updateTalk(); }
   // Guiding Star: a random open field gets +50% for 10 minutes
-  if (mpas('guidingStar') && (!S.pilgrim || Date.now() > S.pilgrim.until)) { const open = FIELDS.map((f, i) => i).filter(fieldOpen); S.pilgrim = { f: pick(open), until: Date.now() + 6e5 }; toast(`Guiding Star: ${FIELDS[S.pilgrim.f].n} gives +50% for 10 min`, 'star'); }
-  if (!mpas('guidingStar') && S.pilgrim) S.pilgrim = null;
+  if (S.pilgrim && Date.now() > S.pilgrim.until) S.pilgrim = null;
   // zone abilities
   mistOn = false;
   for (let i = E.decals.length - 1; i >= 0; i--) {
     const d = E.decals[i];
     if (d.kind === 'mist') { mistOn = true; d.r = Math.min(140, d.r + dt * 4); }
+    else if (d.kind === 'starspot' && d.age + dt >= d.dur) {
+      const sx2 = d.x, sy2 = d.y, inside = dist(player.x, player.y, sx2, sy2) < d.r + 8;
+      E.proj.push({ kind: 'fallstar', x0: sx2 + 80, y0: sy2 - 260, x1: sx2, y1: sy2, t: 0, dur: .35, arc: 0, hit() {
+        ring(sx2, sy2, 40, '#7ee08a', .35, 4); burst(sx2, sy2, 10, { type: 'star', col: '#ffe066', spd: 120, life: .6, size: 2.4 });
+        if (dist(player.x, player.y, sx2, sy2) < 42) { if (!B.inspire) B.inspire = { t: 5, st: 1 }; else { B.inspire.st = Math.min(10, B.inspire.st + 1); B.inspire.t = 5; } pop(player.x, player.y - 64, `Inspire x${B.inspire.st + 1}`, '#3fae6b', true); } } });
+    }
     else if (d.kind === 'flame') {
       d.tick += dt; if (d.tick > (mpas('blazingStar') ? .5 : 1)) { d.tick = 0; kilnFlame = doko().pas === 'kiln'; let got = 0; tilesNear(d.fi, d.x, d.y, d.r).forEach(t => got += collect(t, d.base, 'spice', d.dark ? 2 : 1)); kilnFlame = false; }
       if (Math.random() < dt * 4) E.parts.push({ type: 'ember', x: d.x + rand(-20, 20), y: d.y + rand(-8, 8), vx: 0, vy: -40, g: -20, life: .7, max: .7, size: 2.6, col: d.dark ? '#b06cff' : '#ff8a3d' });
@@ -682,8 +694,9 @@ function update(dt) {
     if (nd) B.darkheat = { t: 99, st: nd, perm: true }; else delete B.darkheat; }
   // side stars
   if (pf >= 0 && fieldOpen(pf) && S.doko < capMax()) {
-    if (mpas('starSaw')) { sawT -= dt; if (sawT <= 0) { sawT = .15; const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; tilesNear(pf, sx, sy, 30).forEach(t => collect(t, tool().amt * .8, 'neutral', 1)); } }
-    if (mpas('starShower')) { showerT -= dt; if (showerT <= 0) { showerT = 1.2; const ts = tilesNear(pf, player.x, player.y, 230); if (ts.length) { const t = pick(ts), base = tool().amt; E.proj.push({ kind: 'fallstar', x0: t.x + 80, y0: t.y - 260, x1: t.x, y1: t.y, t: 0, dur: .45, arc: 0, hit() { let sum = 0; tilesNear(pf, t.x, t.y, 48).forEach(q => sum += collect(q, base, 'neutral', 2)); ring(t.x, t.y, 48, '#ffe066', .35, 4); burst(t.x, t.y, 12, { type: 'star', col: '#ffe066', spd: 120, life: .6, size: 2.4 }); if (sum) pop(t.x, t.y - 20, '+' + fmt(sum), '#ffe066'); } }); } } }
+    if (mpas('starSaw') && B.saw) { sawT -= dt; if (sawT <= 0) { sawT = .12; const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; tilesNear(pf, sx, sy, 38).forEach(t => collect(t, tool().amt * 1.5, 'neutral', 1)); } }
+    if (mpas('starShower')) { showerT -= dt; if (showerT <= 0 && !E.decals.some(d => d.kind === 'starspot')) { showerT = 45; const f = FIELDS[pf];
+      for (let k = 0; k < 10; k++) E.decals.push({ kind: 'starspot', x: rand(f.x + 40, f.x + f.w - 40), y: rand(f.yy + 40, f.yy + f.h - 40), r: 34, age: 0, dur: 3 + k * .9, fi: pf }); } }
   }
   // Kiln bag: instant conversion while gathering
   if (doko().pas === 'kiln' && pf >= 0 && S.doko > 0) {
@@ -961,7 +974,7 @@ function render() {
   for (const p of E.parts) drawPart(c, p);
   // top decals (rays, flash, focus)
   for (const d of E.decals) drawDecalTop(c, d);
-  if (mpas('starSaw') && fieldAt(player.x, player.y) >= 0) { const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; c.save(); c.globalAlpha = .3; circ(c, sx, sy, 30, '#ffe066', false); c.restore(); drawStarShape(c, sx, sy - 6, 14, now * 14, '#ffd24a'); }
+  if (mpas('starSaw') && B.saw && fieldAt(player.x, player.y) >= 0) { const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; c.save(); c.globalAlpha = .3; circ(c, sx, sy, 30, '#ffe066', false); c.restore(); drawStarShape(c, sx, sy - 6, 14, now * 14, '#ffd24a'); }
   // popups
   c.textAlign = 'center';
   for (const p of E.pops) {
@@ -1107,6 +1120,7 @@ function drawFrostSheet(c, fi) {
   c.restore();
 }
 function drawDecalGround(c, d) {
+  if (d.kind === 'starspot') { const u = Math.min(1, d.age / d.dur); c.save(); circ(c, d.x, d.y, d.r, 'rgba(126,224,138,.22)', false); P(c); c.arc(d.x, d.y, d.r, 0, TAU); c.strokeStyle = '#3fae6b'; c.lineWidth = 2.5; c.stroke(); P(c); c.arc(d.x, d.y, d.r * u, 0, TAU); c.strokeStyle = 'rgba(255,224,102,.9)'; c.lineWidth = 2; c.stroke(); c.restore(); return; }
   const u = d.age / d.dur, a = 1 - u;
   const fadeIO = Math.min(1, d.age * 3, (d.dur - d.age) * 1.5);
   if (d.kind === 'goo') { c.save(); c.globalAlpha = fadeIO * .75; circ(c, d.x, d.y, d.r, '#ffe7a3', false); circ(c, d.x, d.y, d.r * .78, '#fff1c4', false); for (let k = 0; k < 6; k++) { const an = k / 6 * TAU + now * .2; circ(c, d.x + Math.cos(an) * d.r * .55, d.y + Math.sin(an) * d.r * .55, 8, 'rgba(255,255,255,.6)', false); } c.restore(); return; }
@@ -1298,9 +1312,11 @@ function addFlame(fi, x, y, base) {
    Light all three for a field-wide bonus. Sometimes a stray dog shows up to befriend. */
 function startNight() {
   const cap = capMax(); E.diyas = []; E.litF = {};
-  FIELDS.forEach((f, fi) => { if (!fieldOpen(fi)) return; for (let k = 0; k < 3; k++) E.diyas.push({ fi, x: f.x + f.w * (.22 + k * .28), y: f.yy + f.h * (k === 1 ? .3 : .7), need: cap * (.25 + f.z * .1), prog: 0, lit: false, ph: rand(0, TAU) }); });
+  { const open = FIELDS.map((f, i) => i).filter(fieldOpen); let tot = 0; open.forEach(i => tot += 5 - FIELDS[i].z); let q = Math.random() * tot, fi = open[0];
+    for (const i of open) { q -= 5 - FIELDS[i].z; if (q <= 0) { fi = i; break; } }
+    const f = FIELDS[fi]; E.diyas.push({ fi, x: f.x + f.w * rand(.3, .7), y: f.yy + f.h * rand(.35, .7), need: cap * (.6 + f.z * .45), prog: 0, lit: false, ph: rand(0, TAU), big: true }); }
   E.stray = Math.random() < STRAY_CHANCE ? (() => { const open = FIELDS.map((f, i) => i).filter(fieldOpen), fi = pick(open), f = FIELDS[fi]; return { fi, x: f.x + f.w / 2, y: f.yy + f.h / 2, tx: f.x + f.w / 2, ty: f.yy + f.h / 2, need: cap * (.8 + f.z * .15), trust: 0, wait: rand(10, 60), on: false, hop: 0, face: 1, anim: 0 }; })() : null;
-  toast('Diyo Night! Gather next to the diyas in any field to light them', 'diya');
+  toast(`Diyo Night! A great lantern waits in ${FIELDS[E.diyas[0].fi].n}`, 'diya');
 }
 function endNight() {
   if (E.stray && E.stray.on) toast('The stray dog wandered off into the dark', 'paw');
@@ -1308,19 +1324,19 @@ function endNight() {
 }
 function nightHit(t, add) {
   for (const d of E.diyas) {
-    if (d.lit || d.fi !== t.f || Math.abs(t.x - d.x) > 130 || Math.abs(t.y - d.y) > 110) continue;
+    if (d.lit || d.fi !== t.f || Math.abs(t.x - d.x) > 160 || Math.abs(t.y - d.y) > 130) continue;
     d.prog += add;
     if (d.prog >= d.need) {
-      d.lit = true; const z = FIELDS[d.fi].z, n = ri(6, 10) * (1 + z);
-      giveMari(n, d.x, d.y); burst(d.x, d.y - 14, 26, { type: 'star', col: '#ffcf5a', spd: 140, life: .9, size: 2.6 }); ring(d.x, d.y, 70, '#ffb347', .5, 5);
-      if (E.diyas.filter(q => q.fi === d.fi).every(q => q.lit)) { E.litF[d.fi] = true; const bonus = 25 * (1 + z); giveMari(bonus, d.x, d.y - 30); toast(`${FIELDS[d.fi].n} is fully lit: +50% here until morning`, 'diya'); shake(6); }
+      d.lit = true; const z = FIELDS[d.fi].z, n = ri(1 + z * 2, 2 + z * 2);
+      giveMari(n, d.x, d.y); burst(d.x, d.y - 14, 30, { type: 'star', col: '#ffcf5a', spd: 160, life: 1, size: 2.8 }); ring(d.x, d.y, 90, '#ffb347', .5, 6); shake(6);
+      toast(`The great lantern is lit: +${n} Marigold${n > 1 ? 's' : ''}`, 'marigold'); save();
     }
   }
   const st = E.stray;
   if (st && st.on && t.f === st.fi && Math.abs(t.x - st.x) < 170 && Math.abs(t.y - st.y) < 140) {
     st.trust += add;
     if (st.trust >= st.need) {
-      const z = FIELDS[st.fi].z; S.items.tilak = (S.items.tilak || 0) + 1; giveMari(40 * (1 + z), st.x, st.y);
+      const z = FIELDS[st.fi].z; S.items.tilak = (S.items.tilak || 0) + 1; giveMari(1 + Math.floor(z / 2), st.x, st.y);
       burst(st.x, st.y - 20, 40, { type: 'heart', col: '#ff6b8a', spd: 120, life: 1.4, size: 4, g: -40 });
       toast(`The stray trusts you! Kukur Tilak ${S.items.tilak}/${TILAK_NEED}`, 'paw'); E.stray = null; save();
     }
@@ -1353,13 +1369,13 @@ function sproutHit(t, add) {
 }
 function sproutLoot(o) {
   const pool = [['chili', 3], ['berry', 3], ['apple', 3], ['momo', 3], ['selroti', 2], ['walnut', 1 + o * .6], ['dalbhat', .5 + o * .6], ['lotusSeed', .15 + o * .12],
-    ['permit', o >= 1 ? .12 * o : 0], ['mysticWheel', o >= 2 ? .18 * o : 0], ['gem', o >= 3 ? .35 : 0], ['goldenMomo', o >= 4 ? .3 : 0], ['marigold', tiharOn() ? 2.5 : 0]];
+    ['permit', o >= 1 ? .12 * o : 0], ['mysticWheel', o >= 2 ? .18 * o : 0], ['gem', o >= 3 ? .35 : 0], ['goldenMomo', o >= 4 ? .3 : 0], ['marigold', tiharOn() ? .4 : 0]];
   let tot = 0; for (const [, w] of pool) tot += w;
   let q = Math.random() * tot; for (const [k, w] of pool) { q -= w; if (q <= 0) return k; } return 'momo';
 }
 function popSprout(i) {
   const sp = S.sprouts.splice(i, 1)[0], def = SPROUT[sp.r], got = {};
-  for (let k = 0; k < def.drops; k++) { const it = sproutLoot(def.o); const n = ['chili', 'berry', 'apple', 'momo'].includes(it) ? ri(2, 4) * (1 + def.o) : it === 'marigold' ? ri(3, 8) : 1; got[it] = (got[it] || 0) + n; }
+  for (let k = 0; k < def.drops; k++) { const it = sproutLoot(def.o); const n = ['chili', 'berry', 'apple', 'momo'].includes(it) ? ri(2, 4) * (1 + def.o) : it === 'marigold' ? 1 : 1; got[it] = (got[it] || 0) + n; }
   for (const k in got) { S.items[k] = (S.items[k] || 0) + got[k]; if (k === 'marigold') S.stats.marigolds = (S.stats.marigolds || 0) + got[k]; }
   S.stats.sprouts = (S.stats.sprouts || 0) + 1;
   burst(sp.x, sp.y - 20, 40, { type: 'star', col: def.c, spd: 220, life: 1.1, size: 3 });
@@ -1454,6 +1470,8 @@ function boot() {
   if (!S.fperm) S.fperm = {};
   if (S.mandala && S.mandala.pas.length) { const ps = [...new Set(S.mandala.pas.map(p => OLD_STAR[p] || p).filter(p => MANDALA_PAS[p]))]; const mains = ps.filter(p => MANDALA_PAS[p].main), sides = ps.filter(p => !MANDALA_PAS[p].main); S.mandala.pas = mains.length && sides.length ? [mains[0], sides[0]] : mains.length > 1 ? [mains[0], pick(['guidingStar', 'starSaw', 'starShower'])] : ps.slice(0, 1); }
   if (S.butter == null) S.butter = 0;
+  if (S.guideN == null) S.guideN = 0;
+  if (S.mv3 !== 1) { S.mv3 = 1; S.items.marigold = Math.ceil((S.items.marigold || 0) / 37); }
   if (S.bv !== 2) { S.bv = 2; S.beds = Math.max(25, S.beds || 0);
     S.perm = {}; for (let i = 0; i < Math.min(S.q.prof || 0, Q_PROF.length); i++) for (const k in Q_PROF[i].rw.perm) S.perm[k] = (S.perm[k] || 0) + Q_PROF[i].rw.perm[k];
     if (S.stats.leo) { const top = FIELDS.map(f => f.id).sort((a, b) => (S.stats.field[b] || 0) - (S.stats.field[a] || 0))[0]; S.fperm[top] = (S.fperm[top] || 0) + S.stats.leo * .01; } }

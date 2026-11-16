@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '27';
+const VERSION = '28';
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -42,9 +42,9 @@ function uiTick(dt) {
   const fi = fieldAt(player.x, player.y);
   $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>Lv ${FIELDS[fi].lv[0]}${FIELDS[fi].lv[1] > FIELDS[fi].lv[0] ? "-" + FIELDS[fi].lv[1] : ""}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
   const bf = [];
-  const BI = { precision: 'focus', darkheat: 'flame', kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
+  const BI = { inspire: 'sparkle', saw: 'star', precision: 'focus', darkheat: 'flame', kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   { const fl = frostAt(player.x, player.y); if (fl) bf.push(`<button class="chip frostc" data-b="frostmark">${ic('snow')}<b>x${FROST_MUL[fl]}</b></button>`); }
-  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
+  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
   $('quest').innerHTML = questTracker();
@@ -418,6 +418,12 @@ function useItem(k) {
   if (k === 'incense') addTimed('incense', 300);
   if (k === 'goldenTea') addTimed('gtea', 900);
   if (k === 'masala') addTimed('masala', 600);
+  if (k === 'marigold') {
+    if (!mpas('starSaw')) { S.items[k]++; toast('Marigolds spin up the Chakra Saw star. Spend them at the Tihar Stall otherwise.', 'marigold'); return; }
+    if (now - (S.sawLast || -99) > 20) S.sawN = 0; S.sawLast = now; S.sawN = (S.sawN || 0) + 1;
+    if (S.sawN >= 3) { S.sawN = 0; S.items[k]++; B.saw = { t: Math.min(90, (B.saw ? B.saw.t : 0) + 30), st: 1 }; toast('Chakra Saw spinning for 30s (1 Marigold saved)', 'star'); }
+    else toast(`Chakra Saw ${S.sawN}/3`, 'marigold');
+    save(); renderPanel(); return; }
   if (k === 'garland') { if (S.crew.length >= S.beds) { S.items[k]++; toast('You need a free bed first', 'bed'); return; } addCrew('tiharDog', false); save(); renderPanel(); return; }
   if (k === 'lotusSeed') { if (fieldAt(player.x, player.y) < 0 || !window.plantSprout) { S.items[k]++; toast('Stand in a field to plant it', 'leaf'); return; } plantSprout(fieldAt(player.x, player.y)); }
   if (k === 'butterDrop') { if (fieldAt(player.x, player.y) < 0) { S.items[k]++; toast('Stand in a field to drop butter', 'drop'); return; } E.decals.push({ kind: 'goo', x: player.x, y: player.y, r: 110, age: 0, dur: mpas('butterStar') ? 80 : 40 }); }
@@ -864,7 +870,7 @@ function claimBadge(id) {
 function pTihar() {
   const clk = (S.nightClock || 0) % NIGHT_EVERY, night = isNight(), left = night ? NIGHT_EVERY - clk : NIGHT_EVERY - NIGHT_LEN - clk;
   let h = `<div class="ph"><h2>Tihar Stall</h2><span class="pill">${ic('marigold')}${fmt(S.items.marigold || 0)}</span></div>
-    <p class="mut small">Every 15 minutes the mountain goes dark for a Diyo Night. Every open field gets 3 unlit diyas: gather right next to one to light it. Higher fields need more but pay far more marigolds, and lighting all three in a field gives +50% gathering there until morning. Some nights a stray dog wanders into a field: gather near it until it trusts you to earn a Kukur Tilak. Five tilaks and 1,500 marigolds buy the Marigold Garland for the Tihar Dog.</p>
+    <p class="mut small">Every 10 minutes the mountain goes dark for a Diyo Night, and one great lantern appears in a random field (lower fields more often). Gather right next to it to light it: higher fields take far more but give more Marigolds, from 1 in the Tea Garden up to 10 on the Summit. Some nights a stray dog wanders in: gather near it until it trusts you for a Kukur Tilak. Five tilaks and 40 Marigolds buy the Marigold Garland for the Tihar Dog.</p>
     <div class="item gear">${ib('paw', '#e5484d')}<div class="it"><b>Kukur Tilak ${S.items.tilak || 0}/${TILAK_NEED}</b><span class="mut small">${E.stray && E.stray.on ? `A stray is in ${FIELDS[E.stray.fi].n} right now` : 'Strays show up on about 2 nights in 5'}</span></div></div>
     <div class="item gear">${ib('diya', '#ff9f1a')}<div class="it"><b>${night ? 'Diyo Night is on' : 'Next Diyo Night'}</b><span class="mut small">${night ? `Ends in ${mmss(left * 1000)}` : `Starts in ${mmss(left * 1000)}`}</span></div></div><h3>Festival goods</h3>`;
   h += TIHAR_SHOP.map((g, i) => { const it = ITEMS[g.k], ok = (S.items.marigold || 0) >= g.p && (S.items.tilak || 0) >= (g.tilak || 0);
@@ -882,7 +888,7 @@ function buyTihar(i) {
 /* ---------------- TEST BUILDS (best composition per color) ---------------- */
 const TEST_BUILDS = {
   spice: { crew: { danphe: 10, gurkha: 9, rhodoSpirit: 8, chiliCook: 6, gingerFarmer: 3, fireKid: 2, littleMonk: 4, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, monk: 1 },
-           tool: 'talon', doko: 'kiln', hat: 'emberCrown', stars: ['blazingStar', 'starShower'], lines: [['spice', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'ember' },
+           tool: 'talon', doko: 'kiln', hat: 'emberCrown', stars: ['blazingStar', 'starSaw'], lines: [['spice', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'ember' },
   ice:   { crew: { naga: 9, yeti: 9, skyLantern: 4, iceClimber: 7, iceFisher: 4, glacierGuide: 3, littleMonk: 4, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, monk: 3 },
            tool: 'scythe', doko: 'vault', hat: 'frostCrown', stars: ['glacierStar', 'starShower'], lines: [['ice', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'frost' },
   cloud: { crew: { leopard: 9, mistYak: 9, snowLion: 4, littleMonk: 6, woolSpinner: 5, yakKing: 3, teaMaster: 2, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, teaPicker: 5 },
@@ -896,7 +902,7 @@ function buildTestSave(col) {
   s2.hats = HEADGEAR.map(x => x.id); s2.hat = b.hat; s2.lodge = LODGE.length - 1;
   s2.mandala = { tier: 'celestial', lines: b.lines, pas: b.stars };
   s2.spr = { n: SPR_MAX, lv: SPRINKLERS.length - 1, placed: [] };
-  s2.items = {}; for (const k in ITEMS) s2.items[k] = 500;
+  s2.items = {}; for (const k in ITEMS) s2.items[k] = 500; s2.hotbar = ['marigold', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
   s2.found = {}; for (const id of CREW_IDS) s2.found[id] = true;
   s2.q = { didi: 48, pemba: 99, dolma: 99, norbu: 99, yeti: 99, prof: 0 }; s2.qv = 2; s2.bv = 2; s2.perm = {}; s2.fperm = {}; s2.badges = {}; s2.sprouts = [];
   const f = FIELDS.find(x => x.id === b.field); s2.px = f.x + f.w / 2; s2.py = f.yy + f.h / 2; s2.mapv = 2;

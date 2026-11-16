@@ -326,7 +326,7 @@ function drawDiya(c, d) {
   const fl = Math.sin(now * 14 + d.ph) * 1.2;
   c.save(); c.translate(d.x, d.y);
   if (d.lit) { c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(0, -10, 2, 0, -10, 60); g.addColorStop(0, 'rgba(255,190,80,.8)'); g.addColorStop(1, 'rgba(255,140,40,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, -10, 60, 0, TAU); c.fill(); c.globalCompositeOperation = 'source-over'; }
-  c.scale(1.5, 1.5);
+  c.scale(d.big ? 2.6 : 1.5, d.big ? 2.6 : 1.5);
   P(c); c.moveTo(-11, -4); c.quadraticCurveTo(0, 8, 11, -4); c.closePath(); fs(c, d.lit ? '#c8642b' : '#8a5a3b', 1.8);
   if (d.lit) { P(c); c.moveTo(0, -6); c.quadraticCurveTo(-4.5, -12, 0, -20 - fl); c.quadraticCurveTo(4.5, -12, 0, -6); c.fillStyle = '#ffd24a'; c.fill(); P(c); c.moveTo(0, -7); c.quadraticCurveTo(-2, -11, 0, -15 - fl); c.quadraticCurveTo(2, -11, 0, -7); c.fillStyle = '#fff6d0'; c.fill(); }
   else { line(c, 0, -5, 0, -10, '#3b2b22', 1.4); const u = Math.min(1, d.prog / d.need); rr(c, -16, -26, 32, 6, 3, '#ffffff', true); rr(c, -15, -25, 30 * u, 4, 2, '#ffb347', false); }

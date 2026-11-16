@@ -81,6 +81,7 @@ const ABIL = {
   footprints:  { n: 'Yeti Steps',    i: 'foot', tok: true,  d: 'Bubble. Six giant footprints stomp in a line starting from it. Each stomp gathers every flower within 72 range at x3. Every stomp leaves a bubble behind.' },
   dive:        { n: 'Danphe Dive',   i: 'feather', tok: true,  d: 'Bubble. The Danphe dives in a straight line across the whole field, gathering every flower within 40 of its path at x3. Every flame it flies over turns into a Dark Flame: burns twice as hard, counts x2.5 inside, builds Heat twice as fast, and adds to Dark Heat while it burns.' },
   pounce:      { n: 'Shadow Pounce', i: 'claw', tok: true,  d: 'Bubble. The Snow Leopard pounces to 5 random flowers in the field (8 with Big Cats). Each landing gathers everything within 62 range at x2.5. Every landing leaves butter.' },
+  inspire:     { n: 'Inspire',       i: 'sparkle', tok: true, d: 'Rare bubble from any Blessed crew. x2 to all gathering for 5s. Collecting another refreshes the time.' },
   sniff:       { n: 'Kukur Puja',    i: 'paw', tok: true,  d: 'Bubble. The whole crew is honored: +50% to all gathering for 15s. The dog also digs up 1 to 3 items: food, extracts, Incense, and rarely a Mystic Wheel, Permit or Golden Momo.' },
   spiceBoost:  { n: 'Spice Boost',   i: 'flame',  tok: true,  d: 'Bubble. Spice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also leaves a flame where the bubble lay.' },
   iceBoost:    { n: 'Ice Boost',     i: 'snow',   tok: true,  d: 'Bubble. Ice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also releases 2 bubbles.' },
@@ -280,9 +281,9 @@ const MANDALA_PAS = {
   blazingStar: { n: 'Blazing Star', col: 'spice', main: true, d: 'Flames last twice as long, burn twice as often, count x2 inside instead of x1.5 (Dark Flames x3), and Heat builds 50% faster.' },
   glacierStar: { n: 'Glacier Star', col: 'ice',   main: true, d: 'Chill stacks are 50% stronger (+1.5% Ice gathering and +1.5% capacity each), and every Ice ability also releases a bubble next to you.' },
   butterStar:  { n: 'Butter Star',  col: 'cloud', main: true, d: 'Butter gathers x3 instead of x2 and lasts 50% longer. Every 150 flowers gathered in butter drops a Butter Bomb that covers the field in butter for 20s.' },
-  guidingStar: { n: 'Guiding Star', col: 'any',   main: false, d: 'Every 10 minutes a random open field becomes your guided field: +50% gathering there.' },
-  starSaw:     { n: 'Star Saw',     col: 'any',   main: false, d: 'A spinning star circles you in fields and gathers every flower it touches with your tool power.' },
-  starShower:  { n: 'Star Shower',  col: 'any',   main: false, d: 'While you gather, a shooting star lands near you every 1.2s and gathers everything around it at x2 tool power.' }
+  guidingStar: { n: 'Wayfinder Star', col: 'any', main: false, d: 'Every 250 boost bubbles you collect (Spice, Ice or Cloud Boost), a random open field becomes your wayfinder field for 10 minutes: x2.5 gathering there.' },
+  starSaw:     { n: 'Chakra Saw',   col: 'any',   main: false, d: 'Use 3 Marigolds to spin up a Chakra Saw for 30s (the third Marigold is given back). It circles you in fields and gathers every flower it touches at x1.5 tool power.' },
+  starShower:  { n: 'Comet Rain',   col: 'any',   main: false, d: 'Every 45s while you gather, 10 green circles appear across the field and a comet lands on each one. Stand in a circle when its comet lands for Inspire: x2 gathering for 5s, and every further comet adds +1x (up to x11).' }
 };
 const OLD_STAR = { kilnStar: 'blazingStar', cometStar: 'blazingStar', blazingStar: 'blazingStar', glacierStar: 'glacierStar', frostStar: 'glacierStar', bubbleStar: 'glacierStar', cloudStar: 'butterStar', butterStar: 'butterStar', pilgrimStar: 'guidingStar' };
 
@@ -318,6 +319,8 @@ const BUFFS = {
   precision:  { n: 'Precision',    i: 'focus',   d: '+0.5% chance per stack (up to 20%) that a crit becomes a Super Crit: it doubles again and is brewed straight into rupees.' },
   chill:      { n: 'Chill',        i: 'snow',    d: '+1% Ice gathering and +1% capacity per stack (+1.5% with Glacier Star).' },
   nimbusb:    { n: 'Nimbus',       i: 'cloud',   d: '+2% capacity per stack.' },
+  inspire:    { n: 'Inspire',      i: 'sparkle', d: 'All gathering multiplied by (1 + stacks): x2 at one stack. Lasts 5s, refreshed by more comets or Inspire bubbles.' },
+  saw:        { n: 'Chakra Saw',   i: 'star',    d: 'A spinning saw circles you and gathers at x1.5 tool power.' },
   kukur:      { n: 'Kukur Puja',   i: 'paw',     d: '+50% to all gathering.' },
   litfield:   { n: 'Lit field',    i: 'diya',    d: 'You lit every diya in this field: +50% gathering here until the night ends.' },
   butterbomb: { n: 'Butter Bomb',  i: 'drop',    d: 'The whole field counts as butter.' },
@@ -350,7 +353,7 @@ const ITEMS = {
   goldenTea:   { n: 'Golden Tea',    i: 'cup', d: 'All gathering x1.15 for 15 minutes. Blend only.', use: true },
   masala:      { n: 'Masala Tonic',  i: 'bottle', d: '+8% instant conversion for 10 minutes. Blend only.', use: true },
   lotusSeed:   { n: 'Lotus Seed',    i: 'sprout', d: 'Plant it to grow a sprout in the field you stand in. Planted sprouts are rarer than wild ones.', use: true },
-  marigold:    { n: 'Marigold',      i: 'marigold', d: 'Tihar festival flower. Earned by lighting diyas on Diyo Night (higher fields give more) and from sprouts. Spend it at the Tihar Stall.' },
+  marigold:    { n: 'Marigold',      i: 'marigold', d: 'Tihar festival flower. Light the great lantern on Diyo Night for 1 to 10 (higher fields give more). With the Chakra Saw star, using 3 spins up the saw. Also spent at the Tihar Stall.', use: true },
   garland:     { n: 'Marigold Garland', i: 'garland', d: 'Welcomes the Tihar Dog into your crew. Needs a free bed.', use: true },
   tilak:       { n: 'Kukur Tilak',   i: 'paw', d: 'A red tilak from a stray dog you befriended on Diyo Night. The Tihar Stall needs 5 of them, plus marigolds, for a Marigold Garland.' },
   butterDrop:  { n: 'Butter Drop',   i: 'drop',    d: 'Drops a pool of yak butter (radius 110) where you stand for 40s. Gathering inside x2, and Cloud crew gather x1.8 more.', price: 15000, use: true },
@@ -550,14 +553,14 @@ const BADGES = [
   { id: 'quests',  n: 'Helping hand',   i: 'flag',  t: [5, 15, 30, 60, 120], get: () => (S.stats.quests || 0) + (S.stats.leo || 0) },
   { id: 'sprouts', n: 'Sprout popper',  i: 'sprout', t: [3, 15, 50, 150, 500], get: () => S.stats.sprouts || 0 },
   { id: 'blends',  n: 'Blender buddy',  i: 'blender', t: [5, 25, 100, 500, 2000], get: () => S.stats.blends || 0 },
-  { id: 'tihar',   n: 'Tihar spirit',   i: 'marigold', t: [50, 300, 1500, 6000, 25000], get: () => S.stats.marigolds || 0 }
+  { id: 'tihar',   n: 'Tihar spirit',   i: 'marigold', t: [10, 50, 200, 600, 2000], get: () => S.stats.marigolds || 0 }
 ];
 
 /* ---------------- Tihar festival ---------------- */
 const tiharOn = () => true;   /* permanent festival */
-const NIGHT_EVERY = 900, NIGHT_LEN = 150;
+const NIGHT_EVERY = 600, NIGHT_LEN = 150;
 const STRAY_CHANCE = .4, TILAK_NEED = 5;
 const TIHAR_SHOP = [
-  { k: 'garland', p: 1500, tilak: TILAK_NEED }, { k: 'lotusSeed', p: 40 }, { k: 'mysticWheel', p: 120 }, { k: 'goldenTea', p: 80 },
-  { k: 'incense', p: 30 }, { k: 'dalbhat', p: 15 }, { k: 'goldenMomo', p: 450 }
+  { k: 'garland', p: 40, tilak: TILAK_NEED }, { k: 'lotusSeed', p: 3 }, { k: 'mysticWheel', p: 6 }, { k: 'goldenTea', p: 4 },
+  { k: 'incense', p: 2 }, { k: 'dalbhat', p: 1 }, { k: 'goldenMomo', p: 25 }
 ];
