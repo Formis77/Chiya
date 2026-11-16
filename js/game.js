@@ -265,7 +265,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   if (D.k.skyLantern) { const room = Math.max(0, capMax() * 3 - (S.balloon || 0)), toB = Math.min(room, amt * .12); S.balloon = (S.balloon || 0) + toB; amt -= toB; }
   const add = Math.min(space, amt);
   S.doko += add; S.stats.gather += add;
-  if (sup) { pop(t.x, t.y - 22, 'SUPER', '#c06bff', true); burst(t.x, t.y - 10, 8, { type: 'star', col: '#c06bff', spd: 120, life: .6, size: 2.6 }); }
+  if (sup) { burst(t.x, t.y - 10, 8, { type: 'star', col: '#c06bff', spd: 120, life: .6, size: 2.6 }); }
   const st = S.stats; st.col[t.col] = (st.col[t.col] || 0) + add; st.lv[t.lv] = (st.lv[t.lv] || 0) + add;
   if (add > (st.best || 0)) st.best = add;
   const fid = FIELDS[t.f].id; S.stats.field[fid] = (S.stats.field[fid] || 0) + add;
@@ -531,8 +531,8 @@ const FX = {
     E.decals.push({ kind: 'trail', x: x0, y: y0, x1, y1, age: 0, dur: 2.4 });
     E.proj.push({ kind: 'bird', x0, y0, x1, y1, t: 0, dur: 1.1, arc: 0, step(x, y) {
       for (const d of E.decals) if (d.kind === 'flame' && !d.dark && dist(x, y, d.x, d.y) < d.r + 24) {
-        d.dark = true; d.r = 52; d.age = Math.min(d.age, 1); d.dur += 6; addBuff('darkheat', 30, 50);
-        ring(d.x, d.y, 60, '#8b3dff', .45, 5); pop(d.x, d.y - 30, 'Dark Flame', '#c06bff', true); }
+        d.dark = true; d.r = 52; d.age = Math.min(d.age, 1); d.dur += 6;
+        ring(d.x, d.y, 60, '#8b3dff', .45, 5); }
       burst(x, y, 2, { type: 'ember', col: '#ffb347', spd: 50, life: .7, size: 3, g: -30 });
       tilesNear(fi, x, y, 40).forEach(t => { if (!hit.has(t)) { hit.add(t); const g = collect(t, base, 'spice', 3); if (g) pop(t.x, t.y - 10, '+' + fmt(g), '#ffb347'); } });
     } });
@@ -663,7 +663,7 @@ function update(dt) {
       if (Math.random() < dt * 4) E.parts.push({ type: 'ember', x: d.x + rand(-20, 20), y: d.y + rand(-8, 8), vx: 0, vy: -40, g: -20, life: .7, max: .7, size: 2.6, col: d.dark ? '#b06cff' : '#ff8a3d' });
     } else if (d.kind === 'target' && dist(player.x, player.y, d.x, d.y) < d.r) {
       E.decals.splice(i, 1); bullHits++; ring(d.x, d.y, 44, '#e5484d', .35, 4); pop(d.x, d.y - 24, `${bullHits}/3`, '#ffd24a', true);
-      if (bullHits >= 3) { bullHits = 0; addBuff('precision', 25, 40); pop(player.x, player.y - 60, `Precision ${(B.precision.st * .5).toFixed(1)}%`, '#c06bff', true); ring(player.x, player.y, 80, '#c06bff', .5, 5); }
+      if (bullHits >= 3) { bullHits = 0; addBuff('precision', 25, 40); ring(player.x, player.y, 80, '#c06bff', .5, 5); }
     } else if (d.kind === 'bubble' && dist(player.x, player.y, d.x, d.y) < d.r + 10) {
       E.decals.splice(i, 1); let sum = 0; const fz = frostAt(d.x, d.y), vault = doko().pas === 'deepfreeze';
       tilesNear(d.fi, d.x, d.y, fz ? 78 : 52).forEach(t => sum += collect(t, d.base, 'ice', t.col === 'ice' ? 2.5 : 1.5));
@@ -674,7 +674,12 @@ function update(dt) {
   }
   // Heat: +0.25 per 0.1s standing in a flame (dark flames +0.5), up to 100
   { let inF = null; for (const d of E.decals) if (d.kind === 'flame' && dist(player.x, player.y, d.x, d.y) < d.r) { inF = d; if (d.dark) break; }
-    if (inF) { heatT += dt; while (heatT >= .1) { heatT -= .1; const r = (inF.dark ? .5 : .25) * (mpas('blazingStar') ? 1.5 : 1); if (!B.heat) B.heat = { t: 15, st: 0 }; B.heat.st = Math.min(100, B.heat.st + r); B.heat.t = 15; } } else heatT = 0; }
+    if (inF) { heatT += dt; while (heatT >= .1) { heatT -= .1; const r = (inF.dark ? .5 : .25) * (mpas('blazingStar') ? 1.5 : 1); if (!B.heat) B.heat = { t: 99, st: 0, perm: true }; B.heat.st = Math.min(100, B.heat.st + r); } }
+    else { heatT = 0; if (B.heat) { B.heat.st -= 2.5 * dt; if (B.heat.st <= 0) delete B.heat; } }
+    if (B.heat) { B.heat.t = 99; B.heat.perm = true; }
+    // Dark Heat = dark flames burning right now (max 50)
+    const nd = Math.min(50, E.decals.reduce((a, d) => a + (d.kind === 'flame' && d.dark ? 1 : 0), 0));
+    if (nd) B.darkheat = { t: 99, st: nd, perm: true }; else delete B.darkheat; }
   // side stars
   if (pf >= 0 && fieldOpen(pf) && S.doko < capMax()) {
     if (mpas('starSaw')) { sawT -= dt; if (sawT <= 0) { sawT = .15; const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; tilesNear(pf, sx, sy, 30).forEach(t => collect(t, tool().amt * .8, 'neutral', 1)); } }
