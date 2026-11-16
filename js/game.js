@@ -23,7 +23,7 @@ const E = { crew: [], tokens: [], parts: [], decals: [], timers: [], proj: [], p
 const player = { x: BREW.x, y: BREW.y - 30, face: 1, mv: false, swing: 0, swingT: 0, auto: null, anim: 0 };
 const cam = { x: 0, y: 0, shake: 0 };
 const joy = { on: false, id: null, ox: 0, oy: 0, x: 0, y: 0, kx: 0, ky: 0 };
-let now = 0, brewing = false, fullWarnT = 0, nearNpc = null;
+let now = 0, brewing = false, fullWarnT = 0, nearNpc = null, kilnT = 0;
 const NPCS = () => Object.assign({}, GIVERS, REPEAT);
 
 /* ---------------- save ---------------- */
@@ -38,9 +38,11 @@ function newSave() {
     last: Date.now(), rate: 0, px: BREW.x, py: BREW.y - 30
   };
 }
+function curSlot() { try { return +localStorage.getItem('chiya_slot') || 1; } catch (e) { return 1; } }
+const slotKey = (n = curSlot()) => n === 1 ? 'chiya_save' : 'chiya_save_' + n;
 function load() {
   try {
-    const s = JSON.parse(localStorage.getItem('chiya_save'));
+    const s = JSON.parse(localStorage.getItem(slotKey()));
     if (s && s.v === 1) {
       if (!s.q) { s.q = { didi: Math.min(s.quest || 0, 8), pemba: 0, dolma: 0, norbu: 0, yeti: 0 }; s.qb = {}; delete s.quest; delete s.qBase; }
       return s;
@@ -51,7 +53,7 @@ function load() {
 function save() {
   if (!S) return;
   S.last = Date.now(); S.px = Math.round(player.x); S.py = Math.round(player.y);
-  try { localStorage.setItem('chiya_save', JSON.stringify(S)); } catch (e) {}
+  try { localStorage.setItem(slotKey(), JSON.stringify(S)); } catch (e) {}
 }
 
 /* ---------------- world: tiles & decor ---------------- */
@@ -161,11 +163,13 @@ function recompute() {
 }
 const bp = s => D.bp[s] || 0;
 const tool = () => TOOLS.find(t => t.id === S.tool);
-const equippedGear = () => [tool(), HEADGEAR.find(h => h.id === S.hat), CHARMS.find(h => h.id === S.charm)].filter(Boolean);
+const doko = () => DOKOS.find(d => d.id === S.dokoId);
+const equippedGear = () => [tool(), doko(), HEADGEAR.find(h => h.id === S.hat), CHARMS.find(h => h.id === S.charm)].filter(Boolean);
 const lvlMult = m => (1 + .1 * (m.lvl - 1)) * (m.bl ? 1.25 : 1);
 function capMax() {
   const m = 1 + bp('cap') + (D.syn.has('porterUnion') ? .25 : 0) + (D.syn.has('herd') ? .1 : 0) + (D.hive === 'cloud' ? .15 : 0) + .05 * (D.k.dzo || 0);
-  return Math.floor(DOKOS.find(d => d.id === S.dokoId).cap * m);
+  if (doko().pas === 'nimbus') m *= 1 + Math.min(.6, (S.nimbus || 0) * .01);
+  return Math.floor(doko().cap * m);
 }
 function moveSpeed() { return BOOTS.find(b => b.id === S.boots).spd * (1 + bp('speed')) * (1 + .2 * (B.haste ? B.haste.st : 0)); }
 function gMult(col, isTool) {
@@ -176,6 +180,7 @@ function gMult(col, isTool) {
   if (col === 'spice' && B.spiceRush) m *= 1 + .5 * (D.syn.has('kitchen') ? 1.5 : 1);
   if (B['shot_' + col]) m *= 1.5;
   if (B.wildfire && col === 'spice') m *= 3;
+  if (col === 'ice' && doko().pas === 'deepfreeze' && S.doko > capMax() * .5) m *= 1.4;
   if (B.polar && col === 'ice') m *= 3;
   if (B.spirit) m *= 2;
   if (isTool && B.cloudburst) m *= 3;
@@ -193,13 +198,14 @@ function cdMul(def) {
   if (def.r === 'mythic' && D.syn.has('legends')) m *= 1 / .7;
   return m;
 }
-function zoneMult(x, y) {
+const FROST_MUL = [1, 1.25, 1.5, 2];
+function zoneMult(x, y, col) {
   let z = 1, frost = 0;
   for (const d of E.decals) {
     if (d.kind === 'wheel' && dist(x, y, d.x, d.y) < d.r) z *= 2;
-    else if (d.kind === 'frost' && dist(x, y, d.x, d.y) < 56) frost++;
+    else if (d.kind === 'frost' && col === 'ice' && dist(x, y, d.x, d.y) < 56) frost = Math.max(frost, d.lv || 1);
   }
-  return z * (1 + frost);
+  return z * FROST_MUL[frost];
 }
 function addBuff(id, dur, max = 1) {
   const b = B[id];
@@ -214,7 +220,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   const tv = t.v; t.v = Math.max(0, tv - .22);
   let amt = base * FIELDS[t.f].y * LVM[t.lv] * (.35 + .65 * tv) * extra;
   const match = srcCol === t.col ? 1.5 : srcCol === 'neutral' ? 1.15 : 1;
-  amt *= match * gMult(t.col, isTool) * zoneMult(t.x, t.y) * (t.wet || 1);
+  amt *= match * gMult(t.col, isTool) * zoneMult(t.x, t.y, t.col) * (t.wet || 1);
   let crit = false;
   if (Math.random() < critChance()) { amt *= critMul(); crit = true; S.stats.crits++; }
   const add = Math.min(space, amt);
@@ -234,7 +240,7 @@ function rebuildCrew() {
   E.crew = S.crew.map((m, i) => {
     const prev = old.find(e => e.m === m);
     if (prev) return prev;
-    return { m, x: player.x + rand(-40, 40), y: player.y + rand(-30, 30), st: 'idle', t: 0, tile: null, cd: rand(2, CREW[m.id].cd || 10), anim: rand(0, 9), face: 1, mv: false, act: false, jump: null };
+    return { m, x: player.x + rand(-40, 40), y: player.y + rand(-30, 30), st: 'idle', t: 0, tile: null, cd: rand(4, (CREW[m.id].cd || 10) * 1.8), anim: rand(0, 9), face: 1, mv: false, act: false, jump: null };
   });
   recompute();
 }
@@ -274,9 +280,12 @@ function updCrew(e, i, dt) {
   const pf = fieldAt(player.x, player.y);
   const atHome = dist(player.x, player.y, BREW.x, BREW.y) < BREW.r + 90;
   const working = pf >= 0 && fieldOpen(pf) && S.doko < capMax() - .5;
-  if (def.ab && pf >= 0 && fieldOpen(pf)) {
-    e.cd -= dt * cdMul(def);
-    if (e.cd <= 0) { e.cd = def.cd; useAbility(e, pf); }
+  if (def.ab) {
+    const inField = pf >= 0 && fieldOpen(pf) && fieldAt(e.x, e.y) === pf && (e.st === 'go' || e.st === 'gather');
+    if (inField || def.ab === 'haste') {
+      e.cd -= dt * cdMul(def) * (1 + .04 * (e.m.lvl - 1));
+      if (e.cd <= 0) { e.cd = def.cd * 1.8; useAbility(e, pf >= 0 && fieldOpen(pf) ? pf : -1); }
+    }
   }
   if (atHome) {
     const n = E.crew.length, a = Math.PI * (.08 + .84 * (i + .5) / n), rr = 150 + (i % 3) * 22;
@@ -320,6 +329,7 @@ function useAbility(e, fi) {
   const a = CREW[e.m.id].ab;
   if (ABIL[a].tok) {
     if (E.tokens.length > 30) return;
+    if (fi < 0 && a !== 'haste') return;
     E.tokens.push({ x: e.x + rand(-18, 18), y: e.y + rand(-10, 10), ab: a, e, fi, life: 10, age: 0 });
     burst(e.x, e.y - 20, 6, { type: 'star', col: '#fff6c8', spd: 60, life: .5, size: 2 });
   } else { FX[a](e, fi); S.stats.ab[a] = (S.stats.ab[a] || 0) + 1; abilityFired(CREW[e.m.id].c); }
@@ -329,7 +339,8 @@ function takeToken(tk) {
   ring(tk.x, tk.y, 40, '#ffffff', .4, 3);
   burst(tk.x, tk.y, 14, { type: 'star', col: '#fff6c8', spd: 120, life: .6, size: 2.4 });
   pop(tk.x, tk.y - 22, ABIL[a].n, '#ffffff', true);
-  FX[a](tk.e, tk.fi, tk);
+  const src = a === 'pounce' ? tk.e : { x: tk.x, y: tk.y, m: tk.e.m, face: 1 };
+  FX[a](src, tk.fi, tk);
   abilityFired(CREW[tk.e.m.id].c);
 }
 const FX = {
@@ -400,11 +411,12 @@ const FX = {
     burst(e.x, e.y - 18, 26, { type: 'petal', col: '#ff4d6d', spd: 180, life: 1.2, size: 3.6, g: 30 });
   },
   frostMark(e, fi) {
-    const t = pick(tilesNear(fi, e.x, e.y, 120).concat(TILES[fi].slice(0, 1)));
+    const t = TILES[fi].reduce((b, q) => dist(q.x, q.y, e.x, e.y) < dist(b.x, b.y, e.x, e.y) ? q : b, TILES[fi][0]);
     const max = D.syn.has('frozenFocus') ? 8 : 5;
     const marks = E.decals.filter(d => d.kind === 'frost');
-    if (marks.length >= max) E.decals.splice(E.decals.indexOf(marks[0]), 1);
-    E.decals.push({ kind: 'frost', x: t.x, y: t.y, age: 0, dur: 15 });
+    const on = marks.find(d => dist(d.x, d.y, t.x, t.y) < 56);
+    if (on) { on.lv = Math.min(3, (on.lv || 1) + 1); on.age = 0; pop(on.x, on.y - 24, 'Frost Mark x' + FROST_MUL[on.lv], '#bfefff', true); }
+    else { if (marks.length >= max) E.decals.splice(E.decals.indexOf(marks[0]), 1); E.decals.push({ kind: 'frost', x: t.x, y: t.y, age: 0, dur: 15, lv: 1 }); }
     burst(t.x, t.y, 16, { type: 'snow', col: '#d6f3ff', spd: 120, life: .9, size: 2.6 });
     ring(t.x, t.y, 56, '#9be7ff', .45, 3);
   },
@@ -463,12 +475,12 @@ const FX = {
     next();
   },
   gust(e, fi) {
-    const f = FIELDS[fi], y = clamp(e.y, f.yy + 30, f.yy + f.h - 30), hit = new Set(), base = crewAmount(e);
+    const f = FIELDS[fi], y = clamp(e.y, f.yy + 30, f.yy + f.h - 30), hit = new Set(), base = crewAmount(e); let sum = 0;
     E.decals.push({ kind: 'band', x: f.x, y, w: f.w, age: 0, dur: 1.3 });
     E.proj.push({ kind: 'wind', x0: f.x, y0: y, x1: f.x + f.w, y1: y, t: 0, dur: 1, arc: 0, step(x) {
       if (Math.random() < .7) E.parts.push({ type: 'spark', x, y: y + rand(-40, 40), vx: 420, vy: 0, life: .35, max: .35, size: 2, col: 'rgba(255,255,255,.8)' });
-      TILES[fi].forEach(t => { if (!hit.has(t) && Math.abs(t.y - y) < 46 && t.x < x) { hit.add(t); collect(t, base, 'neutral', 2); } });
-    } });
+      TILES[fi].forEach(t => { if (!hit.has(t) && Math.abs(t.y - y) < 46 && t.x < x) { hit.add(t); const g = collect(t, base, 'neutral', 2.5); sum += g; if (g) burst(t.x, t.y, 2, { type: 'leaf', col: '#ffffff', spd: 90, life: .6, size: 2.6 }); } });
+    }, hit() { if (sum) pop(f.x + f.w / 2, y - 30, 'Kite Gust +' + fmt(sum), '#ffffff', true); } });
   }
 };
 
@@ -523,6 +535,11 @@ function update(dt) {
   let nn = null, nd = 75;
   const all = NPCS(); for (const id in all) { const g = all[id], d = dist(player.x, player.y, g.x, g.y); if (d < nd) { nd = d; nn = id; } }
   if (nn !== nearNpc) { nearNpc = nn; updateTalk(); }
+  // Kiln bag: instant conversion while gathering
+  if (doko().pas === 'kiln' && pf >= 0 && S.doko > 0) {
+    kilnT += dt;
+    if (kilnT >= 20) { kilnT = 0; const conv = S.doko * .06, val = conv * brewValue(); S.doko -= conv; S.rp += val; S.stats.earn += val; pop(player.x, player.y - 70, 'Kiln +' + fmt(val), '#ffb347', true); burst(player.x, player.y - 30, 20, { type: 'ember', col: '#ff8a3d', spd: 140, life: .8, size: 3, g: -60 }); }
+  }
   // brewing
   brewing = false;
   if (dist(player.x, player.y, BREW.x, BREW.y) < BREW.r && S.doko > 0) {
@@ -532,7 +549,7 @@ function update(dt) {
     S.doko -= conv; if (S.doko < .01) S.doko = 0;
     const val = conv * brewValue(); S.rp += val; S.stats.earn += val; brewing = true;
     if (Math.random() < .5) E.parts.push({ type: 'coin', x: BREW.x + rand(-30, 30), y: BREW.y - rand(0, 20), vx: rand(-20, 20), vy: -rand(60, 120), g: 60, life: 1, max: 1, size: 3.4, col: '#ffd24a' });
-    if (S.doko === 0) { toast('All brewed. Back to the fields', 'cup'); S.stats.brews++; }
+    if (S.doko === 0) { toast('All brewed. Back to the fields', 'cup'); S.stats.brews++; S.nimbus = 0; }
   }
   if (Math.random() < dt * (brewing ? 12 : 3)) E.parts.push({ type: 'steam', x: brewing && Math.random() < .6 ? STALL.x - 2 : HOUSE.x + teaChimney(), y: brewing && Math.random() < .6 ? STALL.y - 48 : HOUSE.y + houseTop() - 6, vx: rand(-6, 6), vy: -rand(18, 30), g: 0, life: 2.4, max: 2.4, size: rand(5, 8), col: 'rgba(255,255,255,.55)' });
   // crew
@@ -805,7 +822,7 @@ function drawDecalGround(c, d) {
   const u = d.age / d.dur, a = 1 - u;
   if (d.kind === 'wheel') {
     const fade = Math.min(1, d.age * 3, (d.dur - d.age) * 2);
-    c.save(); c.translate(d.x, d.y); c.scale(1, .55); c.globalAlpha = fade;
+    c.save(); c.translate(d.x, d.y); c.globalAlpha = fade;
     circ(c, 0, 0, d.r, 'rgba(255,210,74,.16)', false);
     c.rotate(now * 1.2);
     P(c); c.arc(0, 0, d.r, 0, TAU); c.strokeStyle = 'rgba(255,215,90,.9)'; c.lineWidth = 3; c.stroke();
@@ -815,8 +832,10 @@ function drawDecalGround(c, d) {
     c.restore();
   } else if (d.kind === 'frost') {
     const fade = Math.min(1, d.age * 4, (d.dur - d.age));
-    c.save(); c.translate(d.x, d.y); c.scale(1, .6); c.globalAlpha = fade * .9; c.rotate(now * .3);
-    circ(c, 0, 0, 56, 'rgba(120,210,255,.18)', false);
+    const lv = d.lv || 1;
+    c.save(); c.translate(d.x, d.y); c.globalAlpha = fade * .9; c.rotate(now * .3);
+    circ(c, 0, 0, 56, `rgba(120,210,255,${.12 + lv * .08})`, false);
+    for (let k = 0; k < lv; k++) { P(c); c.arc(0, 0, 56 - k * 7, 0, TAU); c.strokeStyle = 'rgba(210,245,255,.85)'; c.lineWidth = 2; c.stroke(); }
     for (let i = 0; i < 6; i++) { const an = i / 6 * TAU; line(c, 0, 0, Math.cos(an) * 40, Math.sin(an) * 40, 'rgba(210,245,255,.95)', 3); line(c, Math.cos(an) * 22, Math.sin(an) * 22, Math.cos(an + .45) * 32, Math.sin(an + .45) * 32, 'rgba(210,245,255,.9)', 2); line(c, Math.cos(an) * 22, Math.sin(an) * 22, Math.cos(an - .45) * 32, Math.sin(an - .45) * 32, 'rgba(210,245,255,.9)', 2); }
     c.restore();
   } else if (d.kind === 'foot') {
@@ -835,7 +854,7 @@ function drawDecalGround(c, d) {
     P(c); c.arc(0, 0, d.r, -1.2 + u * .8, .9 + u * .8); c.strokeStyle = '#ffffff'; c.lineWidth = 4 * a + 1; c.lineCap = 'round'; c.stroke();
     c.restore();
   } else if (d.kind === 'ring') {
-    c.save(); c.translate(d.x, d.y); c.scale(1, .55);
+    c.save(); c.translate(d.x, d.y);
     P(c); c.arc(0, 0, d.r * (.2 + .8 * Math.pow(u, .6)), 0, TAU); c.strokeStyle = d.col; c.globalAlpha = a; c.lineWidth = d.w * a + .5; c.stroke();
     c.restore();
   }
@@ -982,6 +1001,7 @@ function abilityFired(col) {
   for (const g of equippedGear()) {
     if (!g.pas) continue;
     const p = PASSIVES[g.pas];
+    if (p.col === 'always') { if (g.pas === 'nimbus') S.nimbus = Math.min(60, (S.nimbus || 0) + 1); continue; }
     if (p.col !== 'any' && p.col !== col) continue;
     S.pas[g.pas] = Math.min(p.need, (S.pas[g.pas] || 0) + 1);
     if (S.pas[g.pas] >= p.need) {
@@ -1032,6 +1052,6 @@ function boot() {
   resize(); addEventListener('resize', resize);
   uiInit();
   if (fresh) showIntro(); else offlineEarnings();
-  document.addEventListener('visibilitychange', () => { if (document.hidden) save(); else { const gap = (Date.now() - S.last) / 1000; if (gap > 90) offlineEarnings(); } });
+  document.addEventListener('visibilitychange', () => { if (!S) return; if (document.hidden) save(); else { const gap = (Date.now() - S.last) / 1000; if (gap > 90) offlineEarnings(); } });
   requestAnimationFrame(frame);
 }

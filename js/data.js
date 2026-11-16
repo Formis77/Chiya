@@ -55,23 +55,23 @@ const CREW = {
 const CREW_IDS = Object.keys(CREW);
 
 const ABIL = {
-  spiceRush:   { n: 'Spice Rush',    i: 'chili', tok: true,  d: 'Token: +50% Spice gathering for 15s.' },
-  random:      { n: 'Wild Card',     i: 'dice', tok: true,  d: 'Token: a random effect. Might be great. Might be a selfie.' },
-  haste:       { n: 'Haste',         i: 'speed', tok: true,  d: 'Token: +20% move & crew speed for 10s. Stacks ×3.' },
-  burst:       { n: 'Chili Burst',   i: 'burst', tok: true,  d: 'Token: fiery explosion collects every nearby tile ×3.' },
-  focus:       { n: 'Focus',         i: 'focus', tok: true,  d: 'Token: +20% crit chance for 12s. Crits ×3.' },
-  prayerWheel: { n: 'Prayer Wheel',  i: 'wheel', tok: false, d: 'Auto: a spinning golden wheel. Gathering inside ×2 for 10s.' },
-  honey:       { n: 'Wild Honey',    i: 'honey', tok: true,  d: 'Token: instant rupees and a chance of food.' },
-  petalStorm:  { n: 'Petal Storm',   i: 'flower', tok: false, d: 'Auto: petals sweep the field and collect 30 tiles ×2.' },
-  frostMark:   { n: 'Frost Mark',    i: 'snow', tok: false, d: 'Auto: an icy mark. Tiles near marks ×2 per mark (max 5).' },
-  roar:        { n: 'Roar',          i: 'roar', tok: false, d: 'Auto: shockwave. Crew gather 50% faster for 10s.' },
-  caravan:     { n: 'Caravan Rush',  i: 'horns', tok: false, d: 'Auto: all yaks gather ×2 and move faster for 12s.' },
-  blessing:    { n: 'Blessing',      i: 'sparkle', tok: true,  d: 'Token: +25% to everything for 15s.' },
-  footprints:  { n: 'Yeti Steps',    i: 'foot', tok: false, d: 'Auto: six giant stomps across the field, each ×4.' },
-  dive:        { n: 'Danphe Dive',   i: 'feather', tok: false, d: 'Auto: a fiery dive collects a whole line ×4.' },
-  pounce:      { n: 'Shadow Pounce', i: 'claw', tok: false, d: 'Auto: 5 pounces, each collects an area ×3.' },
-  sniff:       { n: 'Sniff',         i: 'paw', tok: true,  d: 'Token: digs up a random item.' },
-  gust:        { n: 'Kite Gust',     i: 'wind', tok: false, d: 'Auto: wind sweeps a band of the field ×2.' }
+  spiceRush:   { n: 'Spice Rush',    i: 'chili', tok: true,  d: 'Bubble. Collect it for Spice Rush: red Spice flowers give +50% for 15s (x1.5 stronger and longer with Kitchen Crew).' },
+  random:      { n: 'Wild Card',     i: 'dice', tok: true,  d: 'Bubble. One random effect: Chili Burst, Wild Honey, Haste or 2 Momos, or just a selfie. With Lost & Found it never fails and fires twice.' },
+  haste:       { n: 'Haste',         i: 'speed', tok: true,  d: 'Bubble. +20% move speed for you and your crew for 10s. Stacks up to x3 (x5 with Trail Team). Can appear anywhere, even off the fields.' },
+  burst:       { n: 'Chili Burst',   i: 'burst', tok: true,  d: 'Bubble. Explodes where it lies: every flower within 95 range is gathered at x3.' },
+  focus:       { n: 'Focus',         i: 'focus', tok: true,  d: 'Bubble. For 12s: +20% crit chance, and crits give x3 instead of x2 (x4 with Frozen Focus).' },
+  prayerWheel: { n: 'Prayer Wheel',  i: 'wheel', tok: true,  d: 'Bubble. Sets a golden wheel (radius 80) where it lies for 10s. Everything gathered inside counts double. Sacred Ground makes it 50% bigger and twice as long.' },
+  honey:       { n: 'Wild Honey',    i: 'honey', tok: true,  d: 'Bubble. Instantly gives rupees worth 20% of your doko capacity (brewing bonuses apply), with a 25% chance of a free Momo.' },
+  petalStorm:  { n: 'Petal Storm',   i: 'flower', tok: true,  d: 'Bubble. 30 petals fly from it to random flowers in the field and gather each one at x2.' },
+  frostMark:   { n: 'Frost Mark',    i: 'snow', tok: true,  d: 'Bubble. Leaves a frost mark (radius 56) on the nearest flower. Ice flowers inside give x1.25. A new mark on top of it upgrades it to x1.5, then x2 (max level 3). Lasts 15s and refreshes on upgrade.' },
+  roar:        { n: 'Roar',          i: 'roar', tok: true,  d: 'Bubble. A shockwave from where it lies: your whole crew gathers 50% faster for 10s (20s with Big Cats).' },
+  caravan:     { n: 'Caravan Rush',  i: 'horns', tok: true,  d: 'Bubble. Every yak in your crew (Yak Calf, Dzo, Yak King) gathers x2 and moves 50% faster for 12s.' },
+  blessing:    { n: 'Blessing',      i: 'sparkle', tok: true,  d: 'Bubble. +25% to all gathering and brewing for 15s.' },
+  footprints:  { n: 'Yeti Steps',    i: 'foot', tok: true,  d: 'Bubble. Six giant footprints stomp in a line starting from it. Each stomp gathers every flower within 72 range at x4.' },
+  dive:        { n: 'Danphe Dive',   i: 'feather', tok: true,  d: 'Bubble. The Danphe dives in a straight line through the bubble across the whole field, gathering every flower within 40 of its path at x4.' },
+  pounce:      { n: 'Shadow Pounce', i: 'claw', tok: true,  d: 'Bubble. The Snow Leopard pounces to 5 random flowers in the field (8 with Big Cats). Each landing gathers everything within 62 range at x3.' },
+  sniff:       { n: 'Sniff',         i: 'paw', tok: true,  d: 'Bubble. Digs up a random item: food (most often), Butter Tea, Incense, and rarely a Mystic Wheel, Permit or Golden Momo.' },
+  gust:        { n: 'Kite Gust',     i: 'wind', tok: true,  d: 'Bubble. A wind band 92 tall sweeps across the whole field at the bubble\'s height, gathering every flower in it at x2.5.' }
 };
 
 /* Fields sit along the switchback trail up the mountain.
@@ -145,7 +145,10 @@ const PASSIVES = {
   strike:      { n: 'Danphe Strike',   col: 'spice', need: 20, d: 'Every 20 Spice abilities: a fiery Danphe Dive through your field.' },
   stomp:       { n: 'Yeti Stomp',      col: 'ice',   need: 20, d: 'Every 20 Ice abilities: giant Yeti Steps around you.' },
   dance:       { n: 'Wind Dance',      col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: two Kite Gusts sweep your field.' },
-  summitBless: { n: 'Summit Blessing', col: 'any',   need: 30, d: 'Every 30 abilities: a free Blessing (+25% everything for 15s).' }
+  summitBless: { n: 'Summit Blessing', col: 'any',   need: 30, d: 'Every 30 abilities: a free Blessing (+25% everything for 15s).' },
+  kiln:        { n: 'Kiln',            col: 'always', need: 0, d: 'Every 20 seconds while you gather, 6% of your doko is brewed into rupees on the spot (with all brewing bonuses).' },
+  deepfreeze:  { n: 'Deep Freeze',     col: 'always', need: 0, d: 'While your doko is more than half full, Ice gathering x1.4.' },
+  nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Capacity grows +1% for every ability that fires, up to +60%. Resets when you finish brewing.' }
 };
 /* crafting materials drop while gathering in each field */
 const MATS = {
@@ -162,20 +165,23 @@ const MATS = {
 const FIELD_MAT = {}; for (const k in MATS) FIELD_MAT[MATS[k].f] = k;
 
 const DOKOS = [
-  { id: 'basket', n: 'Bamboo Basket',   i: 'basket', cost: 0,     cap: 200 },
-  { id: 'woven',  n: 'Woven Doko',      i: 'basket', cost: 1500,  cap: 900 },
-  { id: 'frame',  n: 'Porter Frame',    i: 'backpack', cost: 2e4,   cap: 4000 },
-  { id: 'saddle', n: 'Yak Saddlebag',   i: 'backpack', cost: 2.5e5, cap: 18000 },
-  { id: 'exped',  n: 'Expedition Pack', i: 'backpack', cost: 3e6,   cap: 8e4 },
-  { id: 'glacier',n: 'Glacier Pack',    i: 'backpack', cost: 4e7,   cap: 3.5e5 },
-  { id: 'spirit', n: 'Spirit Satchel',  i: 'backpack', cost: 6e8,   cap: 1.5e6 }
+  { id: 'basket', n: 'Bamboo Basket',   i: 'basket',   cost: 0,     cap: 500 },
+  { id: 'woven',  n: 'Woven Doko',      i: 'basket',   cost: 1500,  cap: 2500 },
+  { id: 'frame',  n: 'Porter Frame',    i: 'backpack', cost: 2e4,   cap: 12000 },
+  { id: 'saddle', n: 'Yak Saddlebag',   i: 'backpack', cost: 2.5e5, cap: 60000 },
+  { id: 'exped',  n: 'Expedition Pack', i: 'backpack', cost: 3e6,   cap: 2.5e5 },
+  { id: 'glacier',n: 'Glacier Pack',    i: 'backpack', cost: 4e7,   cap: 1e6 },
+  { id: 'spirit', n: 'Spirit Satchel',  i: 'backpack', cost: 6e8,   cap: 4e6 },
+  { id: 'kiln',   n: 'Ember Kiln Pack', i: 'backpack', col: 'spice', cost: 3e9, cap: 8e6,   pas: 'kiln',       req: { petal: 150, saffron: 80, goldenMomo: 3 } },
+  { id: 'vault',  n: 'Glacier Vault',   i: 'backpack', col: 'ice',   cost: 3e9, cap: 1.4e7, pas: 'deepfreeze', req: { ice: 150, berry: 80, goldenMomo: 3 } },
+  { id: 'nimbus', n: 'Nimbus Bag',      i: 'backpack', col: 'cloud', cost: 3e9, cap: 9e6,   pas: 'nimbus',     req: { wool: 150, bead: 80, goldenMomo: 3 } }
 ];
 const BOOTS = [
-  { id: 'sandals', n: 'Sandals',      i: 'boot', cost: 0,   spd: 150 },
-  { id: 'runners', n: 'Trail Runners',i: 'boot', cost: 3e3, spd: 175 },
-  { id: 'crampon', n: 'Crampons',     i: 'boot', cost: 8e4, spd: 200 },
-  { id: 'sherpa',  n: 'Sherpa Boots', i: 'boot', cost: 2e6, spd: 230 },
-  { id: 'wind',    n: 'Wind Boots',   i: 'boot', cost: 6e7, spd: 260 }
+  { id: 'sandals', n: 'Sandals',      i: 'boot', cost: 0,   spd: 120 },
+  { id: 'runners', n: 'Trail Runners',i: 'boot', cost: 3e3, spd: 145 },
+  { id: 'crampon', n: 'Crampons',     i: 'boot', cost: 8e4, spd: 170 },
+  { id: 'sherpa',  n: 'Sherpa Boots', i: 'boot', cost: 2e6, spd: 195 },
+  { id: 'wind',    n: 'Wind Boots',   i: 'boot', cost: 6e7, spd: 225 }
 ];
 const LODGE = [
   { n: 'No manager',      eff: .10, cost: 0 },

@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '10';
+const VERSION = '11';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -38,7 +38,7 @@ function uiTick(dt) {
   const bf = [];
   const BI = { haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   for (const k in B) bf.push(`<button class="chip" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].st > 1 ? '<i>x' + B[k].st + '</i>' : ''}<b>${Math.ceil(B[k].t)}s</b></button>`);
-  for (const g of equippedGear()) if (g.pas) { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
+  for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
   $('quest').innerHTML = questTracker();
   const pf = fieldAt(player.x, player.y), canPlace = S.spr.n > 0 && pf >= 0 && fieldOpen(pf) && !panel;
@@ -479,7 +479,7 @@ async function forceUpdate() {
 let resetArm = false;
 function resetProgress() {
   if (!resetArm) { resetArm = true; renderPanel(); setTimeout(() => { resetArm = false; if (panel === 'settings') renderPanel(); }, 4000); return; }
-  try { localStorage.removeItem('chiya_save'); } catch (e) {}
+  try { localStorage.removeItem(slotKey()); } catch (e) {}
   S = null; location.reload();
 }
 function pSettings() {
@@ -489,6 +489,12 @@ function pSettings() {
   h += `<div class="row2"><button class="btn" onclick="checkUpdate()">${ic('refresh')}<span>Check for update</span></button>
     <button class="btn primary" onclick="forceUpdate()">${ic('download')}<span>Update now</span><small>Reloads the latest version</small></button></div>`;
   h += `<p class="mut small">Your progress is saved on this phone and stays when you update.</p>`;
+  h += `<h3>Profiles</h3><p class="mut small">Three separate saves. Switching keeps your other progress safe.</p>`;
+  for (let n = 1; n <= 3; n++) {
+    const cur = n === curSlot();
+    let d = cur ? S : null; if (!cur) try { d = JSON.parse(localStorage.getItem(slotKey(n))); } catch (e) {}
+    h += `<div class="item ${cur ? 'eq' : ''}">${ib('crew', cur ? '#ff8a3d' : '#9aa0ad')}<div class="it"><b>Profile ${n}</b><span class="mut small">${d ? `${d.crew.length} crew · ${fmt(d.stats.earn)} rupees earned` : 'Empty. Start fresh.'}</span></div>${cur ? '<span class="tag">Playing</span>' : `<button class="btn sm" onclick="switchProfile(${n})"><span>${d ? 'Play' : 'Start'}</span></button>`}</div>`;
+  }
   h += `<h3>Game</h3><div class="item">${ib('cup', '#ff8a3d')}<div class="it"><b>How to play</b><span class="mut small">Show the intro again</span></div><button class="btn sm" onclick="closePanel();showIntro()"><span>Show</span></button></div>`;
   h += `<div class="item">${ib('trash', '#ef4d5f')}<div class="it"><b>Reset progress</b><span class="mut small">Deletes your teahouse and crew. Cannot be undone.</span></div><button class="btn sm ${resetArm ? 'danger' : ''}" onclick="resetProgress()"><span>${resetArm ? 'Tap again' : 'Reset'}</span></button></div>`;
   return h;
@@ -550,3 +556,5 @@ function pasTip(id) {
   t.innerHTML = `${ib('sparkle', '#9b6ef3')}<div><b>${p.n}</b><span>${p.d}</span><small>${S.pas[id] || 0} / ${p.need} charged${p.col !== 'any' ? ' · counts ' + COL[p.col].n + ' crew abilities' : ' · counts every ability'}</small></div>`;
   t.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => t.classList.remove('on'), 3600);
 }
+
+function switchProfile(n) { save(); S = null; try { localStorage.setItem('chiya_slot', String(n)); } catch (e) {} location.reload(); }
