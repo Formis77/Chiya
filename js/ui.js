@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '16';
+const VERSION = '17';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['gear', 'backpack', 'Gear'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -149,7 +149,7 @@ function pCrewDetail(i) {
     <button class="btn" ${(S.items.mysticWheel || 0) ? '' : 'disabled'} onclick="reroll(${i},'blessed')"><span>Blessed</span></button></div>`;
   return h;
 }
-const STATN = { cap: 'doko capacity', gather: 'all gathering', spice: 'Spice gathering', ice: 'Ice gathering', cloud: 'Cloud gathering', brew: 'brewing value', speed: 'move speed', crit: 'crit chance', offline: 'offline earnings', tool: 'tool gathering' };
+const STATN = { cdr: 'ability recharge', conv: 'instant conversion', cap: 'doko capacity', gather: 'all gathering', spice: 'Spice gathering', ice: 'Ice gathering', cloud: 'Cloud gathering', brew: 'brewing value', speed: 'move speed', crit: 'crit chance', offline: 'offline earnings', tool: 'tool gathering' };
 
 function rollOdds(odds) { let r = Math.random(), acc = 0; for (const k in odds) { acc += odds[k]; if (r < acc) return k; } return Object.keys(odds)[1]; }
 function rollCrew(odds) { const r = rollOdds(odds); return pick(CREW_IDS.filter(id => CREW[id].r === r)); }
@@ -352,12 +352,13 @@ const npcLocked = id => S.crew.length < npcOf(id).gate;
 /* repeatable odd jobs */
 function rqMake(id) {
   const cap = capMax(), open = FIELDS.filter((f, i) => fieldOpen(i));
-  const kinds = ['gather', 'field', 'earn', 'feed'];
+  const kinds = ['gather', 'field', 'field', 'col', 'col', 'feed'], lv = S.stats.leo || 0, hard = 1 + Math.min(3, lv * .03);
   if (E.crew.some(e => CREW[e.m.id].ab && ABIL[CREW[e.m.id].ab].tok)) kinds.push('tokens');
   const k = pick(kinds), f = pick(open), round = n => { const p = Math.pow(10, Math.max(0, Math.floor(Math.log10(n)) - 1)); return Math.max(1, Math.round(n / p) * p); };
   const q = { k, rw: npcOf(id).rw(), cd: 0 };
-  if (k === 'gather') { q.a = round(cap * rand(2, 3.5)); q.t = `Gather ${fmt(q.a)} ingredients`; q.base = S.stats.gather; }
-  if (k === 'field') { q.a = round(cap * rand(1.2, 2.2)); q.f = f.id; q.t = `Gather ${fmt(q.a)} in ${f.n}`; q.base = S.stats.field[f.id] || 0; }
+  if (k === 'gather') { q.a = round(cap * hard * rand(2.5, 4)); q.t = `Gather ${fmt(q.a)} ingredients`; q.base = S.stats.gather; }
+  if (k === 'col') { q.c = pick(['spice', 'ice', 'cloud']); q.a = round(cap * hard * rand(1.5, 2.5)); q.t = `Gather ${fmt(q.a)} ${COL[q.c].n} ingredients`; q.base = S.stats.col[q.c] || 0; }
+  if (k === 'field') { q.a = round(cap * hard * rand(1.5, 2.5)); q.f = f.id; q.t = `Gather ${fmt(q.a)} in ${f.n}`; q.base = S.stats.field[f.id] || 0; }
   if (k === 'earn') { q.a = round(cap * brewValue() * rand(2, 3.5)); q.t = `Brew tea worth ${fmt(q.a)} rupees`; q.base = S.stats.earn; }
   if (k === 'feed') { q.a = ri(3, 8); q.t = `Feed your crew ${q.a} times`; q.base = S.stats.feed; }
   if (k === 'tokens') { q.a = ri(5, 12); q.t = `Grab ${q.a} ability bubbles`; q.base = S.stats.tokens || 0; }
@@ -369,13 +370,13 @@ function rq(id) {
   return S.rq[id];
 }
 function curQuest(gid) {
-  if (REPEAT[gid]) { const q = rq(gid); return Date.now() < q.cd ? null : { t: q.t, rw: { items: q.rw }, rep: true }; }
+  if (REPEAT[gid]) { const q = rq(gid); return Date.now() < q.cd ? null : { t: q.t, rw: { items: q.rw, perm: REPEAT[gid].perm }, rep: true }; }
   return QUESTS[gid][S.q[gid] || 0];
 }
 function qProg(gid) {
   if (REPEAT[gid]) {
     const q = rq(gid); if (Date.now() < q.cd) return null;
-    const cur = q.k === 'gather' ? S.stats.gather : q.k === 'field' ? (S.stats.field[q.f] || 0) : q.k === 'earn' ? S.stats.earn : q.k === 'feed' ? S.stats.feed : (S.stats.tokens || 0);
+    const cur = q.k === 'gather' ? S.stats.gather : q.k === 'col' ? (S.stats.col[q.c] || 0) : q.k === 'field' ? (S.stats.field[q.f] || 0) : q.k === 'earn' ? S.stats.earn : q.k === 'feed' ? S.stats.feed : (S.stats.tokens || 0);
     return { cur: cur - q.base, goal: q.a };
   }
   const q = curQuest(gid); if (!q) return null;
@@ -384,6 +385,9 @@ function qProg(gid) {
     case 'gather': return { cur: S.stats.gather - base, goal: a };
     case 'earn': return { cur: S.stats.earn - base, goal: a };
     case 'feed': return { cur: S.stats.feed - base, goal: a };
+    case 'col': return { cur: (S.stats.col[a] || 0) - base, goal: b };
+    case 'tokens': return { cur: (S.stats.tokens || 0) - base, goal: a };
+    case 'blend': return { cur: (S.stats.blends || 0) - base, goal: a };
     case 'field': return { cur: (S.stats.field[a] || 0) - base, goal: b };
     case 'crew': return { cur: S.crew.length, goal: a };
     case 'tool': return { cur: S.tools.includes(a) ? 1 : 0, goal: 1 };
@@ -397,16 +401,24 @@ function qProg(gid) {
 function qBaseNow(gid) {
   const q = curQuest(gid); if (!q || q.rep) return 0;
   const [type, a] = q.g;
-  return type === 'gather' ? S.stats.gather : type === 'earn' ? S.stats.earn : type === 'feed' ? S.stats.feed : type === 'field' ? (S.stats.field[a] || 0) : 0;
+  return type === 'gather' ? S.stats.gather : type === 'earn' ? S.stats.earn : type === 'feed' ? S.stats.feed : type === 'field' ? (S.stats.field[a] || 0) : type === 'col' ? (S.stats.col[a] || 0) : type === 'tokens' ? (S.stats.tokens || 0) : type === 'blend' ? (S.stats.blends || 0) : 0;
 }
 function giverState(gid) {
   if (npcLocked(gid)) return 'locked';
   if (REPEAT[gid] && Date.now() < rq(gid).cd) return 'cooldown';
+  if (S.qfix) { S.qfix = false; S.qb.didi = qBaseNow('didi'); }
+  const cq = curQuest(gid); if (cq && cq.line != null && S.crew.length < QLINES[cq.line].need) return 'wait';
   const p = qProg(gid); return !p ? 'done' : p.cur >= p.goal ? 'ready' : 'active';
 }
-const rwHtml = rw => [rw.rp ? money(rw.rp) : '', ...Object.entries(rw.items || {}).map(([k, n]) => `<span class="rwi">${ic(ITEMS[k].i)}${ITEMS[k].n} x${n}</span>`), rw.crew ? `<span class="rwi">${ic('crew')}${CREW[rw.crew].n}</span>` : ''].filter(Boolean).join('');
-const rwText = rw => [rw.rp ? fmt(rw.rp) + ' rupees' : '', ...Object.entries(rw.items || {}).map(([k, n]) => `${ITEMS[k].n} x${n}`), rw.crew ? CREW[rw.crew].n : ''].filter(Boolean).join(', ');
+const permTxt = p => Object.entries(p || {}).map(([k, v]) => `+${Math.round(v * 100)}% ${STATN[k]} forever`);
+const rwHtml = rw => [rw.rp ? money(rw.rp) : '', ...permTxt(rw.perm).map(t => `<span class="rwi perm">${ic('star')}${t}</span>`), ...Object.entries(rw.items || {}).map(([k, n]) => `<span class="rwi">${ic(ITEMS[k].i)}${ITEMS[k].n} x${n}</span>`), rw.crew ? `<span class="rwi">${ic('crew')}${CREW[rw.crew].n}</span>` : ''].filter(Boolean).join('');
+const rwText = rw => [rw.rp ? fmt(rw.rp) + ' rupees' : '', ...permTxt(rw.perm), ...Object.entries(rw.items || {}).map(([k, n]) => `${ITEMS[k].n} x${n}`), rw.crew ? CREW[rw.crew].n : ''].filter(Boolean).join(', ');
 const mmss = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+function qLabel(gid) {
+  const i = S.q[gid] || 0, q = QUESTS[gid][i];
+  if (q && q.line != null) { const st = QUESTS[gid].findIndex(x => x.line === q.line); return `${QLINES[q.line].n} · ${i - st + 1} of ${QUESTS[gid].filter(x => x.line === q.line).length}`; }
+  return `Quest ${i + 1} of ${QUESTS[gid].length}`;
+}
 function trackedGiver() {
   const ids = Object.keys(GIVERS);
   return ids.find(g => giverState(g) === 'ready') || ids.find(g => giverState(g) === 'active');
@@ -423,14 +435,15 @@ function giverRow(gid) {
   if (st === 'locked') body = `<div class="mut small">${ic('lock')} Unlocks at ${g.gate} crew</div>`;
   else if (st === 'cooldown') body = `<div class="mut small">New job in ${mmss(rq(gid).cd - Date.now())}</div>`;
   else if (st === 'done') body = '<div class="mut small">All done. Thank you!</div>';
-  else { const q = curQuest(gid), p = qProg(gid); body = `<div class="small"><b>${q.t}</b></div><div class="qbar"><i style="width:${Math.min(100, p.cur / p.goal * 100)}%"></i></div><div class="mut small">${fmt(Math.min(p.cur, p.goal))} / ${fmt(p.goal)}${g.rep ? ' · Repeatable' : ` · Quest ${(S.q[gid] || 0) + 1} of ${QUESTS[gid].length}`}</div>`; }
+  else if (st === 'wait') body = `<div class="mut small">${ic('lock')} ${QLINES[curQuest(gid).line].n} opens at ${QLINES[curQuest(gid).line].need} crew</div>`;
+  else { const q = curQuest(gid), p = qProg(gid); body = `<div class="small"><b>${q.t}</b></div><div class="qbar"><i style="width:${Math.min(100, p.cur / p.goal * 100)}%"></i></div><div class="mut small">${fmt(Math.min(p.cur, p.goal))} / ${fmt(p.goal)}${g.rep ? ` · ${S.stats.leo || 0} done` : ` · ${qLabel(gid)}`}</div>`; }
   return `<div class="giver ${st === 'locked' ? 'dim' : ''}" style="--gc:${g.col}"><img src="${npcPortrait(gid)}" alt=""><div class="it"><div class="dn"><b>${g.n}</b><span class="mut small">${g.role}</span></div>${body}</div>
-    ${st === 'locked' ? '' : `<button class="btn sm ${st === 'ready' ? 'primary' : ''}" onclick="goTo(${g.x},${g.y + 30})"><span>${st === 'ready' ? 'Claim' : 'Go'}</span></button>`}</div>`;
+    ${st === 'locked' || st === 'wait' ? '' : `<button class="btn sm ${st === 'ready' ? 'primary' : ''}" onclick="goTo(${g.x},${g.y + 30})"><span>${st === 'ready' ? 'Claim' : 'Go'}</span></button>`}</div>`;
 }
 function pQuests() {
   let h = `<div class="ph"><h2>Quests</h2></div><p class="mut small">Quest givers live on the mountain. Walk up to them to talk and claim rewards.</p>`;
   h += `<h3>Story</h3>` + Object.keys(GIVERS).map(giverRow).join('');
-  h += `<h3>Odd jobs</h3><p class="mut small">Small repeatable jobs for items. A new one is ready a few minutes after you finish.</p>` + Object.keys(REPEAT).map(giverRow).join('');
+  h += `<h3>Endless</h3><p class="mut small">The Old Snow Leopard Lady never runs out of favours. Each one gives a little fruit and +1% to all gathering, forever. You have +${Math.round((S.perm.gather || 0) * 100)}% from quests so far.</p>` + Object.keys(REPEAT).map(giverRow).join('');
   return h;
 }
 const gliderOf = id => GLIDERS.find(g => g.id === id);
@@ -461,13 +474,14 @@ function talk(gid) {
   const g = npcOf(gid), st = giverState(gid);
   let h = `<div class="npc-head" style="--gc:${g.col}"><img src="${npcPortrait(gid)}" alt=""></div><h2>${g.n}</h2><div class="mut small">${g.role}</div>`;
   if (st === 'locked') { h += `<p class="say">"Come back when your crew is bigger. I only deal with teahouses of ${g.gate} or more."</p><button class="btn primary" onclick="closeModal()"><span>Okay</span></button>`; showModal(h); return; }
+  if (st === 'wait') { const ln = QLINES[curQuest(gid).line]; h += `<p class="say">"You finished everything I had for now! The ${ln.n.toLowerCase()} starts once your teahouse has ${ln.need} crew. You have ${S.crew.length}."</p><button class="btn primary" onclick="closeModal()"><span>Okay</span></button>`; showModal(h); return; }
   if (st === 'cooldown') { h += `<p class="say">"Thanks again! I'll have another job for you in ${mmss(rq(gid).cd - Date.now())}."</p><button class="btn primary" onclick="closeModal()"><span>See you</span></button>`; showModal(h); return; }
   const q = curQuest(gid), p = qProg(gid);
   if (!q) { h += `<p class="say">"You have done everything I asked. The mountain smiles on you."</p><button class="btn primary" onclick="closeModal()"><span>Thank you</span></button>`; showModal(h); return; }
   const done = p.cur >= p.goal, needBed = q.rw.crew && S.crew.length >= S.beds, first = !g.rep && (S.q[gid] || 0) === 0;
   const line = [first || g.rep ? g.hi : '', done ? 'You did it! Here is your reward.' : g.rep ? '' : 'Can you help me with something?'].filter(Boolean).join(' ');
   h += `<p class="say">"${line}"</p>
-    <div class="quest"><div class="qn">${g.rep ? 'Odd job' : `Quest ${(S.q[gid] || 0) + 1} of ${QUESTS[gid].length}`}</div><h3>${q.t}</h3>
+    <div class="quest"><div class="qn">${g.rep ? `Favour ${(S.stats.leo || 0) + 1}` : qLabel(gid)}</div><h3>${q.t}</h3>
     <div class="qbar big"><i style="width:${Math.min(100, p.cur / p.goal * 100)}%"></i></div><div class="mut small">${fmt(Math.min(p.cur, p.goal))} / ${fmt(p.goal)}</div>
     <div class="rw">${ic('gift')}${rwHtml(q.rw)}</div></div>
     <button class="btn primary" ${done && !needBed ? '' : 'disabled'} onclick="claimQuest('${gid}')"><span>${needBed ? 'Needs a free bed' : done ? 'Claim reward' : 'On it'}</span></button>
@@ -479,7 +493,9 @@ function claimQuest(gid) {
   if (q.rw.crew && S.crew.length >= S.beds) return;
   if (q.rw.rp) S.rp += q.rw.rp;
   for (const k in q.rw.items || {}) S.items[k] = (S.items[k] || 0) + q.rw.items[k];
-  if (REPEAT[gid]) { S.rq[gid].cd = Date.now() + REPEAT_CD; S.stats.jobs++; }
+  for (const k in q.rw.perm || {}) S.perm[k] = (S.perm[k] || 0) + q.rw.perm[k];
+  if (q.rw.perm) rebuildCrew();
+  if (REPEAT[gid]) { S.rq[gid].cd = Date.now() + 1; S.stats.leo = (S.stats.leo || 0) + 1; }
   else { S.stats.quests++; S.q[gid] = (S.q[gid] || 0) + 1; S.qb[gid] = qBaseNow(gid); }
   const g = npcOf(gid); burst(g.x, g.y - 40, 40, { type: 'star', col: '#ffd24a', spd: 200, life: 1.2, size: 3 });
   closeModal(); updateTalk();
@@ -634,7 +650,7 @@ function pStats() {
   h += abs.length ? `<div class="sbox">${bars(abs.map(([k, v]) => [ABIL[k].n, v, '#9b6ef3', ABIL[k].i]), amax)}</div>` : '<p class="mut small">No abilities used yet.</p>';
   h += `<h3>Quests</h3><div class="sgrid">
     ${tile('flag', '#2ea4dc', 'Story quests', fmt(st.quests))}
-    ${tile('gift', '#c8913e', 'Odd jobs', fmt(st.jobs))}</div>`;
+    ${tile('gift', '#c8913e', 'Leopard favours', fmt(st.leo || 0))}</div>`;
   return h;
 }
 

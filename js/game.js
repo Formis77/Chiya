@@ -158,6 +158,7 @@ function recompute() {
   for (const c in cnt) if (n >= 8 && cnt[c] >= n * .5) hive = c;
   const bpm = syn.has('blessedTrio') ? 1.5 : 1, bp = {};
   S.crew.forEach(m => { if (m.bl) { const [st, v] = CREW[m.id].bp; bp[st] = (bp[st] || 0) + v * bpm / 100; } });
+  for (const k in S.perm || {}) bp[k] = (bp[k] || 0) + S.perm[k];
   for (const g of equippedGear()) for (const k in g.st || {}) bp[k] = (bp[k] || 0) + g.st[k];
   if (S.mandala) for (const [k, v] of S.mandala.lines) bp[k] = (bp[k] || 0) + v;
   if (S.mandala && S.mandala.pas.includes('kilnStar')) bp.conv = (bp.conv || 0) + .08;
@@ -1196,6 +1197,8 @@ function boot() {
   for (const k of ['comet', 'gstar', 'cswing', 'pops', 'heat', 'popcap', 'balloon']) if (!S[k]) S[k] = 0;
   for (const k in OLD_MAT) if (S.items[k]) { S.items[OLD_MAT[k]] = (S.items[OLD_MAT[k]] || 0) + S.items[k]; delete S.items[k]; }
   buildWorld();
+  if (S.qv !== 2) { const old = S.q.didi || 0; S.q.didi = [0, 1, 3, 5, 7, 8, 11, 14, 16, 24, 32, 40][Math.min(11, old)]; S.qb.didi = 0; S.qv = 2; S.qfix = true; }
+  if (!S.perm) S.perm = {};
   if (S.mapv !== 2) { S.mapv = 2; S.px = PLAZA.x; S.py = PLAZA.y + 30; if (S.spr) S.spr.placed = []; }
   player.x = S.px || BREW.x; player.y = S.py || BREW.y - 30;
   rebuildCrew(); refreshWet();

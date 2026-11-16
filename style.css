@@ -259,3 +259,4 @@ html.gapfix #toast{bottom:150px}
 .fruits span{display:flex;align-items:center;gap:6px;background:var(--card);border-radius:14px;padding:5px 10px 5px 5px}
 .fruits .ib{width:30px;height:30px;border-radius:10px}.fruits .ib .ic{width:17px;height:17px}
 .buyrow.col{flex-direction:column}
+.rwi.perm{background:#fff4d6;color:#a5700a}

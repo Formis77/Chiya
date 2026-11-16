@@ -388,22 +388,89 @@ const GIVERS = {
   pemba: { n: 'Old Pemba',   role: 'Retired Sherpa',        x: 920, y: 4760, col: '#2ea4dc', gate: 0, hi: 'Forty summits, little one. Let me teach you about crews.' },
   dolma: { n: 'Dolma',       role: 'Yak herder',            x: 500, y: 4260, col: '#3fae6b', gate: 5, hi: 'My yaks know every flower on this mountain.' },
   norbu: { n: 'Lama Norbu',  role: 'Keeper of the chorten', x: 560, y: 2960, col: '#9b6ef3', gate: 10, hi: 'Harmony between your crew is the real summit.' },
+  prof:  { n: 'Professor Yak',role: 'Mountain scientist',   x: 1660, y: 3000, col: '#2ea4dc', gate: 10, hi: 'Ah, a field assistant! My research needs data, and the results make your teahouse permanently better.' },
   yeti:  { n: 'Grandpa Yeti',role: 'Guardian of the peak',  x: 1650, y: 830, col: '#4fb6e6', gate: 25, hi: 'Hrrm. Few climb this high. Fewer bring tea.' }
 };
-/* repeatable odd-job givers: small item rewards, never progression-breaking */
+/* Old Snow Leopard Lady: endless quests, each one +1% gathering forever */
 const REPEAT = {
-  ang:  { n: 'Ang',  role: 'Porter for hire', x: 905, y: 5455, col: '#c8913e', gate: 0,  rep: true, hi: 'Got a small job if you have a minute.',
-          rw: () => pick([{ momo: ri(5, 10) }, { selroti: ri(2, 4) }, { momo: ri(3, 6), selroti: 1 }, { dalbhat: 1 }]) },
-  maya: { n: 'Maya', role: 'Backpacker',      x: 1700, y: 4000, col: '#e84393', gate: 5,  rep: true, hi: 'This view is unreal! Help me out?',
-          rw: () => pick([{ butterTea: ri(1, 2) }, { spiceShot: 1 }, { glacierShard: 1 }, { yakCheese: 1 }, { butterTea: 1, momo: 4 }, { incense: 1 }]) },
-  raju: { n: 'Raju', role: 'Travelling trader', x: 1660, y: 3000, col: '#e0a43c', gate: 10, rep: true, hi: 'Fine goods from Kathmandu, for a fair favour.',
-          rw: () => Math.random() < .08 ? { mysticWheel: 1 } : pick([{ dalbhat: ri(2, 4) }, { incense: 1, selroti: 3 }, { dalbhat: 2, butterTea: 1 }]) }
+  leopard: { n: 'Old Snow Leopard Lady', role: 'Endless quests', x: 1700, y: 4000, col: '#8e9bd6', gate: 5, rep: true, perm: { gather: .01 },
+             hi: 'Purr. Fetch for an old cat, and the mountain will remember it. Every favour makes you a little stronger, forever.',
+             rw: () => pick([{ chili: ri(3, 6) }, { berry: ri(3, 6) }, { apple: ri(3, 6) }, { momo: ri(4, 8) }, { chili: 2, berry: 2, apple: 2 }, { selroti: ri(1, 3) }, { walnut: 1 }]) }
 };
 const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
-const REPEAT_CD = 4 * 60 * 1000;
 
-const QUESTS = {
-  didi: [
+/* Mansoon's three questlines: early, mid and late. Each line waits for a crew size. */
+const Q_EARLY = [
+  { t: 'Gather 100 ingredients',               g: ['gather', 100],              rw: { items: { momo: 5 }, rp: 100 } },
+  { t: 'Brew tea worth 500 rupees',            g: ['earn', 500],                rw: { items: { permit: 1 } } },
+  { t: 'Gather 300 in Tea Garden',             g: ['field', 'tea', 300],        rw: { items: { apple: 3, momo: 3 } } },
+  { t: 'Have 4 crew',                          g: ['crew', 4],                  rw: { rp: 300, items: { butterTea: 2 } } },
+  { t: 'Gather 500 in Glacier Spring',         g: ['field', 'glacier', 500],    rw: { items: { berry: 4 } } },
+  { t: 'Feed your crew 5 times',               g: ['feed', 5],                  rw: { items: { selroti: 3 } } },
+  { t: 'Gather 800 in Ginger Terraces',        g: ['field', 'ginger', 800],     rw: { items: { chili: 5 } } },
+  { t: 'Buy the Bamboo Rake',                  g: ['tool', 'rake'],             rw: { rp: 1000 } },
+  { t: 'Gather 1,500 Spice ingredients',       g: ['col', 'spice', 1500],       rw: { items: { spiceShot: 1, permit: 1 } } },
+  { t: 'Gather 1,500 Ice ingredients',         g: ['col', 'ice', 1500],         rw: { items: { glacierShard: 1, momo: 5 } } },
+  { t: 'Gather 1,500 Cloud ingredients',       g: ['col', 'cloud', 1500],       rw: { items: { yakCheese: 1, momo: 5 } } },
+  { t: 'Have 5 crew',                          g: ['crew', 5],                  rw: { items: { mysticWheel: 1 } } },
+  { t: 'Gather 3,000 in Marigold Meadow',      g: ['field', 'bazaar', 3000],    rw: { items: { dalbhat: 2, momo: 10 } } },
+  { t: 'Grab 15 ability bubbles',              g: ['tokens', 15],               rw: { items: { incense: 1, chili: 5, berry: 5 } } },
+  { t: 'Brew tea worth 15,000 rupees',         g: ['earn', 15000],              rw: { items: { dalbhat: 3 } } },
+  { t: 'Gather 12,000 ingredients',            g: ['gather', 12000],            rw: { items: { permit: 2, mysticWheel: 2 } } }
+];
+const Q_MID = [
+  { t: 'Gather 8,000 in Yak Meadow',           g: ['field', 'meadow', 8000],    rw: { items: { apple: 10, momo: 10 } } },
+  { t: 'Gather 8,000 in Rhododendron Forest',  g: ['field', 'rhodo', 8000],     rw: { items: { chili: 10, selroti: 3 } } },
+  { t: 'Gather 8,000 in Turquoise Lake',       g: ['field', 'lake', 8000],      rw: { items: { berry: 10, selroti: 3 } } },
+  { t: 'Blend 3 things at the Blender',        g: ['blend', 3],                 rw: { items: { walnut: 5, butterTea: 2 } } },
+  { t: 'Gather 25,000 Cloud ingredients',      g: ['col', 'cloud', 25000],      rw: { items: { yakCheese: 2 } } },
+  { t: 'Gather 25,000 Spice ingredients',      g: ['col', 'spice', 25000],      rw: { items: { spiceShot: 2 } } },
+  { t: 'Gather 25,000 Ice ingredients',        g: ['col', 'ice', 25000],        rw: { items: { glacierShard: 2 } } },
+  { t: 'Gather 40,000 in Juniper Ridge',       g: ['field', 'juniper', 4e4],    rw: { items: { permit: 1, dalbhat: 3 } } },
+  { t: 'Grab 60 ability bubbles',              g: ['tokens', 60],               rw: { items: { incense: 2 } } },
+  { t: 'Brew tea worth 300,000 rupees',        g: ['earn', 3e5],                rw: { items: { mysticWheel: 2, walnut: 5 } } },
+  { t: 'Gather 100,000 in Juniper Ridge',      g: ['field', 'juniper', 1e5],    rw: { items: { dalbhat: 5, apple: 20 } } },
+  { t: 'Get a crew member to level 8',         g: ['level', 8],                 rw: { items: { masala: 2 } } },
+  { t: 'Gather 150,000 ingredients',           g: ['gather', 1.5e5],            rw: { items: { permit: 2 } } },
+  { t: 'Have 15 crew',                         g: ['crew', 15],                 rw: { items: { goldenTea: 1, mysticWheel: 2 } } },
+  { t: 'Gather 250,000 in Yak Meadow',         g: ['field', 'meadow', 2.5e5],   rw: { items: { walnut: 10, dalbhat: 5 } } },
+  { t: 'Brew tea worth 5M rupees',             g: ['earn', 5e6],                rw: { items: { goldenMomo: 1, mysticWheel: 5, permit: 2 } } }
+];
+const Q_LATE = [
+  { t: 'Gather 500,000 in Prayer Flag Pass',   g: ['field', 'flags', 5e5],      rw: { items: { apple: 30, dalbhat: 5 } } },
+  { t: 'Gather 500,000 in Ember Rocks',        g: ['field', 'ember', 5e5],      rw: { items: { chili: 30, dalbhat: 5 } } },
+  { t: 'Gather 500,000 in Frost Hollow',       g: ['field', 'frost', 5e5],      rw: { items: { berry: 30, dalbhat: 5 } } },
+  { t: 'Gather 500,000 in Saffron Cliffs',     g: ['field', 'saffron', 5e5],    rw: { items: { walnut: 15, mysticWheel: 3 } } },
+  { t: 'Gather 2M Spice ingredients',          g: ['col', 'spice', 2e6],        rw: { items: { spiceShot: 4 } } },
+  { t: 'Gather 2M Ice ingredients',            g: ['col', 'ice', 2e6],          rw: { items: { glacierShard: 4 } } },
+  { t: 'Gather 2M Cloud ingredients',          g: ['col', 'cloud', 2e6],        rw: { items: { yakCheese: 4 } } },
+  { t: 'Blend 15 things at the Blender',       g: ['blend', 15],                rw: { items: { goldenTea: 2, gem: 3 } } },
+  { t: 'Grab 300 ability bubbles',             g: ['tokens', 300],              rw: { items: { incense: 4, mysticWheel: 5 } } },
+  { t: 'Brew tea worth 50M rupees',            g: ['earn', 5e7],                rw: { items: { goldenMomo: 1 } } },
+  { t: 'Gather 3M in Summit Glacier',          g: ['field', 'summit', 3e6],     rw: { items: { gem: 5, permit: 3 } } },
+  { t: 'Have 25 crew',                         g: ['crew', 25],                 rw: { items: { mysticWheel: 10 } } },
+  { t: 'Gather 10M ingredients',               g: ['gather', 1e7],              rw: { items: { goldenTea: 3, masala: 3 } } },
+  { t: 'Gather 5M in Summit Glacier',          g: ['field', 'summit', 5e6],     rw: { items: { goldenMomo: 2 } } },
+  { t: 'Brew tea worth 1B rupees',             g: ['earn', 1e9],                rw: { items: { mysticWheel: 25, gem: 10 } } },
+  { t: 'Gather 25M ingredients',               g: ['gather', 2.5e7],            rw: { crew: 'bear', items: { goldenMomo: 3 } } }
+];
+const QLINES = [{ n: 'Early questline', need: 0 }, { n: 'Mid questline', need: 10 }, { n: 'Late questline', need: 20 }];
+
+/* Professor Yak: a short list of research quests that give permanent boosts */
+const Q_PROF = [
+  { t: 'Gather 5,000 in Turquoise Lake',       g: ['field', 'lake', 5000],      rw: { perm: { gather: .03 } } },
+  { t: 'Blend 5 things at the Blender',        g: ['blend', 5],                 rw: { perm: { cap: .05 } } },
+  { t: 'Grab 40 ability bubbles',              g: ['tokens', 40],               rw: { perm: { cdr: .05 } } },
+  { t: 'Gather 60,000 Spice ingredients',      g: ['col', 'spice', 6e4],        rw: { perm: { crit: .02 } } },
+  { t: 'Gather 60,000 Ice ingredients',        g: ['col', 'ice', 6e4],          rw: { perm: { brew: .05 } } },
+  { t: 'Gather 60,000 Cloud ingredients',      g: ['col', 'cloud', 6e4],        rw: { perm: { tool: .1 } } },
+  { t: 'Have 3 Blessed crew',                  g: ['blessed', 3],               rw: { perm: { conv: .03 } } },
+  { t: 'Gather 1M in Frost Hollow',            g: ['field', 'frost', 1e6],      rw: { perm: { gather: .05 } } },
+  { t: 'Grab 500 ability bubbles',             g: ['tokens', 500],              rw: { perm: { cap: .1 } } },
+  { t: 'Gather 5M in Summit Glacier',          g: ['field', 'summit', 5e6],     rw: { perm: { gather: .1, speed: .05 } } }
+];
+
+const QUESTS_OLD_DIDI = [
     { t: 'Gather 100 ingredients',               g: ['gather', 100],              rw: { items: { momo: 5 }, rp: 100 } },
     { t: 'Brew tea worth 500 rupees',            g: ['earn', 500],                rw: { items: { permit: 1 } } },
     { t: 'Have 4 crew',                          g: ['crew', 4],                  rw: { rp: 300, items: { butterTea: 2 } } },
@@ -415,7 +482,10 @@ const QUESTS = {
     { t: 'Brew tea worth 300,000 rupees',        g: ['earn', 3e5],                rw: { items: { goldenMomo: 1 } } },
     { t: 'Brew tea worth 20M rupees',            g: ['earn', 2e7],                rw: { items: { mysticWheel: 5, dalbhat: 25 } } },
     { t: 'Brew tea worth 1B rupees',             g: ['earn', 1e9],                rw: { items: { goldenMomo: 3 } } }
-  ],
+];
+const QUESTS = {
+  didi: [...Q_EARLY.map(q => ({ ...q, line: 0 })), ...Q_MID.map(q => ({ ...q, line: 1 })), ...Q_LATE.map(q => ({ ...q, line: 2 }))],
+  prof: Q_PROF,
   pemba: [
     { t: 'Gather 8,000 in Rhododendron Forest',  g: ['field', 'rhodo', 8000],     rw: { items: { permit: 2 } } },
     { t: 'Get a crew member to level 5',         g: ['level', 5],                 rw: { rp: 5000, items: { selroti: 5 } } },
