@@ -22,7 +22,7 @@ const BLENDER = { x: 330, y: 4120 };
 const TSTALL = { x: 870, y: 5470 };
 let sproutT = 40, diyaT = 0, wasNight = false;
 const isNight = () => tiharOn() && (S.nightClock || 0) % NIGHT_EVERY > NIGHT_EVERY - NIGHT_LEN;
-const VIEW_W = 360;
+let VIEW_W = 360;
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -727,11 +727,11 @@ function resize() {
   // shorter than the screen by the status bar height; stretch everything over the gap.
   const portrait = innerHeight > innerWidth, sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
   const gap = (navigator.standalone || matchMedia('(display-mode: standalone)').matches) ? Math.max(0, Math.min(80, sh - innerHeight)) : 0;
-  document.documentElement.classList.toggle('gapfix', gap > 10);
+  document.documentElement.classList.toggle('gapfix', portrait && gap > 10);
   DPR = Math.min(2.5, window.devicePixelRatio || 1);
   const rc = cv.getBoundingClientRect(), w = rc.width || innerWidth, h = rc.height || innerHeight;
   cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
-  scale = cv.width / VIEW_W; viewH = cv.height / scale;
+  if (w > h) { viewH = 440; scale = cv.height / viewH; VIEW_W = cv.width / scale; } else { VIEW_W = 360; scale = cv.width / VIEW_W; viewH = cv.height / scale; }
 }
 const teaTier = () => { const n = S.crew.length; return n >= 40 ? 4 : n >= 30 ? 3 : n >= 20 ? 2 : n >= 10 ? 1 : 0; };
 const houseTop = () => (teaTier() >= 2 ? -132 : -92);

@@ -5,19 +5,24 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '19';
-const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['gear', 'backpack', 'Gear'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
+const VERSION = '20';
+const NAV = [['home', 'home', 'Home'], ['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['gear', 'backpack', 'Gear'], ['map', 'map', 'Map'], ['badges', 'badge', 'Badges'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
+const HOTBAR_N = 7;
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
   $('rpi').innerHTML = ic('coin'); $('dki').innerHTML = ic('basket');
-  $('gear').innerHTML = ic('gear'); $('gear').addEventListener('click', () => openPanel('settings'));
-  $('statsb').innerHTML = ic('chart'); $('statsb').addEventListener('click', () => openPanel('stats'));
+  $('menub').innerHTML = ic('menu');
+  $('menub').addEventListener('click', () => { if (panel) { closePanel(); document.body.classList.remove('menu'); } else document.body.classList.toggle('menu'); });
+  $('gearq').addEventListener('click', () => openPanel('gear'));
+  if (!S.hotbar || S.hotbar.length !== HOTBAR_N) S.hotbar = ['permit', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
+  $('hotbar').addEventListener('pointerdown', ev => { const sl = ev.target.closest('.hslot'); if (!sl) return; ev.preventDefault(); dragStart(ev, S.hotbar[+sl.dataset.i], +sl.dataset.i); });
+  addEventListener('pointermove', dragMove); addEventListener('pointerup', dragEnd); addEventListener('pointercancel', dragEnd);
   setTimeout(() => checkUpdate(true), 2500);
   $('bar').addEventListener('click', ev => {
     const b = ev.target.closest('button'); if (!b) return;
     const a = b.dataset.a;
     if (a === 'home') { player.auto = { x: BREW.x, y: BREW.y }; closePanel(); toast('Walking home to brew', 'home'); }
-    else openPanel(a);
+    else openPanel(a === 'items' ? 'inv' : a);
   });
   $('quest').addEventListener('click', () => openPanel('quests'));
   $('talk').addEventListener('click', () => talk());
@@ -42,6 +47,8 @@ function uiTick(dt) {
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
   $('quest').innerHTML = questTracker();
+  renderHotbar();
+  { const tl = tool(), dk = doko(), g = `${ic(tl.i)}${ic(dk.i)}`; if ($('gearq').dataset.g !== tl.id + dk.id) { $('gearq').innerHTML = `<span>${ic(tl.i)}</span><span>${ic(dk.i)}</span>`; $('gearq').dataset.g = tl.id + dk.id; } }
   const pf = fieldAt(player.x, player.y), canPlace = S.spr.n > 0 && pf >= 0 && fieldOpen(pf) && !panel;
   $('place').classList.toggle('on', canPlace);
   if (canPlace) $('place').innerHTML = `${ic('drop')}<span><small>${SPRINKLERS[S.spr.lv].n}</small>Place ${S.spr.placed.length}/${S.spr.n}</span>`;
@@ -73,16 +80,16 @@ function showIntro() {
 function openPanel(name, tab) {
   if (panel === name && !tab) { closePanel(); return; }
   panel = name; panelTab = tab || panelTab;
-  $('sheet').classList.add('on'); document.body.classList.add('panel');
+  $('sheet').classList.add('on'); document.body.classList.add('panel', 'menu');
   renderPanel();
 }
-function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
+function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel', 'menu'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
-  const fn = { tihar: pTihar, badges: pBadges, blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
+  const fn = { inv: pItems, tihar: pTihar, badges: pBadges, blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
   if (!fn) return;
   $('sheet').classList.toggle('fit', panel === 'shop');
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
-  document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel));
+  document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel || (b.dataset.a === 'items' && panel === 'inv')));
 }
 const tabs = (list, cur, panelName) => `<div class="tabs">${list.map(([id, n]) => `<button class="${cur === id ? 'on' : ''}" onclick="panelTab='${id}';renderPanel()">${n}</button>`).join('')}</div>`;
 const rarBadge = r => `<span class="rb" style="--rc:${RAR[r].c}">${RAR[r].n}</span>`;
@@ -175,8 +182,9 @@ const STATN = { cdr: 'ability recharge', conv: 'instant conversion', cap: 'doko 
 function rollOdds(odds) { let r = Math.random(), acc = 0; for (const k in odds) { acc += odds[k]; if (r < acc) return k; } return Object.keys(odds)[1]; }
 function rollCrew(odds) { const r = rollOdds(odds); return pick(CREW_IDS.filter(id => CREW[id].r === r)); }
 const blessChance = (wheel) => (wheel ? 1 / 250 : 1 / 287) + .002 * (D.k.lama || 0);
-function doRecruit() {
+function doRecruit(permitOnly) {
   if (S.crew.length >= S.beds) { toast('No free bed. Buy a new one first.', 'bed'); return; }
+  if (permitOnly && !(S.items.permit > 0)) { toast('No permits. Buy them at the Bazaar.', 'ticket'); return; }
   if ((S.items.permit || 0) > 0) S.items.permit--;
   else { const c = permitCost(); if (S.rp < c) { toast('Not enough rupees', 'coin'); return; } spend(c); S.recruits++; }
   const id = rollCrew(PERMIT_ODDS), bl = Math.random() < blessChance();
@@ -340,16 +348,59 @@ function buyItem(k, cost, n = 1) {
 function buyLodge(i) { const l = LODGE[i]; if (S.rp < l.cost) return; spend(l.cost); S.lodge = i; toast(`Hired: ${l.n}`, 'key'); save(); renderPanel(); }
 
 /* ---------------- ITEMS ---------------- */
+let invSel = null;
+function itemAction(k) {
+  const it = ITEMS[k];
+  return it.use ? `<button class="btn sm primary" onclick="useItem('${k}')"><span>Use</span></button>` : FOOD[k] ? `<button class="btn sm" onclick="openPanel('crew')"><span>Feed crew</span></button>` : k === 'permit' ? `<button class="btn sm primary" onclick="doRecruit(true)"><span>Recruit</span></button>` : k === 'mysticWheel' || k === 'goldenMomo' ? `<button class="btn sm" onclick="openPanel('crew')"><span>Pick crew</span></button>` : '<span class="tag dim">Crafting</span>';
+}
 function pItems() {
-  let h = `<div class="ph"><h2>Items</h2></div>`;
+  let h = `<div class="ph"><h2>Inventory</h2></div>`;
   const keys = Object.keys(ITEMS).filter(k => S.items[k] > 0);
   if (!keys.length) return h + '<p class="mut">Empty. Buy supplies in the Bazaar.</p>';
-  h += keys.map(k => {
-    const it = ITEMS[k];
-    const action = it.mat ? '<span class="tag dim">Material</span>' : it.use ? `<button class="btn sm primary" onclick="useItem('${k}')"><span>Use</span></button>` : FOOD[k] ? `<button class="btn sm" onclick="openPanel('crew')"><span>Feed</span></button>` : k === 'permit' ? `<button class="btn sm" onclick="doRecruit()"><span>Recruit</span></button>` : `<button class="btn sm" onclick="openPanel('crew')"><span>Crew</span></button>`;
-    return `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k]}</span> ${info('it', k)}</b></div>${action}</div>`;
-  }).join('');
+  if (!invSel || !(S.items[invSel] > 0)) invSel = keys[0];
+  const it = ITEMS[invSel];
+  h += `<div class="invsel">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${fmt(S.items[invSel])}</span></b><span class="mut small">${it.d}</span></div>${itemAction(invSel)}</div>`;
+  h += `<p class="mut small">Hold an item and drag it onto a hotbar slot. Drag a slot off the hotbar to clear it.</p>`;
+  h += `<div class="invgrid">${keys.map(k => `<button class="icell ${k === invSel ? 'on' : ''} ${S.hotbar.includes(k) ? 'hb' : ''}" data-k="${k}" onpointerdown="dragStart(event,'${k}',-1)">${ib(ITEMS[k].i, icol(ITEMS[k].i))}<b>${fmt(S.items[k])}</b></button>`).join('')}</div>`;
   return h;
+}
+/* ---------------- HOTBAR ---------------- */
+let hbSig = '';
+function renderHotbar() {
+  const sig = S.hotbar.map(k => k ? k + ':' + (S.items[k] || 0) : '-').join('|') + (dragS ? 'd' : '');
+  if (sig === hbSig) return; hbSig = sig;
+  $('hotbar').innerHTML = S.hotbar.map((k, i) => { if (!k) return `<button class="hslot empty" data-i="${i}"><small>${i + 1}</small></button>`;
+    const n = S.items[k] || 0; return `<button class="hslot ${n ? '' : 'zero'}" data-i="${i}" style="--c:${icol(ITEMS[k].i)}">${ic(ITEMS[k].i)}<b>${fmt(n)}</b><small>${i + 1}</small></button>`; }).join('');
+}
+function hotUse(i) {
+  const k = S.hotbar[i]; if (!k) { openPanel('inv'); return; }
+  if (!(S.items[k] > 0)) { toast(`No ${ITEMS[k].n} left`, ITEMS[k].i); return; }
+  const it = ITEMS[k];
+  if (it.use) useItem(k); else if (k === 'permit') doRecruit(true); else if (FOOD[k] || k === 'mysticWheel' || k === 'goldenMomo') openPanel('crew'); else toast(`${it.n} is used for crafting and blending`, it.i);
+}
+let dragS = null;
+function dragStart(ev, k, from) {
+  dragS = { k, from, x0: ev.clientX, y0: ev.clientY, on: false, id: ev.pointerId, armed: from >= 0 };
+  if (from < 0) { const d = dragS; setTimeout(() => { if (dragS === d) { d.armed = true; const el = document.querySelector(`.icell[data-k="${k}"]`); if (el) el.classList.add('lift'); } }, 220); }
+}
+document.addEventListener('touchmove', e => { if (dragS && dragS.armed) e.preventDefault(); }, { passive: false });
+function dragMove(ev) {
+  if (!dragS || ev.pointerId !== dragS.id) return;
+  if (!dragS.armed && Math.hypot(ev.clientX - dragS.x0, ev.clientY - dragS.y0) > 9) { dragS = null; return; }
+  if (!dragS.on && dragS.armed && Math.hypot(ev.clientX - dragS.x0, ev.clientY - dragS.y0) > 9 && dragS.k) {
+    dragS.on = true; const d = $('drag'); d.innerHTML = ib(ITEMS[dragS.k].i, icol(ITEMS[dragS.k].i)); d.classList.add('on'); document.body.classList.add('dragging');
+  }
+  if (dragS.on) { const d = $('drag'); d.style.transform = `translate(${ev.clientX - 26}px,${ev.clientY - 26}px)`;
+    document.querySelectorAll('.hslot').forEach(s2 => s2.classList.remove('over')); const el = document.elementFromPoint(ev.clientX, ev.clientY), sl = el && el.closest('.hslot'); if (sl) sl.classList.add('over'); }
+}
+function dragEnd(ev) {
+  if (!dragS || ev.pointerId !== dragS.id) return;
+  const ds = dragS; dragS = null; $('drag').classList.remove('on'); document.body.classList.remove('dragging');
+  if (!ds.on) { if (ds.from >= 0) hotUse(ds.from); else if (ds.k) { invSel = ds.k; renderPanel(); } hbSig = ''; return; }
+  const el = document.elementFromPoint(ev.clientX, ev.clientY), sl = el && el.closest('.hslot');
+  if (sl) { const to = +sl.dataset.i; if (ds.from >= 0) { const t = S.hotbar[to]; S.hotbar[to] = ds.k; S.hotbar[ds.from] = t; } else { const prev = S.hotbar.indexOf(ds.k); if (prev >= 0) S.hotbar[prev] = S.hotbar[to]; S.hotbar[to] = ds.k; } }
+  else if (ds.from >= 0) S.hotbar[ds.from] = null;
+  hbSig = ''; renderHotbar(); save(); if (panel === 'inv') renderPanel();
 }
 function useItem(k) {
   if (!(S.items[k] > 0)) return; S.items[k]--;
