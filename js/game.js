@@ -19,6 +19,9 @@ const GLIDERS = [
 const GLIDE_GATE = 10;
 const MSHRINE = { x: 1780, y: 3250 };
 const BLENDER = { x: 330, y: 4120 };
+const TSTALL = { x: 870, y: 5470 };
+let sproutT = 40, diyaT = 0, wasNight = false;
+const isNight = () => tiharOn() && (S.nightClock || 0) % NIGHT_EVERY > NIGHT_EVERY - NIGHT_LEN;
 const VIEW_W = 360;
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -107,7 +110,7 @@ function buildWorld() {
   PATHPTS = pts;
   const nearPath = (x, y, m) => { for (let i = 0; i < TRAIL.length; i += 2) { const t = TRAIL[i]; if (Math.abs(t.x - x) < m && Math.abs(t.y - y) < m && Math.hypot(t.x - x, t.y - y) < m) return true; } return false; };
   const nearPlaza = (x, y) => Math.hypot((x - PLAZA.x) / 290, (y - PLAZA.y) / 170) < 1;
-  const blocked = (x, y, m) => inField(x, y, m) || nearPath(x, y, m + 12) || nearPlaza(x, y) || Object.values(NPCS()).some(g => Math.hypot(x - g.x, y - g.y) < 60) || GLIDERS.some(g => Math.hypot(x - g.x, y - g.y) < 70) || SHOPS.some(g => Math.hypot(x - g.x, y - g.y + 20) < 95) || Math.hypot(x - MSHRINE.x, y - MSHRINE.y + 20) < 100 || Math.hypot(x - BLENDER.x, y - BLENDER.y + 20) < 90;
+  const blocked = (x, y, m) => inField(x, y, m) || nearPath(x, y, m + 12) || nearPlaza(x, y) || Object.values(NPCS()).some(g => Math.hypot(x - g.x, y - g.y) < 60) || GLIDERS.some(g => Math.hypot(x - g.x, y - g.y) < 70) || SHOPS.some(g => Math.hypot(x - g.x, y - g.y + 20) < 95) || Math.hypot(x - MSHRINE.x, y - MSHRINE.y + 20) < 100 || Math.hypot(x - BLENDER.x, y - BLENDER.y + 20) < 90 || Math.hypot(x - TSTALL.x, y - TSTALL.y + 20) < 90;
   // gates where the trail crosses each zone border
   GATES = [];
   for (let z = 1; z < ZONES.length; z++) { const top = ZONES[z - 1].top, p = TRAIL.find(t => t.y < top) || TRAIL[0]; GATES.push({ z, x: p.x, y: top }); }
@@ -159,6 +162,7 @@ function recompute() {
   const bpm = syn.has('blessedTrio') ? 1.5 : 1, bp = {};
   S.crew.forEach(m => { if (m.bl) { const [st, v] = CREW[m.id].bp; bp[st] = (bp[st] || 0) + v * bpm / 100; } });
   for (const k in S.perm || {}) bp[k] = (bp[k] || 0) + S.perm[k];
+  { let n = 0; for (const k in S.badges || {}) n += S.badges[k]; bp.gather = (bp.gather || 0) + n * BADGE_BONUS; }
   for (const g of equippedGear()) for (const k in g.st || {}) bp[k] = (bp[k] || 0) + g.st[k];
   if (S.mandala) for (const [k, v] of S.mandala.lines) bp[k] = (bp[k] || 0) + v;
   if (S.mandala && S.mandala.pas.includes('kilnStar')) bp.conv = (bp.conv || 0) + .08;
@@ -253,6 +257,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   const st = S.stats; st.col[t.col] = (st.col[t.col] || 0) + add; st.lv[t.lv] = (st.lv[t.lv] || 0) + add;
   if (add > (st.best || 0)) st.best = add;
   const fid = FIELDS[t.f].id; S.stats.field[fid] = (S.stats.field[fid] || 0) + add;
+  if (S.sprouts.length && add > 0) sproutHit(t, add);
   leafBurst(t, crit ? 5 : 2);
   if (crit) burst(t.x, t.y - 10, 5, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.2 });
   return add;
@@ -324,7 +329,7 @@ function updCrew(e, i, dt) {
       e.act = true; e.mv = false; e.t -= dt * (B.roar ? 1.5 : 1);
       if (e.t <= 0) {
         const got = collect(e.tile, crewAmount(e, e.tile), def.c);
-        if (got > 0) { pop(e.x, e.y - 34, '+' + fmt(got), COL[def.c].c); if (Math.random() < .004) dropMat(e.tile.f); }
+        if (got > 0) { pop(e.x, e.y - 34, '+' + fmt(got), COL[def.c].c); if (Math.random() < .004) dropMat(e.tile.f); if (tiharOn() && Math.random() < .006) giveMari(1, e.x, e.y); }
         e.st = 'idle';
       }
       return;
@@ -583,6 +588,23 @@ function update(dt) {
   player.mv = !player.fly && Math.abs(ix) + Math.abs(iy) > .05;
   if (player.mv) S.stats.walk += sp * Math.hypot(ix, iy) * dt;
   S.stats.time += dt;
+  // sprouts
+  sproutT -= dt; if (sproutT <= 0) { sproutT = rand(150, 300); spawnSprout(-1, SPROUT_WILD, true); }
+  // Tihar: Diyo Night
+  if (tiharOn()) {
+    S.nightClock = (S.nightClock || 0) + dt;
+    const nt = isNight();
+    if (nt && !wasNight) { toast('Diyo Night! Collect the glowing lamps for marigolds', 'diya'); E.diyas = []; }
+    if (!nt && wasNight) E.diyas = [];
+    wasNight = nt;
+    if (nt) {
+      E.diyas = E.diyas || [];
+      diyaT -= dt; if (diyaT <= 0 && E.diyas.length < 12) { diyaT = .7; const a = rand(0, TAU), r = rand(90, 300); E.diyas.push({ x: clamp(player.x + Math.cos(a) * r, 30, WORLD.w - 30), y: clamp(player.y + Math.sin(a) * r * .8, ZONES[0].top + 60, WORLD.h - 30), age: 0, life: 22, ph: rand(0, TAU) }); }
+      for (let i = E.diyas.length - 1; i >= 0; i--) { const d = E.diyas[i]; d.age += dt; d.y += Math.sin(now * 2 + d.ph) * .15;
+        if (d.age > d.life) { E.diyas.splice(i, 1); continue; }
+        if (dist(player.x, player.y, d.x, d.y) < 34) { E.diyas.splice(i, 1); giveMari(Math.random() < .3 ? 3 : 2, d.x, d.y); burst(d.x, d.y - 10, 14, { type: 'star', col: '#ffcf5a', spd: 110, life: .7, size: 2.4 }); } }
+    }
+  }
   if (Math.abs(ix) > .1) player.face = ix > 0 ? 1 : -1;
   player.anim += dt; player.swing = Math.max(0, player.swing - dt * 4);
   if (player.mv && B.haste && Math.random() < .5) E.parts.push({ type: 'spark', x: player.x - ix * 14 + rand(-8, 8), y: player.y - rand(4, 26), vx: -ix * 160, vy: -iy * 160, life: .25, max: .25, size: 1.6, col: 'rgba(170,245,255,.9)' });
@@ -596,6 +618,7 @@ function update(dt) {
     const reach = tl.r * (B.cloudburst ? 1.5 : 1) * (B.bear ? 1.3 : 1);
     for (const t of TILES[pf]) if (dist(t.x, t.y, cx, cy) < reach) sum += collect(t, tl.amt * (tl.col === t.col ? 1 + (tl.cb || .6) : 1), 'neutral', 1, true);
     if (sum > 0 && Math.random() < .03) dropMat(pf);
+    if (sum > 0 && tiharOn() && Math.random() < .05) giveMari(1, player.x, player.y);
     if (sum > 0 && mpas('cloudStar') && ++S.cswing >= 60) { S.cswing = 0; addBuff('cloudburst', 10); pop(player.x, player.y - 70, 'Cloud Burst!', '#ffffff', true); }
     E.decals.push({ kind: 'swoosh', x: cx, y: cy, r: reach, face: player.face, age: 0, dur: .22 });
     if (sum) pop(player.x, player.y - 48, '+' + fmt(sum), '#ffffff');
@@ -607,6 +630,7 @@ function update(dt) {
   for (const sh of SHOPS) { const d = dist(player.x, player.y, sh.x, sh.y + 20); if (d < nd + 15) { nd = d; nn = 'shop:' + sh.id; } }
   { const d = dist(player.x, player.y, MSHRINE.x, MSHRINE.y + 20); if (d < nd + 15) { nd = d; nn = 'mandala'; } }
   { const d = dist(player.x, player.y, BLENDER.x, BLENDER.y + 20); if (d < nd + 15) { nd = d; nn = 'blender'; } }
+  if (tiharOn()) { const d = dist(player.x, player.y, TSTALL.x, TSTALL.y + 20); if (d < nd + 15) { nd = d; nn = 'tihar'; } }
   if (player.fly) nn = null;
   if (nn !== nearNpc) { nearNpc = nn; updateTalk(); }
   // Pilgrim Star: a random open field gets +60% for 10 minutes
@@ -800,6 +824,8 @@ function render() {
   for (const sp of S.spr.placed) if (vis(sp.x, sp.y, 60)) objs.push({ y: sp.y, f: () => drawSprinkler(c, sp) });
   for (const g of GATES) if (vis(g.x, g.y, 140)) objs.push({ y: g.y, f: () => drawGate(c, g) });
   for (const g of GLIDERS) if (vis(g.x, g.y, 80)) objs.push({ y: g.y, f: () => drawGlider(c, g) });
+  if (tiharOn() && vis(TSTALL.x, TSTALL.y, 120)) objs.push({ y: TSTALL.y, f: () => { c.save(); c.translate(TSTALL.x, TSTALL.y); drawTiharStall(c, now); c.restore(); } });
+  for (const sp of S.sprouts) if (vis(sp.x, sp.y, 60)) objs.push({ y: sp.y, f: () => drawSprout(c, sp) });
   if (vis(BLENDER.x, BLENDER.y, 120)) objs.push({ y: BLENDER.y, f: () => { c.save(); c.translate(BLENDER.x, BLENDER.y); drawBlender(c, now); c.restore(); } });
   if (vis(MSHRINE.x, MSHRINE.y, 120)) objs.push({ y: MSHRINE.y, f: () => { c.save(); c.translate(MSHRINE.x, MSHRINE.y); drawMandalaShrine(c, now); c.restore(); } });
   for (const sh of SHOPS) if (vis(sh.x, sh.y, 120)) objs.push({ y: sh.y, f: () => { c.save(); c.translate(sh.x, sh.y); drawShop(c, sh, now); c.restore(); } });
@@ -864,6 +890,19 @@ function render() {
   }
   c.globalAlpha = 1;
 
+  // Diyo Night darkness and lamps
+  if (tiharOn()) {
+    const ph = (S.nightClock || 0) % NIGHT_EVERY - (NIGHT_EVERY - NIGHT_LEN), dk = ph > 0 ? Math.min(1, ph / 4, (NIGHT_LEN - ph) / 4) : 0;
+    if (dk > 0) {
+      c.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const W = c.canvas.width / DPR, H = c.canvas.height / DPR, px = (player.x - cam.x) * scale / DPR, py = (player.y - (player.h || 0) - 20 - cam.y) * scale / DPR;
+      const g = c.createRadialGradient(px, py, 45, px, py, Math.max(W, H) * .62);
+      g.addColorStop(0, 'rgba(14,16,48,0)'); g.addColorStop(.22, `rgba(14,16,48,${.55 * dk})`); g.addColorStop(1, `rgba(8,8,30,${.84 * dk})`);
+      c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.setTransform(scale, 0, 0, scale, (-cam.x + sx) * scale, (-cam.y + sy) * scale);
+      for (const d of E.diyas || []) if (vis(d.x, d.y, 40)) drawDiya(c, d);
+    }
+  }
   // joystick (screen space)
   c.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (joy.on) {
@@ -1134,6 +1173,48 @@ function addFlame(fi, x, y, base) {
   if (fieldAt(x, y) !== fi || E.decals.filter(d => d.kind === 'flame').length > 30) return;
   E.decals.push({ kind: 'flame', x, y, r: 38, age: 0, dur: 6, fi, base, tick: 0 });
 }
+function giveMari(n, x, y) {
+  S.items.marigold = (S.items.marigold || 0) + n; S.stats.marigolds = (S.stats.marigolds || 0) + n;
+  pop(x, y - 56, '+' + n + ' Marigold', '#ffb347', true);
+}
+function spawnSprout(fi, odds, wild) {
+  if (S.sprouts.length >= 3 || (wild && S.sprouts.some(s2 => s2.wild))) return false;
+  if (fi < 0) { const open = FIELDS.map((f, i) => i).filter(i => fieldOpen(i)); fi = pick(open); }
+  const f = FIELDS[fi], r = rollOdds(odds), def = SPROUT[r];
+  const sp = { f: fi, x: f.x + rand(70, f.w - 70), y: f.yy + rand(70, f.h - 50), r, wild, max: Math.round(capMax() * def.hp * (1 + f.z * .5)) };
+  if (fi === fieldAt(player.x, player.y) && !wild) { sp.x = clamp(player.x, f.x + 60, f.x + f.w - 60); sp.y = clamp(player.y - 40, f.yy + 60, f.yy + f.h - 40); }
+  sp.hp = sp.max; S.sprouts.push(sp);
+  burst(sp.x, sp.y - 10, 18, { type: 'leaf', col: def.c, spd: 120, life: .8, size: 3.4, g: 80 });
+  if (wild) toast(`A ${def.n} appeared in ${f.n}`, 'sprout');
+  return true;
+}
+function plantSprout(fi) {
+  if (!spawnSprout(fi, SPROUT_SEED, false)) { S.items.lotusSeed++; toast('Too many sprouts at once (max 3)', 'sprout'); return; }
+  toast(`Planted a ${SPROUT[S.sprouts[S.sprouts.length - 1].r].n}`, 'sprout');
+}
+function sproutHit(t, add) {
+  for (let i = S.sprouts.length - 1; i >= 0; i--) {
+    const sp = S.sprouts[i]; if (sp.f !== t.f || Math.abs(t.x - sp.x) > 170 || Math.abs(t.y - sp.y) > 130) continue;
+    sp.hp -= add; sp.hit = now; if (sp.hp <= 0) popSprout(i);
+  }
+}
+function sproutLoot(o) {
+  const pool = [['chili', 3], ['berry', 3], ['apple', 3], ['momo', 3], ['selroti', 2], ['walnut', 1 + o * .6], ['dalbhat', .5 + o * .6], ['lotusSeed', .15 + o * .12],
+    ['permit', o >= 1 ? .12 * o : 0], ['mysticWheel', o >= 2 ? .18 * o : 0], ['gem', o >= 3 ? .35 : 0], ['goldenMomo', o >= 4 ? .3 : 0], ['marigold', tiharOn() ? 2.5 : 0]];
+  let tot = 0; for (const [, w] of pool) tot += w;
+  let q = Math.random() * tot; for (const [k, w] of pool) { q -= w; if (q <= 0) return k; } return 'momo';
+}
+function popSprout(i) {
+  const sp = S.sprouts.splice(i, 1)[0], def = SPROUT[sp.r], got = {};
+  for (let k = 0; k < def.drops; k++) { const it = sproutLoot(def.o); const n = ['chili', 'berry', 'apple', 'momo'].includes(it) ? ri(2, 4) * (1 + def.o) : it === 'marigold' ? ri(3, 8) : 1; got[it] = (got[it] || 0) + n; }
+  for (const k in got) { S.items[k] = (S.items[k] || 0) + got[k]; if (k === 'marigold') S.stats.marigolds = (S.stats.marigolds || 0) + got[k]; }
+  S.stats.sprouts = (S.stats.sprouts || 0) + 1;
+  burst(sp.x, sp.y - 20, 40, { type: 'star', col: def.c, spd: 220, life: 1.1, size: 3 });
+  burst(sp.x, sp.y - 10, 20, { type: 'leaf', col: '#6cc87a', spd: 160, life: 1, size: 3.5, g: 120 });
+  ring(sp.x, sp.y, 110, def.c, .6, 5); cam.shake = Math.max(cam.shake, 5);
+  pop(sp.x, sp.y - 70, def.n + '!', def.c, true);
+  toast(Object.entries(got).map(([k, n]) => `${ITEMS[k].n} x${n}`).join(', '), 'sprout'); save();
+}
 function dropMat(fi) {
   const f = FIELDS[fi], r = Math.random();
   let k; if (f.z === 4 && r < .08) k = 'gem'; else if (f.z >= 2 && r < .2) k = 'walnut'; else { let q = Math.random(); k = 'apple'; for (const c2 in f.cw) { q -= f.cw[c2]; if (q <= 0) { k = { spice: 'chili', ice: 'berry', cloud: 'apple' }[c2]; break; } } }
@@ -1199,6 +1280,7 @@ function boot() {
   buildWorld();
   if (S.qv !== 2) { const old = S.q.didi || 0; S.q.didi = [0, 1, 3, 5, 7, 8, 11, 14, 16, 24, 32, 40][Math.min(11, old)]; S.qb.didi = 0; S.qv = 2; S.qfix = true; }
   if (!S.perm) S.perm = {};
+  if (!S.sprouts) S.sprouts = []; if (!S.badges) S.badges = {};
   if (S.mapv !== 2) { S.mapv = 2; S.px = PLAZA.x; S.py = PLAZA.y + 30; if (S.spr) S.spr.placed = []; }
   player.x = S.px || BREW.x; player.y = S.py || BREW.y - 30;
   rebuildCrew(); refreshWet();

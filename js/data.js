@@ -344,7 +344,9 @@ const ITEMS = {
   incense:     { n: 'Incense',       i: 'incense', d: 'Abilities recharge twice as fast for 5 minutes. Using more adds time.', price: 8000, use: true },
   goldenTea:   { n: 'Golden Tea',    i: 'cup', d: 'All gathering x1.15 for 15 minutes. Blend only.', use: true },
   masala:      { n: 'Masala Tonic',  i: 'bottle', d: '+8% instant conversion for 10 minutes. Blend only.', use: true },
-  lotusSeed:   { n: 'Lotus Seed',    i: 'leaf', d: 'Plant it to grow a sprout in the field you stand in.', use: true },
+  lotusSeed:   { n: 'Lotus Seed',    i: 'sprout', d: 'Plant it to grow a sprout in the field you stand in. Planted sprouts are rarer than wild ones.', use: true },
+  marigold:    { n: 'Marigold',      i: 'marigold', d: 'Tihar festival flower. Drops while gathering during the festival. Spend it at the Tihar Stall.' },
+  garland:     { n: 'Marigold Garland', i: 'garland', d: 'Welcomes the Tihar Dog into your crew. Needs a free bed.', use: true },
   butterDrop:  { n: 'Butter Drop',   i: 'drop',    d: 'Drops a pool of yak butter (radius 110) where you stand for 40s. Gathering inside x2, and Cloud crew gather x1.5 more.', price: 15000, use: true },
   permit:      { n: 'Trekking Permit', i: 'ticket', d: 'Recruit a random crew member into an empty bed.' },
   mysticWheel: { n: 'Mystic Wheel',  i: 'wheel', d: 'Reroll a crew member. Never gives Commons.' },
@@ -489,7 +491,7 @@ const QUESTS = {
   pemba: [
     { t: 'Gather 8,000 in Rhododendron Forest',  g: ['field', 'rhodo', 8000],     rw: { items: { permit: 2 } } },
     { t: 'Get a crew member to level 5',         g: ['level', 5],                 rw: { rp: 5000, items: { selroti: 5 } } },
-    { t: 'Have 10 crew',                         g: ['crew', 10],                 rw: { crew: 'tiharDog' } },
+    { t: 'Have 10 crew',                         g: ['crew', 10],                 rw: { items: { mysticWheel: 2, permit: 2 } } },
     { t: 'Get a crew member to level 10',        g: ['level', 10],                rw: { items: { dalbhat: 15 } } },
     { t: 'Have 15 crew',                         g: ['crew', 15],                 rw: { crew: 'kiteFlyer' } },
     { t: 'Have 25 crew',                         g: ['crew', 25],                 rw: { items: { permit: 3, goldenMomo: 1 } } },
@@ -514,3 +516,42 @@ const QUESTS = {
     { t: 'Activate 12 synergies',                g: ['syn', 12],                  rw: { items: { goldenMomo: 5 } } }
   ]
 };
+
+/* ---------------- sprouts ---------------- */
+const SPROUT = {
+  common:    { n: 'Sprout',           c: '#6cc87a', hp: 3,  drops: 4,  o: 0, s: 1 },
+  rare:      { n: 'Rare Sprout',      c: '#5aa8ff', hp: 6,  drops: 6,  o: 1, s: 1.12 },
+  epic:      { n: 'Epic Sprout',      c: '#b06cff', hp: 12, drops: 9,  o: 2, s: 1.25 },
+  legendary: { n: 'Legendary Sprout', c: '#ffb020', hp: 25, drops: 13, o: 3, s: 1.42 },
+  mythic:    { n: 'Mythic Sprout',    c: '#ff4fa3', hp: 50, drops: 20, o: 4, s: 1.6 }
+};
+const SPROUT_WILD = { common: .55, rare: .27, epic: .12, legendary: .05, mythic: .01 };
+const SPROUT_SEED = { common: .2, rare: .36, epic: .28, legendary: .13, mythic: .03 };
+
+/* ---------------- badges ---------------- */
+const BADGE_T = [{ n: 'Bronze', c: '#c8834a' }, { n: 'Silver', c: '#8f99ab' }, { n: 'Gold', c: '#f0b429' }, { n: 'Diamond', c: '#36b3f0' }, { n: 'Himalayan', c: '#9b6ef3' }];
+const BADGE_RW = [{ momo: 5 }, { selroti: 3, walnut: 2 }, { dalbhat: 3, lotusSeed: 1 }, { mysticWheel: 2, lotusSeed: 2 }, { goldenMomo: 1 }];
+const BADGE_BONUS = .0025;   /* +0.25% all gathering per tier claimed */
+const BADGES = [
+  ...FIELDS.map(f => { const b = [5e3, 5e4, 5e5, 5e6, 2e7][f.z]; return { id: 'f_' + f.id, n: f.n, i: 'leaf', t: [b, b * 10, b * 100, b * 1e3, b * 1e4], get: () => S.stats.field[f.id] || 0 }; }),
+  { id: 'c_spice', n: 'Spice gatherer', i: 'flame', t: [1e5, 1e6, 1e7, 1e8, 1e9], get: () => S.stats.col.spice || 0 },
+  { id: 'c_ice',   n: 'Ice gatherer',   i: 'snow',  t: [1e5, 1e6, 1e7, 1e8, 1e9], get: () => S.stats.col.ice || 0 },
+  { id: 'c_cloud', n: 'Cloud gatherer', i: 'cloud', t: [1e5, 1e6, 1e7, 1e8, 1e9], get: () => S.stats.col.cloud || 0 },
+  { id: 'rupees',  n: 'Tea money',      i: 'coin',  t: [1e4, 1e6, 1e8, 1e10, 1e12], get: () => S.stats.earn },
+  { id: 'time',    n: 'Playtime',       i: 'clock', t: [1, 5, 20, 60, 200], unit: 'h', get: () => S.stats.time / 3600 },
+  { id: 'tokens',  n: 'Bubble catcher', i: 'bubble', t: [25, 250, 2500, 1e4, 5e4], get: () => S.stats.tokens || 0 },
+  { id: 'crew',    n: 'Big teahouse',   i: 'crew',  t: [5, 10, 20, 30, 50], get: () => S.crew.length },
+  { id: 'quests',  n: 'Helping hand',   i: 'flag',  t: [5, 15, 30, 60, 120], get: () => (S.stats.quests || 0) + (S.stats.leo || 0) },
+  { id: 'sprouts', n: 'Sprout popper',  i: 'sprout', t: [3, 15, 50, 150, 500], get: () => S.stats.sprouts || 0 },
+  { id: 'blends',  n: 'Blender buddy',  i: 'blender', t: [5, 25, 100, 500, 2000], get: () => S.stats.blends || 0 },
+  { id: 'tihar',   n: 'Tihar spirit',   i: 'marigold', t: [50, 300, 1500, 6000, 25000], get: () => S.stats.marigolds || 0 }
+];
+
+/* ---------------- Tihar festival ---------------- */
+const TIHAR_END = Date.UTC(2027, 0, 31);
+const tiharOn = () => Date.now() < TIHAR_END;
+const NIGHT_EVERY = 300, NIGHT_LEN = 70;
+const TIHAR_SHOP = [
+  { k: 'garland', p: 400 }, { k: 'lotusSeed', p: 30 }, { k: 'mysticWheel', p: 80 }, { k: 'goldenTea', p: 60 },
+  { k: 'incense', p: 25 }, { k: 'selroti', p: 4 }, { k: 'goldenMomo', p: 300 }
+];

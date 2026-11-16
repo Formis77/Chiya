@@ -302,6 +302,52 @@ function drawPlayer(c, t, mv, swing, dokoCol, gear) {
   }, t, mv, false);
 }
 
+/* ---------------- sprouts ---------------- */
+function drawSprout(c, sp) {
+  const def = SPROUT[sp.r], t = now, wob = sp.hit && now - sp.hit < .2 ? Math.sin(now * 60) * .08 : Math.sin(t * 2 + sp.x) * .04;
+  c.save(); c.translate(sp.x, sp.y);
+  ell(c, 0, 2, 22 * def.s, 7 * def.s, 'rgba(0,0,0,.18)', false);
+  c.save(); c.scale(def.s, def.s);
+  ell(c, 0, 0, 18, 7, '#8a5a3b');
+  if (def.o >= 3) { c.globalAlpha = .35 + Math.sin(t * 4) * .15; circ(c, 0, -22, 22, def.c, false); c.globalAlpha = 1; }
+  c.rotate(wob);
+  line(c, 0, -2, 0, -20, OUT, 5); line(c, 0, -2, 0, -20, '#3fae6b', 3);
+  P(c); c.moveTo(0, -12); c.quadraticCurveTo(-14, -22, -16, -10); c.quadraticCurveTo(-8, -6, 0, -12); fs(c, '#57c06c', 1.8);
+  P(c); c.moveTo(0, -14); c.quadraticCurveTo(14, -24, 16, -12); c.quadraticCurveTo(8, -8, 0, -14); fs(c, '#57c06c', 1.8);
+  P(c); c.ellipse(0, -27, 9, 11, 0, 0, TAU); fs(c, def.c, 2.2);
+  ell(c, -3, -31, 2.6, 3.4, 'rgba(255,255,255,.45)', false);
+  P(c); c.moveTo(-6, -34); c.lineTo(0, -40); c.lineTo(6, -34); c.strokeStyle = OUT; c.lineWidth = 1.6; c.stroke();
+  c.restore();
+  const w = 46, y = -58 * def.s, u = Math.max(0, sp.hp / sp.max);
+  rr(c, -w / 2, y, w, 7, 3.5, '#ffffff', true); rr(c, -w / 2 + 1.5, y + 1.5, (w - 3) * u, 4, 2, def.c, false);
+  c.restore();
+}
+function drawDiya(c, d) {
+  const a = Math.min(1, d.age * 2, (d.life - d.age) * .8), fl = Math.sin(now * 14 + d.ph) * 1.2;
+  c.save(); c.translate(d.x, d.y); c.globalAlpha = a;
+  c.globalCompositeOperation = 'lighter';
+  const g = c.createRadialGradient(0, -10, 2, 0, -10, 46); g.addColorStop(0, 'rgba(255,190,80,.75)'); g.addColorStop(1, 'rgba(255,140,40,0)');
+  c.fillStyle = g; c.beginPath(); c.arc(0, -10, 46, 0, TAU); c.fill();
+  c.globalCompositeOperation = 'source-over';
+  P(c); c.moveTo(-11, -4); c.quadraticCurveTo(0, 8, 11, -4); c.closePath(); fs(c, '#c8642b', 1.8);
+  P(c); c.moveTo(0, -6); c.quadraticCurveTo(-4.5, -12, 0, -20 - fl); c.quadraticCurveTo(4.5, -12, 0, -6); c.fillStyle = '#ffd24a'; c.fill();
+  P(c); c.moveTo(0, -7); c.quadraticCurveTo(-2, -11, 0, -15 - fl); c.quadraticCurveTo(2, -11, 0, -7); c.fillStyle = '#fff6d0'; c.fill();
+  c.restore();
+}
+function drawTiharStall(c, t) {
+  ell(c, 0, 4, 52, 12, 'rgba(0,0,0,.15)', false);
+  rr(c, -42, -30, 84, 32, 4, '#b98455'); line(c, -38, -18, 38, -18, 'rgba(0,0,0,.15)', 2);
+  for (const x of [-38, 34]) rr(c, x, -78, 5, 50, 2, '#8a5a3b');
+  P(c); c.moveTo(-50, -74); c.lineTo(50, -74); c.lineTo(44, -90); c.lineTo(-44, -90); c.closePath(); fs(c, '#e5484d', 2.2);
+  for (let i = -40; i < 44; i += 16) { P(c); c.moveTo(i, -74); c.quadraticCurveTo(i + 8, -66, i + 16, -74); fs(c, i % 32 ? '#ffffff' : '#ffd24a', 1.6); }
+  for (let i = 0; i < 9; i++) { const x = -36 + i * 9, y = -60 + Math.sin(i / 8 * Math.PI) * 8; circ(c, x, y, 3.6, i % 2 ? '#ff9f1a' : '#ffcf3a'); }
+  for (const x of [-26, 0, 26]) { P(c); c.moveTo(x - 7, -32); c.quadraticCurveTo(x, -24, x + 7, -32); c.closePath(); fs(c, '#c8642b', 1.4); const fl = Math.sin(t * 12 + x) * 1; P(c); c.moveTo(x, -33); c.quadraticCurveTo(x - 3, -37, x, -42 - fl); c.quadraticCurveTo(x + 3, -37, x, -33); c.fillStyle = '#ffd24a'; c.fill(); }
+  c.font = '900 10px -apple-system,system-ui,sans-serif'; const tw = c.measureText('Tihar Stall').width + 30;
+  P(c); c.roundRect(-tw / 2, -118, tw, 22, 11); fs(c, '#ffffff', 1.8);
+  drawIcon(c, 'marigold', -tw / 2 + 13, -107, 12, '#ff9f1a', 2.2);
+  c.fillStyle = OUT; c.textAlign = 'left'; c.fillText('Tihar Stall', -tw / 2 + 23, -103);
+}
+
 /* ---------------- blender ---------------- */
 function drawBlender(c, t) {
   ell(c, 0, 4, 50, 12, 'rgba(0,0,0,.15)', false);

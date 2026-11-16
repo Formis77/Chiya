@@ -260,3 +260,5 @@ html.gapfix #toast{bottom:150px}
 .fruits .ib{width:30px;height:30px;border-radius:10px}.fruits .ib .ic{width:17px;height:17px}
 .buyrow.col{flex-direction:column}
 .rwi.perm{background:#fff4d6;color:#a5700a}
+.bdots{display:flex;gap:4px;margin:4px 0 6px}.bdots i{width:18px;height:6px;border-radius:3px;display:block}
+.item.badge .qbar{margin:2px 0 4px}

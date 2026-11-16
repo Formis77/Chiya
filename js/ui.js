@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '17';
+const VERSION = '18';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['gear', 'backpack', 'Gear'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -77,7 +77,7 @@ function openPanel(name, tab) {
 }
 function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
-  const fn = { blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
+  const fn = { tihar: pTihar, badges: pBadges, blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
   if (!fn) return;
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
   document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel));
@@ -339,6 +339,7 @@ function useItem(k) {
   if (k === 'incense') addTimed('incense', 300);
   if (k === 'goldenTea') addTimed('gtea', 900);
   if (k === 'masala') addTimed('masala', 600);
+  if (k === 'garland') { if (S.crew.length >= S.beds) { S.items[k]++; toast('You need a free bed first', 'bed'); return; } addCrew('tiharDog', false); save(); renderPanel(); return; }
   if (k === 'lotusSeed') { if (fieldAt(player.x, player.y) < 0 || !window.plantSprout) { S.items[k]++; toast('Stand in a field to plant it', 'leaf'); return; } plantSprout(fieldAt(player.x, player.y)); }
   if (k === 'butterDrop') { if (fieldAt(player.x, player.y) < 0) { S.items[k]++; toast('Stand in a field to drop butter', 'drop'); return; } E.decals.push({ kind: 'goo', x: player.x, y: player.y, r: 110, age: 0, dur: mpas('butterStar') ? 80 : 40 }); }
   ring(player.x, player.y, 80, '#ffd24a', .5, 5);
@@ -450,6 +451,7 @@ const gliderOf = id => GLIDERS.find(g => g.id === id);
 function updateTalk() {
   const t = $('talk');
   if (!nearNpc) { t.classList.remove('on'); return; }
+  if (nearNpc === 'tihar') { t.innerHTML = `<span class="gl" style="background:#fff1dc;color:#ff9f1a">${ic('marigold')}</span><span><small>Festival</small>Tihar Stall</span>`; t.classList.add('on'); return; }
   if (nearNpc === 'blender') { t.innerHTML = `<span class="gl">${ic('blender')}</span><span><small>Machine</small>Blender</span>`; t.classList.add('on'); return; }
   if (nearNpc === 'mandala') { t.innerHTML = `<span class="gl" style="background:#f3edff;color:#9b6ef3">${ic('wheel')}</span><span><small>Generator</small>Mandala Shrine</span>`; t.classList.add('on'); return; }
   if (nearNpc.startsWith('shop:')) { const sh = SHOPS.find(q => 'shop:' + q.id === nearNpc); t.innerHTML = `<span class="gl" style="background:${sh.col}22;color:${sh.col}">${ic('shop')}</span><span><small>Shop</small>${sh.n}</span>`; t.classList.add('on'); return; }
@@ -467,6 +469,7 @@ function gliderMenu(id) {
 }
 function talk(gid) {
   gid = gid || nearNpc; if (!gid) return;
+  if (gid === 'tihar') { openPanel('tihar', 'x'); return; }
   if (gid === 'blender') { openPanel('blender', 'x'); return; }
   if (gid === 'mandala') { panelTab = null; openPanel('mandala', 'x'); return; }
   if (gid.startsWith('shop:')) { openShop(gid.slice(5)); return; }
@@ -619,6 +622,8 @@ function pStats() {
   const bars = (rows, total) => rows.map(([label, v, col, icon]) => `<div class="srow">${icon ? ic(icon) : ''}<span class="sl">${label}</span><div class="sbar"><i style="width:${total ? Math.max(1.5, v / total * 100) : 0}%;background:${col}"></i></div><b>${fmt(v)}</b></div>`).join('');
   const days = Math.max(1, Math.ceil((Date.now() - S.start) / 864e5));
   let h = `<div class="ph"><h2>Stats</h2><span class="pill">${ic('clock')}Day ${days}</span></div><p class="mut small">All-time records for your teahouse.</p>`;
+  { const rdy = BADGES.filter(b => badgeReady(b)).length, got = Object.values(S.badges).reduce((a, b) => a + b, 0);
+    h += `<div class="item gear">${ib('badge', '#f0b429')}<div class="it"><b>Badges</b><span class="mut small">${got} of ${BADGES.length * 5} tiers earned. Each tier adds +0.25% to all gathering.</span></div><button class="btn sm ${rdy ? 'primary' : ''}" onclick="openPanel('badges','x')"><span>${rdy ? rdy + ' ready' : 'Open'}</span></button></div>`; }
   h += `<h3>Overview</h3><div class="sgrid">
     ${tile('coin', '#ff8a3d', 'Rupees earned', fmt(st.earn))}
     ${tile('leaf', '#3fae6b', 'Ingredients gathered', fmt(st.gather))}
@@ -730,4 +735,45 @@ function blend(i, n) {
   S.items[b.out] = (S.items[b.out] || 0) + n; S.stats.blends = (S.stats.blends || 0) + n;
   burst(BLENDER.x, BLENDER.y - 80, 24, { type: 'star', col: '#bfe6ff', spd: 120, life: .8, size: 2.4 });
   toast(`+${n} ${ITEMS[b.out].n}`, ITEMS[b.out].i); save(); renderPanel();
+}
+
+/* ---------------- BADGES ---------------- */
+const badgeTier = b => S.badges[b.id] || 0;
+const badgeReady = b => badgeTier(b) < 5 && b.get() >= b.t[badgeTier(b)];
+const bfmt = (b, v) => b.unit ? (v < 10 ? v.toFixed(1) : Math.floor(v)) + b.unit : fmt(v);
+function pBadges() {
+  const tot = Object.values(S.badges).reduce((a, b) => a + b, 0);
+  let h = `<div class="ph"><h2>Badges</h2><span class="pill">${ic('badge')}+${(tot * BADGE_BONUS * 100).toFixed(2).replace(/\.?0+$/, '')}% gathering</span></div><p class="mut small">Every badge has five tiers: Bronze, Silver, Gold, Diamond and Himalayan. Claim each tier for items and a permanent +0.25% to all gathering.</p>`;
+  const row = b => { const tr = badgeTier(b), v = b.get(), done = tr >= 5, goal = done ? b.t[4] : b.t[tr], col = tr ? BADGE_T[tr - 1].c : '#c9c3cf';
+    return `<div class="item gear badge">${ib(b.i, col)}<div class="it"><b>${b.n} <span class="mut small">${tr ? BADGE_T[tr - 1].n : 'Not started'}</span></b>
+      <div class="bdots">${BADGE_T.map((t, i) => `<i style="background:${i < tr ? t.c : '#ece7f0'}"></i>`).join('')}</div>
+      ${done ? '<span class="mut small">Complete</span>' : `<div class="qbar"><i style="width:${Math.min(100, v / goal * 100)}%;background:${BADGE_T[tr].c}"></i></div><span class="mut small">${bfmt(b, Math.min(v, goal))} / ${bfmt(b, goal)} for ${BADGE_T[tr].n}: ${rwText({ items: BADGE_RW[tr] })}</span>`}</div>
+      ${badgeReady(b) ? `<button class="btn sm primary" onclick="claimBadge('${b.id}')"><span>Claim</span></button>` : ''}</div>`; };
+  const sorted = [...BADGES].sort((a, b) => badgeReady(b) - badgeReady(a));
+  h += sorted.map(row).join('');
+  return h;
+}
+function claimBadge(id) {
+  const b = BADGES.find(x => x.id === id); if (!b || !badgeReady(b)) return;
+  const tr = badgeTier(b); S.badges[id] = tr + 1;
+  for (const k in BADGE_RW[tr]) S.items[k] = (S.items[k] || 0) + BADGE_RW[tr][k];
+  rebuildCrew(); toast(`${BADGE_T[tr].n} ${b.n} badge`, 'badge'); save(); renderPanel();
+}
+
+/* ---------------- TIHAR ---------------- */
+function pTihar() {
+  const clk = (S.nightClock || 0) % NIGHT_EVERY, night = isNight(), left = night ? NIGHT_EVERY - clk : NIGHT_EVERY - NIGHT_LEN - clk;
+  let h = `<div class="ph"><h2>Tihar Stall</h2><span class="pill">${ic('marigold')}${fmt(S.items.marigold || 0)}</span></div>
+    <p class="mut small">The festival of lights runs until the end of January. Marigolds drop while you and your crew gather, and sprouts can drop them too. Every few minutes the mountain goes dark for a Diyo Night: walk into the floating lamps to collect lots of marigolds.</p>
+    <div class="item gear">${ib('diya', '#ff9f1a')}<div class="it"><b>${night ? 'Diyo Night is on' : 'Next Diyo Night'}</b><span class="mut small">${night ? `Ends in ${mmss(left * 1000)}` : `Starts in ${mmss(left * 1000)}`}</span></div></div><h3>Festival goods</h3>`;
+  h += TIHAR_SHOP.map((g, i) => { const it = ITEMS[g.k], ok = (S.items.marigold || 0) >= g.p;
+    return `<div class="item gear">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[g.k] || 0}</span></b><span class="mut small">${it.d}</span></div>
+      <button class="btn sm ${ok ? 'primary' : ''}" ${ok ? '' : 'disabled'} onclick="buyTihar(${i})">${ic('marigold')}<span>${fmt(g.p)}</span></button></div>`; }).join('');
+  return h;
+}
+function buyTihar(i) {
+  const g = TIHAR_SHOP[i]; if ((S.items.marigold || 0) < g.p) return;
+  S.items.marigold -= g.p; S.items[g.k] = (S.items[g.k] || 0) + 1;
+  if (g.k === 'mysticWheel') S.wheels++;
+  toast(`+1 ${ITEMS[g.k].n}`, ITEMS[g.k].i); save(); renderPanel();
 }
