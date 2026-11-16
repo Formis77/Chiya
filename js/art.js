@@ -362,6 +362,11 @@ function drawCloud(c, s) {
   c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = 'rgba(120,160,190,.55)'; c.lineWidth = 2; c.stroke();
   c.restore();
 }
+function drawIcicle(c, s) {
+  ell(c, 0, 1, 14 * s, 4 * s, 'rgba(60,110,150,.18)', false);
+  poly(c, [-10 * s, 0, -6 * s, -22 * s, -1 * s, 0], '#bfe6ff'); poly(c, [-3 * s, 0, 3 * s, -34 * s, 8 * s, 0], '#9fd8ff'); poly(c, [5 * s, 0, 10 * s, -18 * s, 13 * s, 0], '#d6f0ff');
+  line(c, 2 * s, -26 * s, 3.5 * s, -6 * s, 'rgba(255,255,255,.8)', 1.4);
+}
 function drawSummitFlag(c, t) {
   ell(c, 0, 2, 26, 7, 'rgba(0,0,0,.12)', false);
   poly(c, [-22, 0, -10, -10, 8, -12, 22, 0], '#dfe8f0');

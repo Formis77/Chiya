@@ -78,17 +78,35 @@ const ABIL = {
    w = color weights, lv = [min, max] flower level, y = field multiplier */
 const TILE = 40;
 const LVM = [0, 1, 3, 9, 27, 81];          // ingredients per flower level
+/* five zones, each gated by crew count; z = zone index */
 const FIELDS = [
-  { id: 'tea',     n: 'Tea Garden',          c: 'cloud', y: 1,   gate: 0,  lv: [1, 1], w: { cloud: .7, spice: .15, ice: .15 }, x: 760, yy: 2610, w_: 380, h: 250 },
-  { id: 'ginger',  n: 'Ginger Terraces',     c: 'spice', y: 1,   gate: 0,  lv: [1, 1], w: { spice: .7, cloud: .2, ice: .1 },  x: 110, yy: 2390, w_: 380, h: 250 },
-  { id: 'glacier', n: 'Glacier Spring',      c: 'ice',   y: 1,   gate: 0,  lv: [1, 1], w: { ice: .7, cloud: .2, spice: .1 },  x: 530, yy: 2340, w_: 260, h: 170 },
-  { id: 'rhodo',   n: 'Rhododendron Forest', c: 'spice', y: 1.5, gate: 5,  lv: [1, 2], w: { spice: .6, cloud: .25, ice: .15 }, x: 170, yy: 1710, w_: 340, h: 250 },
-  { id: 'meadow',  n: 'Yak Meadow',          c: 'cloud', y: 1.5, gate: 5,  lv: [1, 2], w: { cloud: .6, ice: .2, spice: .2 },  x: 750, yy: 1910, w_: 420, h: 250 },
-  { id: 'juniper', n: 'Juniper Ridge',       c: 'ice',   y: 2,   gate: 10, lv: [2, 3], w: { ice: .6, cloud: .25, spice: .15 }, x: 820, yy: 1310, w_: 340, h: 290 },
-  { id: 'saffron', n: 'Saffron Cliffs',      c: 'mix',   y: 3,   gate: 15, lv: [2, 3], w: { spice: .4, ice: .3, cloud: .3 },  x: 310, yy: 990, w_: 340, h: 250 },
-  { id: 'flags',   n: 'Prayer Flag Pass',    c: 'cloud', y: 4,   gate: 22, lv: [3, 4], w: { cloud: .55, ice: .25, spice: .2 }, x: 740, yy: 800,  w_: 240, h: 170 },
-  { id: 'summit',  n: 'Summit Snowfield',    c: 'mix',   y: 6,   gate: 30, lv: [3, 5], w: { spice: .34, ice: .33, cloud: .33 }, x: 520, yy: 230, w_: 360, h: 170 }
+  // zone 1 (foothills)
+  { id: 'tea',     n: 'Tea Garden',          z: 0, c: 'cloud', y: 1,   lv: [1, 1], w: { cloud: .75, ice: .125, spice: .125 }, x: 250,  yy: 4950, w_: 460, h: 300 },
+  { id: 'glacier', n: 'Glacier Spring',      z: 0, c: 'ice',   y: 1,   lv: [1, 1], w: { ice: .75, cloud: .25 },               x: 1490, yy: 4950, w_: 460, h: 300 },
+  { id: 'ginger',  n: 'Ginger Terraces',     z: 0, c: 'spice', y: 1,   lv: [1, 1], w: { spice: .75, cloud: .25 },             x: 380,  yy: 4520, w_: 460, h: 320 },
+  { id: 'bazaar',  n: 'Marigold Meadow',     z: 0, c: 'mix',   y: 1,   lv: [1, 1], w: { spice: .4, ice: .4, cloud: .2 },      x: 1360, yy: 4520, w_: 460, h: 320 },
+  // zone 2 (pine forest)
+  { id: 'meadow',  n: 'Yak Meadow',          z: 1, c: 'cloud', y: 1.5, lv: [1, 2], w: { cloud: 1 },                           x: 840,  yy: 3880, w_: 520, h: 340 },
+  { id: 'rhodo',   n: 'Rhododendron Forest', z: 1, c: 'spice', y: 1.5, lv: [1, 2], w: { spice: .75, cloud: .25 },             x: 160,  yy: 3560, w_: 460, h: 320 },
+  { id: 'lake',    n: 'Turquoise Lake',      z: 1, c: 'ice',   y: 1.5, lv: [1, 2], w: { ice: .75, cloud: .25 },               x: 1580, yy: 3560, w_: 460, h: 320 },
+  // zone 3 (high pasture)
+  { id: 'juniper', n: 'Juniper Ridge',       z: 2, c: 'cloud', y: 2,   lv: [2, 3], w: { cloud: .7, ice: .15, spice: .15 },    x: 780,  yy: 2780, w_: 640, h: 400 },
+  // zone 4 (snowline)
+  { id: 'flags',   n: 'Prayer Flag Pass',    z: 3, c: 'cloud', y: 3,   lv: [3, 4], w: { cloud: .7, ice: .15, spice: .15 },    x: 840,  yy: 2100, w_: 520, h: 330 },
+  { id: 'saffron', n: 'Saffron Cliffs',      z: 3, c: 'mix',   y: 3,   lv: [3, 4], w: { spice: .4, ice: .4, cloud: .2 },      x: 840,  yy: 1560, w_: 520, h: 330 },
+  { id: 'ember',   n: 'Ember Rocks',         z: 3, c: 'spice', y: 3,   lv: [3, 4], w: { spice: .75, cloud: .25 },             x: 140,  yy: 1800, w_: 460, h: 320 },
+  { id: 'frost',   n: 'Frost Hollow',        z: 3, c: 'ice',   y: 3,   lv: [3, 4], w: { ice: .75, cloud: .25 },               x: 1600, yy: 1800, w_: 460, h: 320 },
+  // zone 5 (glacier summit)
+  { id: 'summit',  n: 'Summit Glacier',      z: 4, c: 'mix',   y: 5,   lv: [4, 5], w: { spice: .5, ice: .5 },                 x: 700,  yy: 520,  w_: 800, h: 460 }
 ];
+const ZONES = [
+  { n: 'Foothills',    alt: '2,800 m', top: 4400, gate: 0,  col: '#86c763', lip: '#6aab50' },
+  { n: 'Pine Forest',  alt: '3,600 m', top: 3400, gate: 5,  col: '#5fa552', lip: '#4a8a41' },
+  { n: 'High Pasture', alt: '4,400 m', top: 2600, gate: 10, col: '#a9b86a', lip: '#8c9b54' },
+  { n: 'Snowline',     alt: '5,500 m', top: 1300, gate: 15, col: '#e6eef4', lip: '#c4d6e3' },
+  { n: 'Summit Glacier', alt: '7,000 m', top: 0,  gate: 25, col: '#cfe6f6', lip: '#a9cde6' }
+];
+FIELDS.forEach(f => f.gate = ZONES[f.z].gate);
 FIELDS.forEach(f => { f.cw = f.w; f.w = f.w_; delete f.w_; });
 
 /* gear cost: rupees + items (crafting materials and treats). st = stat bonuses, pas = passive id */
@@ -163,6 +181,7 @@ const MATS = {
   gem:     { n: 'Summit Gem',    i: 'gem',    f: 'summit' }
 };
 const FIELD_MAT = {}; for (const k in MATS) FIELD_MAT[MATS[k].f] = k;
+Object.assign(FIELD_MAT, { bazaar: 'ginger', lake: 'ice', ember: 'petal', frost: 'berry' });
 
 const DOKOS = [
   { id: 'basket', n: 'Bamboo Basket',   i: 'basket',   cost: 0,     cap: 500 },
@@ -275,19 +294,19 @@ const HIVE = {
 
 /* ---------------- quest givers (on the map) ---------------- */
 const GIVERS = {
-  didi:  { n: 'Mansoon',     role: 'Teahouse owner',       x: 790,  y: 3085, col: '#ff8a3d', gate: 0, hi: 'Namaste! The kettle never sleeps, and neither should you.' },
-  pemba: { n: 'Old Pemba',   role: 'Retired Sherpa',        x: 1085, y: 2475, col: '#2ea4dc', gate: 0, hi: 'Forty summits, little one. Let me teach you about crews.' },
-  dolma: { n: 'Dolma',       role: 'Yak herder',            x: 1065, y: 1700, col: '#3fae6b', gate: 5, hi: 'My yaks know every flower on this mountain.' },
-  norbu: { n: 'Lama Norbu',  role: 'Keeper of the chorten', x: 965,  y: 1075, col: '#9b6ef3', gate: 10, hi: 'Harmony between your crew is the real summit.' },
-  yeti:  { n: 'Grandpa Yeti',role: 'Guardian of the peak',  x: 860,  y: 545,  col: '#4fb6e6', gate: 30, hi: 'Hrrm. Few climb this high. Fewer bring tea.' }
+  didi:  { n: 'Mansoon',     role: 'Teahouse owner',       x: 1225, y: 5460, col: '#ff8a3d', gate: 0, hi: 'Namaste! The kettle never sleeps, and neither should you.' },
+  pemba: { n: 'Old Pemba',   role: 'Retired Sherpa',        x: 920, y: 4760, col: '#2ea4dc', gate: 0, hi: 'Forty summits, little one. Let me teach you about crews.' },
+  dolma: { n: 'Dolma',       role: 'Yak herder',            x: 500, y: 4260, col: '#3fae6b', gate: 5, hi: 'My yaks know every flower on this mountain.' },
+  norbu: { n: 'Lama Norbu',  role: 'Keeper of the chorten', x: 560, y: 2960, col: '#9b6ef3', gate: 10, hi: 'Harmony between your crew is the real summit.' },
+  yeti:  { n: 'Grandpa Yeti',role: 'Guardian of the peak',  x: 1650, y: 830, col: '#4fb6e6', gate: 25, hi: 'Hrrm. Few climb this high. Fewer bring tea.' }
 };
 /* repeatable odd-job givers: small item rewards, never progression-breaking */
 const REPEAT = {
-  ang:  { n: 'Ang',  role: 'Porter for hire', x: 470, y: 3080, col: '#c8913e', gate: 0,  rep: true, hi: 'Got a small job if you have a minute.',
+  ang:  { n: 'Ang',  role: 'Porter for hire', x: 905, y: 5455, col: '#c8913e', gate: 0,  rep: true, hi: 'Got a small job if you have a minute.',
           rw: () => pick([{ momo: ri(5, 10) }, { selroti: ri(2, 4) }, { momo: ri(3, 6), selroti: 1 }, { dalbhat: 1 }]) },
-  maya: { n: 'Maya', role: 'Backpacker',      x: 250, y: 2120, col: '#e84393', gate: 5,  rep: true, hi: 'This view is unreal! Help me out?',
+  maya: { n: 'Maya', role: 'Backpacker',      x: 1700, y: 4000, col: '#e84393', gate: 5,  rep: true, hi: 'This view is unreal! Help me out?',
           rw: () => pick([{ butterTea: ri(1, 2) }, { spiceShot: 1 }, { glacierShard: 1 }, { yakCheese: 1 }, { butterTea: 1, momo: 4 }, { incense: 1 }]) },
-  raju: { n: 'Raju', role: 'Travelling trader', x: 330, y: 1450, col: '#e0a43c', gate: 10, rep: true, hi: 'Fine goods from Kathmandu, for a fair favour.',
+  raju: { n: 'Raju', role: 'Travelling trader', x: 1660, y: 3000, col: '#e0a43c', gate: 10, rep: true, hi: 'Fine goods from Kathmandu, for a fair favour.',
           rw: () => Math.random() < .08 ? { mysticWheel: 1 } : pick([{ dalbhat: ri(2, 4) }, { incense: 1, selroti: 3 }, { dalbhat: 2, butterTea: 1 }]) }
 };
 const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));

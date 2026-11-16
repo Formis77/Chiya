@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '11';
+const VERSION = '12';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['shop', 'shop', 'Shop'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -375,15 +375,25 @@ function pQuests() {
   h += `<h3>Odd jobs</h3><p class="mut small">Small repeatable jobs for items. A new one is ready a few minutes after you finish.</p>` + Object.keys(REPEAT).map(giverRow).join('');
   return h;
 }
+const gliderOf = id => GLIDERS.find(g => g.id === id);
 function updateTalk() {
   const t = $('talk');
   if (!nearNpc) { t.classList.remove('on'); return; }
+  if (gliderOf(nearNpc)) { t.innerHTML = `<span class="gl">${ic('wind')}</span><span><small>Glider pad</small>Fly somewhere</span>`; t.classList.add('on'); return; }
   const g = npcOf(nearNpc), st = giverState(nearNpc);
   t.innerHTML = `<img src="${npcPortrait(nearNpc)}" alt=""><span><small>${g.role}</small>Talk to ${g.n}</span>${st === 'ready' ? `<b class="dotg"></b>` : ''}`;
   t.classList.add('on');
 }
+function gliderMenu(id) {
+  const here = gliderOf(id), ok = S.crew.length >= GLIDE_GATE;
+  let h = `<div class="big-ico">${ic('wind')}</div><h2>Glider pad</h2><p class="mut small">${ok ? 'Pick a pad to fly to. You can only land in zones you have unlocked.' : `The glider network opens at ${GLIDE_GATE} crew. You have ${S.crew.length}.`}</p>`;
+  if (ok) h += GLIDERS.filter(g => g.id !== id).map(g => { const open = zoneOpen(g.z); return `<div class="item ${open ? '' : 'dim'}">${ib(open ? 'wind' : 'lock', open ? '#2ea4dc' : '#9aa0ad')}<div class="it"><b>${ZONES[g.z].n}</b><span class="mut small">${open ? ZONES[g.z].alt : ZONES[g.z].gate + ' crew needed'}</span></div>${open ? `<button class="btn sm primary" onclick="closeModal();glideTo('${g.id}')"><span>Fly</span></button>` : ''}</div>`; }).join('');
+  h += `<button class="btn" onclick="closeModal()"><span>Close</span></button>`;
+  showModal(h);
+}
 function talk(gid) {
   gid = gid || nearNpc; if (!gid) return;
+  if (gliderOf(gid)) { gliderMenu(gid); return; }
   const g = npcOf(gid), st = giverState(gid);
   let h = `<div class="npc-head" style="--gc:${g.col}"><img src="${npcPortrait(gid)}" alt=""></div><h2>${g.n}</h2><div class="mut small">${g.role}</div>`;
   if (st === 'locked') { h += `<p class="say">"Come back when your crew is bigger. I only deal with teahouses of ${g.gate} or more."</p><button class="btn primary" onclick="closeModal()"><span>Okay</span></button>`; showModal(h); return; }
@@ -444,13 +454,35 @@ function pCodex() {
 
 /* ---------------- MAP ---------------- */
 function pMap() {
-  let h = `<div class="ph"><h2>Mountain</h2></div><p class="mut small">Tap Go to walk there. Higher fields give more per tile.</p>`;
-  h += `<div class="item">${ib('home', '#ff8a3d')}<div class="it"><b>Teahouse</b><span class="mut small">Brew your doko here</span></div><button class="btn sm" onclick="goTo(${BREW.x},${BREW.y})"><span>Go</span></button></div>`;
-  FIELDS.forEach((f, i) => {
-    const open = fieldOpen(i), ci = f.c === 'mix' ? 'sparkle' : COL[f.c].i;
-    h += `<div class="item ${open ? '' : 'dim'}">${ib(open ? ci : 'lock', f.c === 'mix' ? '#9b6ef3' : icol(ci))}<div class="it"><b>${f.n} <span class="mut">Lv ${f.lv[0]}${f.lv[1] > f.lv[0] ? '-' + f.lv[1] : ''}</span></b><span class="mut small">${f.c === 'mix' ? 'Mixed colors' : COL[f.c].n} · ${open ? 'Open' : f.gate + ' crew needed'}</span></div>${open ? `<button class="btn sm" onclick="goTo(${f.x + f.w / 2},${f.yy + f.h / 2})"><span>Go</span></button>` : ''}</div>`;
-  });
+  let h = `<div class="ph"><h2>World map</h2></div><p class="mut small">Tap anywhere on the map to walk there. Gliders fly you between unlocked zones (10+ crew).</p>`;
+  h += `<div class="wmap"><canvas id="wmap"></canvas></div>`;
+  h += `<div class="legend"><span>${ic('home')}Teahouse</span><span class="lg-npc"><i></i>Quest giver</span><span>${ic('wind')}Glider</span><span>${ic('lock')}Locked gate</span><span class="lg-you"><i></i>You</span></div>`;
+  h += `<h3>Zones</h3>` + ZONES.map((z, i) => `<div class="item ${zoneOpen(i) ? '' : 'dim'}">${ib(zoneOpen(i) ? 'mountain' : 'lock', zoneOpen(i) ? '#3fae6b' : '#9aa0ad')}<div class="it"><b>${z.n} <span class="mut">${z.alt}</span></b><span class="mut small">${FIELDS.filter(f => f.z === i).map(f => f.n).join(', ')}${zoneOpen(i) ? '' : ' · ' + z.gate + ' crew needed'}</span></div></div>`).join('');
+  setTimeout(drawWorldMap, 0);
   return h;
+}
+function drawWorldMap() {
+  const cv = $('wmap'); if (!cv) return;
+  const W = cv.parentElement.clientWidth, sc = W / WORLD.w, H = WORLD.h * sc, dpr = Math.min(2.5, devicePixelRatio || 1);
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const c = cv.getContext('2d'); c.scale(dpr * sc, dpr * sc);
+  c.fillStyle = ZONES[0].col; c.fillRect(0, 0, WORLD.w, WORLD.h);
+  ZONES.forEach((z, i) => { const y0 = i === ZONES.length - 1 ? 0 : ZONES[i].top, y1 = i === 0 ? WORLD.h : ZONES[i - 1].top; c.fillStyle = z.col; c.fillRect(0, y0, WORLD.w, y1 - y0); });
+  c.lineCap = 'round'; c.lineJoin = 'round'; P(c); PATHPTS.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.strokeStyle = '#c9a26e'; c.lineWidth = 34; c.stroke();
+  for (const f of FIELDS) {
+    const open = fieldOpen(FIELDS.indexOf(f)), col = f.c === 'mix' ? '#b98af5' : f.c === 'cloud' ? '#f4f6ff' : COL[f.c].c;
+    P(c); c.roundRect(f.x, f.yy, f.w, f.h, 30); c.fillStyle = open ? col : '#9aa0ad'; c.globalAlpha = open ? .95 : .55; c.fill(); c.globalAlpha = 1; c.strokeStyle = OUT; c.lineWidth = 8; c.stroke();
+    c.fillStyle = OUT; c.font = '800 64px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.fillText(f.n, f.x + f.w / 2, f.yy + f.h / 2 + 10);
+    c.font = '700 52px -apple-system,system-ui,sans-serif'; c.fillStyle = 'rgba(43,34,51,.7)'; c.fillText(`Lv ${f.lv[0]}${f.lv[1] > f.lv[0] ? '-' + f.lv[1] : ''}`, f.x + f.w / 2, f.yy + f.h / 2 + 72);
+  }
+  ZONES.forEach((z, i) => { if (!i) return; const y = ZONES[i - 1].top; c.setLineDash(zoneOpen(i) ? [] : [40, 30]); P(c); c.moveTo(0, y); c.lineTo(WORLD.w, y); c.strokeStyle = zoneOpen(i) ? 'rgba(43,34,51,.35)' : '#e5484d'; c.lineWidth = 10; c.stroke(); c.setLineDash([]); });
+  const dot = (x, y, r, fill, icon) => { P(c); c.arc(x, y, r, 0, TAU); c.fillStyle = fill; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 10; c.stroke(); if (icon) drawIcon(c, icon, x, y, r * 1.2, '#fff', 3); };
+  dot(HOUSE.x, HOUSE.y, 70, '#ff8a3d', 'home');
+  for (const g of GLIDERS) dot(g.x, g.y, 48, '#2ea4dc', 'wind');
+  for (const g of GATES) if (!zoneOpen(g.z)) dot(g.x, g.y, 48, '#e5484d', 'lock');
+  const all = NPCS(); for (const id in all) { const n = all[id]; dot(n.x, n.y, 40, npcLocked(id) ? '#9aa0ad' : n.col); }
+  P(c); c.arc(player.x, player.y, 60, 0, TAU); c.fillStyle = '#2b2233'; c.fill(); c.strokeStyle = '#ffd24a'; c.lineWidth = 16; c.stroke();
+  cv.onclick = ev => { const r = cv.getBoundingClientRect(); goTo((ev.clientX - r.left) / sc, (ev.clientY - r.top) / sc); };
 }
 function goTo(x, y) { player.auto = { x, y }; closePanel(); }
 

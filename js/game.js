@@ -2,13 +2,21 @@
 /* =========================================================
    CHIYA — core game: world, player, crew AI, abilities, VFX
    ========================================================= */
-const WORLD = { w: 1400, h: 3200 };
-const HOUSE = { x: 735, y: 2995 };
-const STALL = { x: 580, y: 3035 };
-const BREW = { x: 580, y: 3080, r: 46 };
-const PLAZA = { x: 665, y: 3045 };
-const PEAK = { x: 700, y: 120 };
-const mountHW = y => y < PEAK.y ? 0 : 80 + 640 * Math.pow(Math.min(1, (y - PEAK.y) / 2880), .6);
+const WORLD = { w: 2200, h: 5600 };
+const PLAZA = { x: 1100, y: 5420 };
+const HOUSE = { x: PLAZA.x + 70, y: PLAZA.y - 50 };
+const STALL = { x: PLAZA.x - 85, y: PLAZA.y - 10 };
+const BREW = { x: PLAZA.x - 85, y: PLAZA.y + 35, r: 46 };
+const PEAK = { x: 1100, y: 380 };
+/* glider pads: fly between zones (network opens at 10 crew) */
+const GLIDERS = [
+  { id: 'g1', n: 'Foothills pad',      x: 1400, y: 5330, z: 0 },
+  { id: 'g2', n: 'Pine Forest pad',    x: 1460, y: 4330, z: 1 },
+  { id: 'g3', n: 'High Pasture pad',   x: 520,  y: 3320, z: 2 },
+  { id: 'g4', n: 'Snowline pad',       x: 1480, y: 2500, z: 3 },
+  { id: 'g5', n: 'Summit Glacier pad', x: 1420, y: 1180, z: 4 }
+];
+const GLIDE_GATE = 10;
 const VIEW_W = 360;
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -35,7 +43,7 @@ function newSave() {
     tool: 'sickle', tools: ['sickle'], dokoId: 'basket', dokos: ['basket'], boots: 'sandals', bootsOwned: ['sandals'],
     lodge: 0, recruits: 0, wheels: 0, spr: { n: 0, lv: 0, placed: [] }, hats: [], hat: null, charms: [], charm: null, pas: {}, q: { didi: 0, pemba: 0, dolma: 0, norbu: 0, yeti: 0 }, qb: {},
     stats: { gather: 0, earn: 0, field: {}, feed: 0 }, found: { porter: true },
-    last: Date.now(), rate: 0, px: BREW.x, py: BREW.y - 30
+    last: Date.now(), rate: 0, mapv: 2, px: PLAZA.x, py: PLAZA.y + 30
   };
 }
 function curSlot() { try { return +localStorage.getItem('chiya_slot') || 1; } catch (e) { return 1; } }
@@ -78,7 +86,7 @@ function buildWorld() {
   let pts = [PATH[0]];
   for (let i = 1; i < PATH.length; i++) {
     const [x0, y0] = PATH[i - 1], [x1, y1] = PATH[i], L = Math.hypot(x1 - x0, y1 - y0), nx = -(y1 - y0) / L, ny = (x1 - x0) / L;
-    if (L > 200) for (const u of [.33, .66]) { const o = (r() - .5) * 70; pts.push([x0 + (x1 - x0) * u + nx * o, y0 + (y1 - y0) * u + ny * o]); }
+    if (L > 200) for (const u of [.33, .66]) { const o = (r() - .5) * 40; pts.push([x0 + (x1 - x0) * u + nx * o, y0 + (y1 - y0) * u + ny * o]); }
     pts.push(PATH[i]);
   }
   for (let it = 0; it < 4; it++) { const n = [pts[0]]; for (let i = 0; i < pts.length - 1; i++) { const [a, b] = pts[i], [c2, d] = pts[i + 1]; n.push([a * .75 + c2 * .25, b * .75 + d * .25], [a * .25 + c2 * .75, b * .25 + d * .75]); } n.push(pts[pts.length - 1]); pts = n; }
@@ -95,54 +103,44 @@ function buildWorld() {
     }
   }
   PATHPTS = pts;
-  const inMount = (x, y, m = 0) => y > PEAK.y + 40 && Math.abs(x - PEAK.x) < mountHW(y) - m;
   const nearPath = (x, y, m) => { for (let i = 0; i < TRAIL.length; i += 2) { const t = TRAIL[i]; if (Math.abs(t.x - x) < m && Math.abs(t.y - y) < m && Math.hypot(t.x - x, t.y - y) < m) return true; } return false; };
   const nearPlaza = (x, y) => Math.hypot((x - PLAZA.x) / 290, (y - PLAZA.y) / 170) < 1;
-  for (let i = 0; i < 3000 && DECOR.length < 320; i++) {
-    const x = r() * WORLD.w, y = 80 + r() * (WORLD.h);
-    if (inField(x, y, 34) || nearPath(x, y, 46) || nearPlaza(x, y) || Object.values(NPCS()).some(g => Math.hypot(x - g.x, y - g.y) < 60)) continue;
-    const z = zoneAt(y), inside = inMount(x, y, 20), roll = r();
-    if (!inside && y < 2300) { if (roll < .25) DECOR.push({ type: 'cloud', x, y, s: .8 + r() * .8 }); continue; }
-    const type = !inside ? (roll < .55 ? 'tree' : roll < .8 ? 'pine' : 'bush')
-      : z === 0 ? (roll < .5 ? 'tree' : roll < .8 ? 'bush' : 'rock')
-      : z === 1 ? (roll < .65 ? 'pine' : roll < .8 ? 'tree' : 'rock')
-      : z === 2 ? (roll < .5 ? 'pine' : roll < .8 ? 'rock' : 'autumn')
-      : z === 3 ? (roll < .65 ? 'rock' : 'pine') : (roll < .6 ? 'rock' : 'dead');
-    DECOR.push({ type, x, y, s: .8 + r() * .6, snow: z >= 3 && inside });
+  const blocked = (x, y, m) => inField(x, y, m) || nearPath(x, y, m + 12) || nearPlaza(x, y) || Object.values(NPCS()).some(g => Math.hypot(x - g.x, y - g.y) < 60) || GLIDERS.some(g => Math.hypot(x - g.x, y - g.y) < 70);
+  // gates where the trail crosses each zone border
+  GATES = [];
+  for (let z = 1; z < ZONES.length; z++) { const top = ZONES[z - 1].top, p = TRAIL.find(t => t.y < top) || TRAIL[0]; GATES.push({ z, x: p.x, y: top }); }
+  for (let i = 0; i < 6000 && DECOR.length < 760; i++) {
+    const edge = r() < .45, x = edge ? (r() < .5 ? r() * 260 : WORLD.w - r() * 260) : r() * WORLD.w, y = 60 + r() * (WORLD.h - 80);
+    if (blocked(x, y, 34) || GATES.some(g => Math.hypot(x - g.x, y - g.y) < 90)) continue;
+    const z = zoneAt(y), roll = r();
+    const type = z === 0 ? (roll < .5 ? 'tree' : roll < .8 ? 'bush' : 'rock')
+      : z === 1 ? (roll < .7 ? 'pine' : roll < .85 ? 'tree' : 'rock')
+      : z === 2 ? (roll < .45 ? 'pine' : roll < .8 ? 'rock' : 'autumn')
+      : z === 3 ? (roll < .5 ? 'pine' : roll < .85 ? 'rock' : 'dead') : (roll < .55 ? 'icicle' : 'rock');
+    DECOR.push({ type, x, y, s: .8 + r() * .6, snow: z >= 3 });
   }
   SCATTER = [];
-  for (let i = 0; i < 4000 && SCATTER.length < 1000; i++) {
+  for (let i = 0; i < 9000 && SCATTER.length < 2600; i++) {
     const x = r() * WORLD.w, y = r() * WORLD.h;
-    if (inField(x, y, 10) || nearPath(x, y, 26) || !(inMount(x, y) || y > 2300)) continue;
-    const z = inMount(x, y) ? zoneAt(y) : 0, roll = r();
-    SCATTER.push({ x, y, z, k: roll, t: z >= 4 ? 'spark' : z === 3 ? 'pebble' : z === 2 ? (roll < .5 ? 'pebble' : 'tuft') : (roll < .7 ? 'tuft' : 'flower') });
+    if (inField(x, y, 10) || nearPath(x, y, 26)) continue;
+    const z = zoneAt(y), roll = r();
+    SCATTER.push({ x, y, z, k: roll, t: z === 4 ? 'crack' : z === 3 ? 'spark' : z === 2 ? (roll < .5 ? 'pebble' : 'tuft') : (roll < .7 ? 'tuft' : 'flower') });
   }
-  // mountain outline
-  MOUNT = new Path2D();
-  const L = [], R = [];
-  for (let y = PEAK.y; y <= WORLD.h + 200; y += 20) { const w = mountHW(y) + Math.sin(y * .03) * 10 + Math.sin(y * .011) * 16; L.push([PEAK.x - w, y]); R.push([PEAK.x + w * (1 + Math.sin(y * .017) * .03), y]); }
-  MOUNT.moveTo(PEAK.x, PEAK.y - 10); L.forEach(([x, y]) => MOUNT.lineTo(x, y)); R.reverse().forEach(([x, y]) => MOUNT.lineTo(x, y)); MOUNT.closePath();
-  SHADE = new Path2D(); SHADE.moveTo(PEAK.x, PEAK.y - 10); R.slice().reverse().forEach(([x, y]) => SHADE.lineTo(x, y)); SHADE.lineTo(PEAK.x + 60, WORLD.h + 200); SHADE.lineTo(PEAK.x + 10, PEAK.y + 400); SHADE.closePath();
   BANDS = ZONES.slice(1).map((z, i) => {
-    const y0 = z.y, edge = x => y0 + Math.sin(x * .021 + y0) * 12 + Math.sin(x * .053) * 6;
-    const mk = off => { const p = new Path2D(); p.moveTo(0, -200); p.lineTo(0, edge(0) + off); for (let x = 0; x <= WORLD.w; x += 20) p.lineTo(x, edge(x) + off); p.lineTo(WORLD.w, -200); p.closePath(); return p; };
-    const ln = new Path2D(); ln.moveTo(0, edge(0)); for (let x = 0; x <= WORLD.w; x += 20) ln.lineTo(x, edge(x));
+    const y0 = ZONES[i].top, edge = x => y0 + Math.sin(x * .021 + y0) * 12 + Math.sin(x * .053) * 6;
+    const mk = off => { const p = new Path2D(); p.moveTo(-50, -200); p.lineTo(-50, edge(0) + off); for (let x = -50; x <= WORLD.w + 50; x += 20) p.lineTo(x, edge(x) + off); p.lineTo(WORLD.w + 50, -200); p.closePath(); return p; };
+    const ln = new Path2D(); ln.moveTo(-50, edge(-50)); for (let x = -50; x <= WORLD.w + 50; x += 20) ln.lineTo(x, edge(x));
     return { lipP: mk(0), mainP: mk(-8), line: ln, col: z.col, lip: z.lip, y0 };
   });
-  DECOR.push({ type: 'chorten', x: 470, y: 2920 }, { type: 'chorten', x: 600, y: 1700 }, { type: 'chorten', x: 640, y: 1160 }, { type: 'chorten', x: 600, y: 620 }, { type: 'flagpole', x: PEAK.x, y: PEAK.y + 30 });
-  FLAGS = [[440, 2240, 720, 2250], [480, 1790, 740, 1800], [640, 1320, 840, 1330], [620, 790, 740, 780], [560, 215, 860, 215]];
+  DECOR.push({ type: 'chorten', x: 860, y: 5150 }, { type: 'chorten', x: 560, y: 3800 }, { type: 'chorten', x: 1640, y: 2840 }, { type: 'chorten', x: 560, y: 1300 }, { type: 'flagpole', x: PEAK.x, y: PEAK.y + 60 });
+  FLAGS = GATES.map(g => [g.x - 90, g.y - 70, g.x + 90, g.y - 70]).concat([[PEAK.x - 220, PEAK.y + 40, PEAK.x + 220, PEAK.y + 40]]);
 }
-let DECOR = [], FLAGS = [], SCATTER = [], BANDS = [], MOUNT = null, SHADE = null, STONES = [], TRAIL = [], PATHPTS = [];
-const ZONES = [
-  { y: 3300, n: 'Foothills',    m: '2,800 m', col: '#86c763', lip: '#6aab50' },
-  { y: 2160, n: 'Pine Forest',  m: '3,600 m', col: '#62a854', lip: '#4b8c43' },
-  { y: 1600, n: 'High Pasture', m: '4,300 m', col: '#a9b86a', lip: '#8c9b54' },
-  { y: 1090, n: 'Rock Band',    m: '5,200 m', col: '#bba88a', lip: '#9a876a' },
-  { y: 660,  n: 'Snowline',     m: '6,500 m', col: '#e9f1f7', lip: '#c4d6e3' }
-];
-const zoneAt = y => { let z = 0; for (let i = 1; i < ZONES.length; i++) if (y < ZONES[i].y) z = i; return z; };
+let DECOR = [], FLAGS = [], SCATTER = [], BANDS = [], STONES = [], TRAIL = [], PATHPTS = [];
+const zoneAt = y => { for (let i = 0; i < ZONES.length; i++) if (y >= ZONES[i].top) return i; return ZONES.length - 1; };
+const zoneOpen = z => S.crew.length >= ZONES[z].gate;
+let GATES = [];
 function segDist(x, y, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy; const u = clamp(((x - a[0]) * dx + (y - a[1]) * dy) / l, 0, 1); return Math.hypot(x - a[0] - u * dx, y - a[1] - u * dy); }
-const PATH = [[PLAZA.x - 60, PLAZA.y - 10], [470, 2930], [360, 2760], [1030, 2420], [370, 2080], [1000, 1740], [420, 1420], [900, 1120], [500, 840], [800, 580], [700, 420]];
+const PATH = [[PLAZA.x, PLAZA.y - 40], [1100, 4900], [1100, 4450], [700, 4300], [700, 3500], [1100, 3420], [1500, 3250], [1500, 2720], [1100, 2620], [700, 2450], [700, 1450], [1100, 1330], [1100, 1010]];
 const BRANCH = [];
 
 function fieldAt(x, y) { for (let i = 0; i < FIELDS.length; i++) { const f = FIELDS[i]; if (x > f.x && x < f.x + f.w && y > f.yy && y < f.yy + f.h) return i; } return -1; }
@@ -510,9 +508,19 @@ function update(dt) {
     if (d < 10 || Math.abs(ix) + Math.abs(iy) > .2) player.auto = null; else { ix = dx / d; iy = dy / d; }
   }
   const sp = moveSpeed();
-  player.x = clamp(player.x + ix * sp * dt, 20, WORLD.w - 20);
-  player.y = clamp(player.y + iy * sp * dt, 40, WORLD.h - 20);
-  player.mv = Math.abs(ix) + Math.abs(iy) > .05;
+  if (player.fly) {
+    const f = player.fly; f.t += dt / f.dur; const u = Math.min(1, f.t), e2 = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+    player.x = f.x0 + (f.x1 - f.x0) * e2; player.y = f.y0 + (f.y1 - f.y0) * e2; player.h = Math.sin(u * Math.PI) * 260; ix = iy = 0;
+    if (Math.random() < .6) E.parts.push({ type: 'snow', x: player.x + rand(-20, 20), y: player.y - player.h + rand(0, 20), vx: 0, vy: 30, g: 0, life: .7, max: .7, size: 2, col: 'rgba(255,255,255,.8)' });
+    if (u >= 1) { player.fly = null; player.h = 0; E.crew.forEach(e => { e.x = player.x + rand(-60, 60); e.y = player.y + rand(-40, 40); e.st = 'idle'; e.tile = null; }); ring(player.x, player.y, 90, '#ffffff', .5, 5); burst(player.x, player.y, 24, { type: 'smoke', col: 'rgba(255,255,255,.6)', spd: 120, life: .8, size: 8 }); }
+  } else {
+    player.x = clamp(player.x + ix * sp * dt, 20, WORLD.w - 20);
+    player.y = clamp(player.y + iy * sp * dt, 40, WORLD.h - 20);
+    let zt = 0; while (zt + 1 < ZONES.length && zoneOpen(zt + 1)) zt++;
+    const minY = ZONES[zt].top > 0 ? ZONES[zt].top + 14 : 40;
+    if (player.y < minY) { player.y = minY; if (now - fullWarnT > 3) { fullWarnT = now; toast(`${ZONES[zt + 1].n} needs ${ZONES[zt + 1].gate} crew`, 'lock'); } }
+  }
+  player.mv = !player.fly && Math.abs(ix) + Math.abs(iy) > .05;
   if (player.mv) S.stats.walk += sp * Math.hypot(ix, iy) * dt;
   S.stats.time += dt;
   if (Math.abs(ix) > .1) player.face = ix > 0 ? 1 : -1;
@@ -534,6 +542,8 @@ function update(dt) {
   // quest givers nearby
   let nn = null, nd = 75;
   const all = NPCS(); for (const id in all) { const g = all[id], d = dist(player.x, player.y, g.x, g.y); if (d < nd) { nd = d; nn = id; } }
+  for (const g of GLIDERS) { const d = dist(player.x, player.y, g.x, g.y); if (d < nd) { nd = d; nn = g.id; } }
+  if (player.fly) nn = null;
   if (nn !== nearNpc) { nearNpc = nn; updateTalk(); }
   // Kiln bag: instant conversion while gathering
   if (doko().pas === 'kiln' && pf >= 0 && S.doko > 0) {
@@ -619,37 +629,22 @@ function render() {
   cam.tx = player.x + (PLAZA.x + 10 - player.x) * pw;
   cam.sx = cam.sx == null ? cam.tx : cam.sx + (cam.tx - cam.sx) * .12;
   cam.x = clamp(cam.sx - VIEW_W / 2, 0, WORLD.w - VIEW_W);
-  cam.y = clamp(player.y - viewH * .56, -150, WORLD.h - viewH + 120);
+  cam.y = clamp(player.y - (player.h || 0) * .6 - viewH * .56, -150, WORLD.h - viewH + 120);
   const sx = (Math.random() - .5) * cam.shake, sy = (Math.random() - .5) * cam.shake;
   c.setTransform(scale, 0, 0, scale, (-cam.x + sx) * scale, (-cam.y + sy) * scale);
   const vx0 = cam.x - 60, vy0 = cam.y - 60, vx1 = cam.x + VIEW_W + 60, vy1 = cam.y + viewH + 80;
   const vis = (x, y, m = 0) => x > vx0 - m && x < vx1 + m && y > vy0 - m && y < vy1 + m;
 
-  // valley / cloud sea around the mountain
-  if (!bgGrad) { bgGrad = c.createLinearGradient(0, 0, 0, WORLD.h); [[0, '#cfe6f3'], [.5, '#dcecef'], [.68, '#8fbf72'], [1, '#5e9e4e']].forEach(([o, col]) => bgGrad.addColorStop(o, col)); }
-  c.fillStyle = bgGrad; c.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0);
-  // mountain body with altitude zones
-  c.save(); c.translate(0, 14); c.fillStyle = 'rgba(43,34,51,.12)'; c.fill(MOUNT); c.restore();
-  c.save(); c.clip(MOUNT);
+  // zones, lowest first; each band paints everything above its border
   c.fillStyle = ZONES[0].col; c.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0);
   for (const b of BANDS) { if (b.y0 < vy0 - 40) continue; c.fillStyle = b.lip; c.fill(b.lipP); c.fillStyle = b.col; c.fill(b.mainP); c.strokeStyle = 'rgba(43,34,51,.55)'; c.lineWidth = 2; c.stroke(b.line); }
   for (const d of SCATTER) {
     if (!vis(d.x, d.y, 10)) continue;
     if (d.t === 'tuft') { const g = d.z === 2 ? '#7f8c45' : d.z === 1 ? '#3f7f39' : '#5aa647'; line(c, d.x - 4, d.y, d.x - 6, d.y - 5, g, 1.6); line(c, d.x, d.y, d.x, d.y - 7, g, 1.6); line(c, d.x + 4, d.y, d.x + 6, d.y - 5, g, 1.6); }
     else if (d.t === 'flower') { circ(c, d.x, d.y, 2.2, d.k > .85 ? '#ffd166' : '#ffffff', false); circ(c, d.x + 6, d.y + 3, 1.6, d.k > .85 ? '#ffffff' : '#ffd166', false); }
-    else if (d.t === 'pebble') ell(c, d.x, d.y, 4, 2.6, d.z === 3 ? '#9d8c70' : '#8f9a5c', false);
+    else if (d.t === 'pebble') ell(c, d.x, d.y, 4, 2.6, '#8f9a5c', false);
+    else if (d.t === 'crack') { line(c, d.x - 8, d.y, d.x, d.y - 3, '#9cc8e4', 1.6); line(c, d.x, d.y - 3, d.x + 7, d.y + 2, '#9cc8e4', 1.6); }
     else { line(c, d.x - 4, d.y, d.x, d.y - 3, '#b9d3e3', 1.6); line(c, d.x, d.y - 3, d.x + 4, d.y, '#b9d3e3', 1.6); }
-  }
-  c.restore();
-  c.strokeStyle = OUT; c.lineWidth = 2.6; c.stroke(MOUNT);
-  // zone markers
-  for (let i = 1; i < ZONES.length; i++) {
-    const z = ZONES[i], y = z.y + 26, x = PEAK.x - mountHW(y) + 30;
-    if (!vis(x, y, 80)) continue;
-    c.font = '800 11px -apple-system,system-ui,sans-serif'; const tw = Math.max(c.measureText(z.n).width, 50) + 16;
-    P(c); c.roundRect(x, y - 16, tw, 30, 9); fs(c, 'rgba(255,255,255,.92)', 1.8);
-    c.fillStyle = OUT; c.textAlign = 'left'; c.fillText(z.n, x + 8, y - 3);
-    c.fillStyle = '#8c8296'; c.font = '700 10px -apple-system,system-ui,sans-serif'; c.fillText(z.m, x + 8, y + 9);
   }
   // plaza at the foot
   ell(c, PLAZA.x, PLAZA.y, 250, 100, '#e2cfa3'); ell(c, PLAZA.x, PLAZA.y, 232, 88, '#ecdcb5', false);
@@ -704,20 +699,25 @@ function render() {
   P(c); c.ellipse(BREW.x, BREW.y, BREW.r * pul, BREW.r * .5 * pul, 0, 0, TAU); c.setLineDash([7, 6]); c.lineDashOffset = -now * 20; c.strokeStyle = brewing ? '#3fae6b' : '#ff8a3d'; c.lineWidth = 2.6; c.stroke(); c.setLineDash([]);
   // y-sorted world objects
   const objs = [];
-  for (const d of DECOR) if (vis(d.x, d.y, 60)) objs.push({ y: d.y, f: () => { c.save(); c.translate(d.x, d.y); ({ pine: () => drawPine(c, d.s, d.snow), rock: () => drawRock(c, d.s, d.snow), tree: () => drawTreeRound(c, d.s), autumn: () => drawTreeRound(c, d.s, '#f2a33a'), bush: () => drawBush(c, d.s), dead: () => drawDeadBush(c, d.s), chorten: () => drawChorten(c, now), flagpole: () => drawSummitFlag(c, now), cloud: () => drawCloud(c, d.s) })[d.type](); c.restore(); } });
+  for (const d of DECOR) if (vis(d.x, d.y, 60)) objs.push({ y: d.y, f: () => { c.save(); c.translate(d.x, d.y); ({ pine: () => drawPine(c, d.s, d.snow), rock: () => drawRock(c, d.s, d.snow), tree: () => drawTreeRound(c, d.s), autumn: () => drawTreeRound(c, d.s, '#f2a33a'), bush: () => drawBush(c, d.s), dead: () => drawDeadBush(c, d.s), chorten: () => drawChorten(c, now), flagpole: () => drawSummitFlag(c, now), cloud: () => drawCloud(c, d.s), icicle: () => drawIcicle(c, d.s) })[d.type](); c.restore(); } });
   if (vis(HOUSE.x, HOUSE.y, 200)) objs.push({ y: HOUSE.y, f: () => { c.save(); c.translate(HOUSE.x, HOUSE.y); drawTeahouse(c, teaTier(), now); c.restore(); } });
   const allN = NPCS(); for (const id in allN) { const g = allN[id]; if (vis(g.x, g.y, 80)) objs.push({ y: g.y, f: () => drawGiver(c, id, g) }); }
   for (const sp of S.spr.placed) if (vis(sp.x, sp.y, 60)) objs.push({ y: sp.y, f: () => drawSprinkler(c, sp) });
+  for (const g of GATES) if (vis(g.x, g.y, 140)) objs.push({ y: g.y, f: () => drawGate(c, g) });
+  for (const g of GLIDERS) if (vis(g.x, g.y, 80)) objs.push({ y: g.y, f: () => drawGlider(c, g) });
   if (vis(STALL.x, STALL.y, 120)) objs.push({ y: STALL.y, f: () => { c.save(); c.translate(STALL.x, STALL.y); drawStall(c, now, brewing); c.restore(); } });
   for (const e of E.crew) if (vis(e.x, e.y, 40)) objs.push({ y: e.y, f: () => drawCrewEnt(c, e) });
   objs.push({ y: player.y, f: () => {
     c.save(); c.translate(player.x, player.y);
-    ell(c, 0, 1, 12, 4.5, 'rgba(0,0,0,.22)', false);
+    ell(c, 0, 1, 12 * (1 - (player.h || 0) / 520), 4.5, 'rgba(0,0,0,.22)', false);
+    c.translate(0, -(player.h || 0));
+    if (player.h) { P(c); c.moveTo(-30, -44); c.quadraticCurveTo(0, -72, 30, -44); c.quadraticCurveTo(0, -58, -30, -44); fs(c, '#ff8a3d', 2); line(c, -24, -46, -4, -24, OUT, 1); line(c, 24, -46, 4, -24, OUT, 1); }
     c.scale(player.face, 1);
     const dc = ['#c8913e', '#b5651d', '#8d6e63', '#6d4c41', '#2e86de', '#74b9ff', '#a29bfe'][DOKOS.findIndex(d => d.id === S.dokoId)];
     drawPlayer(c, player.anim, player.mv, player.swing, dc);
     c.restore();
     const fillF = Math.min(1, S.doko / capMax());
+    if (player.h) return;
     rr(c, player.x - 14, player.y + 7, 28, 4, 2, 'rgba(0,0,0,.35)', false);
     rr(c, player.x - 14, player.y + 7, 28 * fillF, 4, 2, fillF >= 1 ? '#ff5a6e' : '#ffd24a', false);
   } });
@@ -773,6 +773,38 @@ function render() {
   }
 }
 
+function glideTo(id) {
+  const g = GLIDERS.find(q => q.id === id); if (!g || player.fly) return;
+  player.auto = null; player.fly = { x0: player.x, y0: player.y, x1: g.x, y1: g.y + 40, t: 0, dur: 1.2 + Math.abs(player.y - g.y) / 2500 };
+  burst(player.x, player.y, 20, { type: 'smoke', col: 'rgba(255,255,255,.6)', spd: 120, life: .8, size: 8 });
+}
+function drawGate(c, g) {
+  const z = ZONES[g.z], open = zoneOpen(g.z);
+  c.save(); c.translate(g.x, g.y);
+  if (!open) { P(c); c.moveTo(-WORLD.w, 0); c.lineTo(WORLD.w, 0); c.setLineDash([10, 10]); c.strokeStyle = 'rgba(229,72,77,.45)'; c.lineWidth = 3; c.stroke(); c.setLineDash([]); }
+  for (const sx of [-58, 58]) { rr(c, sx - 10, -64, 20, 66, 4, '#a3a7b4'); rr(c, sx - 13, -70, 26, 10, 3, '#8c909c'); }
+  rr(c, -70, -82, 140, 14, 4, '#9a6a45');
+  if (!open) { rr(c, -48, -30, 96, 10, 3, '#c0392b'); rr(c, -48, -14, 96, 10, 3, '#c0392b'); }
+  const label = open ? `${z.n} · ${z.alt}` : `${z.n} · ${z.gate} crew`;
+  c.font = '800 11px -apple-system,system-ui,sans-serif'; const tw = c.measureText(label).width + 30;
+  P(c); c.roundRect(-tw / 2, -112, tw, 24, 9); fs(c, open ? '#ffffff' : '#fff1f1', 1.8);
+  drawIcon(c, open ? 'mountain' : 'lock', -tw / 2 + 13, -100, 13, open ? '#3fae6b' : '#e5484d', 2.4);
+  c.fillStyle = OUT; c.textAlign = 'left'; c.fillText(label, -tw / 2 + 23, -96);
+  c.restore();
+}
+function drawGlider(c, g) {
+  const on = S.crew.length >= GLIDE_GATE && zoneOpen(g.z);
+  c.save(); c.translate(g.x, g.y);
+  ell(c, 0, 2, 40, 15, 'rgba(0,0,0,.15)', false);
+  ell(c, 0, 0, 38, 14, '#c9c2b6'); ell(c, 0, -2, 30, 10, on ? '#ffd27a' : '#ddd6ca', false);
+  line(c, -16, -4, -10, -40, OUT, 4); line(c, -16, -4, -10, -40, '#8a5a3b', 2.2); line(c, 16, -4, 10, -40, OUT, 4); line(c, 16, -4, 10, -40, '#8a5a3b', 2.2);
+  const flap = Math.sin(now * 2 + g.x) * 2;
+  P(c); c.moveTo(-34, -40 + flap); c.quadraticCurveTo(0, -66, 34, -40 - flap); c.quadraticCurveTo(0, -54, -34, -40 + flap); fs(c, on ? '#ff8a3d' : '#b9b2a6', 2);
+  for (let i = -2; i <= 2; i++) line(c, i * 12, -50 + Math.abs(i) * 3, i * 12, -45 + Math.abs(i) * 3, 'rgba(255,255,255,.6)', 2);
+  c.font = '800 10px -apple-system,system-ui,sans-serif'; const tw = c.measureText('Glider').width + 14;
+  P(c); c.roundRect(-tw / 2, 14, tw, 17, 8.5); fs(c, '#ffffff', 1.6); c.fillStyle = OUT; c.textAlign = 'center'; c.fillText('Glider', 0, 26);
+  c.restore();
+}
 function drawSprinkler(c, sp) {
   const lv = S.spr.lv, col = ['#8fbf5a', '#d9864a', '#c9d2dc', '#f0c040', '#7fd3ff', '#b98af5'][lv];
   c.save(); c.translate(sp.x, sp.y);
@@ -1046,6 +1078,7 @@ function boot() {
   if (!S.spr) S.spr = { n: 0, lv: 0, placed: [] };
   if (!S.hats) { S.hats = []; S.hat = null; S.charms = []; S.charm = null; S.pas = {}; }
   buildWorld();
+  if (S.mapv !== 2) { S.mapv = 2; S.px = PLAZA.x; S.py = PLAZA.y + 30; if (S.spr) S.spr.placed = []; }
   player.x = S.px || BREW.x; player.y = S.py || BREW.y - 30;
   rebuildCrew(); refreshWet();
   E.crew.forEach(e => { e.x = player.x + rand(-50, 50); e.y = player.y + rand(-30, 30); });

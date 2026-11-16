@@ -1,7 +1,7 @@
 :root{--paper:#fffaf3;--card:#ffffff;--soft:#f6efe4;--line:#ece2d3;--ink:#2b2233;--mut:#8c8296;--acc:#ff8a3d;--acc2:#ff6a2b;--good:#3fae6b;--bad:#ef4d5f;--gold:#f0b429;--spice:#f26b4a;--ice:#4fb6e6;--cloud:#c9d0f2;--neutral:#d8c3a0;--sh:0 6px 24px rgba(43,34,51,.12),0 1px 3px rgba(43,34,51,.08)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;background:#86c763;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","SF Pro Text",system-ui,sans-serif;-webkit-user-select:none;user-select:none;overscroll-behavior:none;touch-action:none}
-canvas{position:fixed;top:0;left:0;width:100vw;height:100%;display:block;touch-action:none}
+#cv{position:fixed;top:0;left:0;width:100vw;height:100%;display:block;touch-action:none}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation;padding:0}
 .ic{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;vertical-align:-.2em}
 .ib{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--c);flex-shrink:0}
@@ -218,3 +218,12 @@ html.gapfix{background:#ffffff}
 html.gapfix #bar{left:0;right:0;bottom:0;border-radius:24px 24px 0 0;padding-bottom:6px}
 html.gapfix #talk,html.gapfix #place{bottom:calc(84px)}
 html.gapfix #toast{bottom:150px}
+.wmap{border-radius:18px;overflow:hidden;box-shadow:0 1px 3px rgba(43,34,51,.12)}
+.wmap canvas{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin:10px 2px;font-size:12px;font-weight:700;color:var(--mut)}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.legend .ic{width:14px;height:14px}
+.legend i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#9b6ef3}
+.lg-you i{background:#2b2233;box-shadow:0 0 0 2px #ffd24a}
+#talk .gl{width:44px;height:44px;border-radius:14px;background:#e0f3fc;color:#2ea4dc;display:flex;align-items:center;justify-content:center}
+#talk .gl .ic{width:24px;height:24px}
