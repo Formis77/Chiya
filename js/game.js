@@ -694,7 +694,7 @@ function update(dt) {
     if (nd) B.darkheat = { t: 99, st: nd, perm: true }; else delete B.darkheat; }
   // side stars
   if (pf >= 0 && fieldOpen(pf) && S.doko < capMax()) {
-    if (mpas('starSaw') && B.saw) { sawT -= dt; if (sawT <= 0) { sawT = .12; const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; tilesNear(pf, sx, sy, 38).forEach(t => collect(t, tool().amt * 1.5, 'neutral', 1)); } }
+    if (mpas('starSaw') && B.saw) { sawT -= dt; if (sawT <= 0) { sawT = .12; const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50; tilesNear(pf, sx, sy, 38).forEach(t => collect(t, tool().amt * .5, 'neutral', 1)); const cv2 = S.doko * .0018; if (cv2 > 0) { const val = cv2 * brewValue(); S.doko -= cv2; S.rp += val; S.stats.earn += val; } } }
     if (mpas('starShower')) { showerT -= dt; if (showerT <= 0 && !E.decals.some(d => d.kind === 'starspot')) { showerT = 45; const f = FIELDS[pf];
       for (let k = 0; k < 10; k++) E.decals.push({ kind: 'starspot', x: rand(f.x + 40, f.x + f.w - 40), y: rand(f.yy + 40, f.yy + f.h - 40), r: 34, age: 0, dur: 3 + k * .9, fi: pf }); } }
   }

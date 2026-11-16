@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '28';
+const VERSION = '29';
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -44,6 +44,7 @@ function uiTick(dt) {
   const bf = [];
   const BI = { inspire: 'sparkle', saw: 'star', precision: 'focus', darkheat: 'flame', kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   { const fl = frostAt(player.x, player.y); if (fl) bf.push(`<button class="chip frostc" data-b="frostmark">${ic('snow')}<b>x${FROST_MUL[fl]}</b></button>`); }
+  if (S.sawN > 0 && now - (S.sawLast || -99) <= 20) bf.push(`<button class="chip" data-b="sawcount">${ic('marigold')}<b>${S.sawN}/3</b></button>`); else if (S.sawN) S.sawN = 0;
   for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
@@ -421,8 +422,8 @@ function useItem(k) {
   if (k === 'marigold') {
     if (!mpas('starSaw')) { S.items[k]++; toast('Marigolds spin up the Chakra Saw star. Spend them at the Tihar Stall otherwise.', 'marigold'); return; }
     if (now - (S.sawLast || -99) > 20) S.sawN = 0; S.sawLast = now; S.sawN = (S.sawN || 0) + 1;
-    if (S.sawN >= 3) { S.sawN = 0; S.items[k]++; B.saw = { t: Math.min(90, (B.saw ? B.saw.t : 0) + 30), st: 1 }; toast('Chakra Saw spinning for 30s (1 Marigold saved)', 'star'); }
-    else toast(`Chakra Saw ${S.sawN}/3`, 'marigold');
+    if (S.sawN >= 3) { S.sawN = 0; S.items[k]++; B.saw = { t: 30, st: 1 }; toast('Chakra Saw spinning for 30s (1 Marigold saved)', 'star'); }
+
     save(); renderPanel(); return; }
   if (k === 'garland') { if (S.crew.length >= S.beds) { S.items[k]++; toast('You need a free bed first', 'bed'); return; } addCrew('tiharDog', false); save(); renderPanel(); return; }
   if (k === 'lotusSeed') { if (fieldAt(player.x, player.y) < 0 || !window.plantSprout) { S.items[k]++; toast('Stand in a field to plant it', 'leaf'); return; } plantSprout(fieldAt(player.x, player.y)); }
@@ -764,6 +765,7 @@ function showPop(el, html, above) {
 function hidePop() { $('pop').className = ''; }
 function buffTip(k, el) {
   el = el || document.querySelector(`[data-b="${k}"]`); if (!el) return;
+  if (k === 'sawcount') { showPop(el, `<b>Chakra Saw</b><span>${S.sawN}/3 Marigolds used. Use ${3 - S.sawN} more within ${Math.max(0, Math.ceil(20 - (now - S.sawLast)))}s.</span>`); return; }
   if (k === 'frostmark') { const fl = frostAt(player.x, player.y); showPop(el, `<b>Frost Mark level ${fl}</b><span>Ice flowers here are gathered at x${FROST_MUL[fl]}.</span>`); return; }
   const b = BUFFS[k]; if (!b || !B[k]) return;
   showPop(el, `<b>${b.n}${B[k].st > 1 ? ' x' + Math.floor(B[k].st) : ''}</b><span>${b.d}</span>${B[k].perm ? '' : `<small>${Math.ceil(B[k].t)}s left</small>`}`);
