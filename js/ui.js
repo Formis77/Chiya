@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '13';
+const VERSION = '14';
 const NAV = [['home', 'home', 'Home'], ['map', 'map', 'Map'], ['crew', 'crew', 'Crew'], ['gear', 'backpack', 'Gear'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['codex', 'book', 'Codex']];
 function uiInit() {
   $('bar').innerHTML = NAV.map(([a, i, n]) => `<button data-a="${a}">${ic(i)}<span>${n}</span></button>`).join('');
@@ -77,7 +77,7 @@ function openPanel(name, tab) {
 }
 function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
-  const fn = { crew: pCrew, shop: pShop, gear: pGear, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
+  const fn = { crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
   if (!fn) return;
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
   document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel));
@@ -205,7 +205,7 @@ function bless(i) {
 }
 
 /* ---------------- SHOP ---------------- */
-const GEARLIST = { tool: TOOLS, doko: DOKOS, boots: BOOTS, hat: HEADGEAR, charm: CHARMS };
+const GEARLIST = { tool: TOOLS, doko: DOKOS, boots: BOOTS, hat: HEADGEAR };
 const ownedOf = k => ({ tool: S.tools, doko: S.dokos, boots: S.bootsOwned, hat: S.hats, charm: S.charms })[k];
 const equippedOf = k => ({ tool: S.tool, doko: S.dokoId, boots: S.boots, hat: S.hat, charm: S.charm })[k];
 const gearCol = it => it.col ? TOKEN_COL[it.col] : icol(it.i);
@@ -276,14 +276,15 @@ function shopExtra(t) {
 /* gear panel: what you wear, what you own, where the shops are */
 function pGear() {
   let h = `<div class="ph"><h2>Gear</h2></div>`;
-  for (const k of ['tool', 'doko', 'boots', 'hat', 'charm']) {
+  for (const k of ['tool', 'doko', 'boots', 'hat']) {
     const own = ownedOf(k), cur = equippedOf(k);
     h += `<h3>${SLOT_N[k]}</h3><div class="gown">` + (own.length ? own.map(id => { const it = GEARLIST[k].find(g => g.id === id); if (!it) return ''; return `<button class="gchip ${cur === id ? 'on' : ''}" onclick="equip('${k}', ${cur === id && (k === 'hat' || k === 'charm') ? 'null' : `'${id}'`})">${ib(it.i, gearCol(it))}<span>${it.n}</span></button>`; }).join('') : `<span class="mut small">None yet. Find one at a shop.</span>`) + `</div>`;
   }
+  h += `<h3>Mandala</h3>` + (S.mandala ? mandalaCard(S.mandala) : `<p class="mut small">None yet. Generate one at the Mandala Shrine in the High Pasture.</p>`);
   h += `<h3>Shops</h3><p class="mut small">Shops are on the map. Walk up to one to browse its gear.</p>` + SHOPS.map(sh => { const open = zoneOpen(sh.z); return `<div class="item ${open ? '' : 'dim'}">${ib(open ? 'shop' : 'lock', open ? sh.col : '#9aa0ad')}<div class="it"><b>${sh.n}</b><span class="mut small">${ZONES[sh.z].n} · ${Object.keys(sh.sells).map(k => SLOT_N[k]).concat((sh.extra || []).map(e => ({ supplies: 'Supplies', lodge: 'Lodge', sprinklers: 'Sprinklers' })[e])).join(', ')}</span></div>${open ? `<button class="btn sm" onclick="goTo(${sh.x},${sh.y + 40})"><span>Go</span></button>` : ''}</div>`; }).join('');
   return h;
 }
-const STATN2 = { cap: 'capacity', gather: 'all gathering', spice: 'Spice', ice: 'Ice', cloud: 'Cloud', brew: 'brewing', speed: 'speed', crit: 'crit', offline: 'offline', tool: 'tool', cdr: 'faster abilities', yak: 'yak gathering' };
+const STATN2 = { conv: 'instant conversion', cap: 'capacity', gather: 'all gathering', spice: 'Spice', ice: 'Ice', cloud: 'Cloud', brew: 'brewing', speed: 'speed', crit: 'crit', offline: 'offline', tool: 'tool', cdr: 'faster abilities', yak: 'yak gathering' };
 const canAfford = it => S.rp >= it.cost && Object.entries(it.req || {}).every(([k, n]) => (S.items[k] || 0) >= n);
 function buyGear(key, id) {
   const list = { tool: TOOLS, doko: DOKOS, boots: BOOTS, hat: HEADGEAR, charm: CHARMS }[key], it = list.find(x => x.id === id);
@@ -416,6 +417,7 @@ const gliderOf = id => GLIDERS.find(g => g.id === id);
 function updateTalk() {
   const t = $('talk');
   if (!nearNpc) { t.classList.remove('on'); return; }
+  if (nearNpc === 'mandala') { t.innerHTML = `<span class="gl" style="background:#f3edff;color:#9b6ef3">${ic('wheel')}</span><span><small>Generator</small>Mandala Shrine</span>`; t.classList.add('on'); return; }
   if (nearNpc.startsWith('shop:')) { const sh = SHOPS.find(q => 'shop:' + q.id === nearNpc); t.innerHTML = `<span class="gl" style="background:${sh.col}22;color:${sh.col}">${ic('shop')}</span><span><small>Shop</small>${sh.n}</span>`; t.classList.add('on'); return; }
   if (gliderOf(nearNpc)) { t.innerHTML = `<span class="gl">${ic('wind')}</span><span><small>Glider pad</small>Fly somewhere</span>`; t.classList.add('on'); return; }
   const g = npcOf(nearNpc), st = giverState(nearNpc);
@@ -431,6 +433,7 @@ function gliderMenu(id) {
 }
 function talk(gid) {
   gid = gid || nearNpc; if (!gid) return;
+  if (gid === 'mandala') { panelTab = null; openPanel('mandala', 'x'); return; }
   if (gid.startsWith('shop:')) { openShop(gid.slice(5)); return; }
   if (gliderOf(gid)) { gliderMenu(gid); return; }
   const g = npcOf(gid), st = giverState(gid);
@@ -629,3 +632,46 @@ function pasTip(id) {
 }
 
 function switchProfile(n) { save(); S = null; try { localStorage.setItem('chiya_slot', String(n)); } catch (e) {} location.reload(); }
+
+/* ---------------- MANDALA ---------------- */
+const blessedCount = () => S.crew.filter(m => m.bl).length;
+const pct = v => (v * 100).toFixed(v < .1 ? 1 : 0) + '%';
+function mandalaCard(m, label) {
+  const tr = MANDALA_TIERS.find(q => q.id === m.tier);
+  return `<div class="mcardm" style="--tc:${tr.col}"><div class="mart">${ic('wheel')}</div><div class="it"><div class="dn"><b>${tr.n}</b>${label ? `<span class="tag">${label}</span>` : ''}</div>
+    <div class="mlines">${m.lines.map(([k, v]) => `<span>+${pct(v)} ${STATN2[k]}</span>`).join('')}</div>
+    ${m.pas.map(p => `<div class="pas">${ic('star')}<span><b>${MANDALA_PAS[p].n}.</b> ${MANDALA_PAS[p].d}</span></div>`).join('')}</div></div>`;
+}
+function pMandala() {
+  const bl = blessedCount();
+  let h = `<div class="ph"><h2>Mandala Shrine</h2><span class="pill">${ic('star')}${bl} Blessed</span></div>`;
+  h += `<p class="mut small">Generate a mandala with random bonuses. Each tier needs more Blessed crew. Only the Celestial Mandala rolls a main passive, sometimes two. You choose whether to keep the new one.</p>`;
+  if (S.charmRefund) { h += `<div class="item eq">${ib('coin', '#ff8a3d')}<div class="it"><b>Charms were retired</b><span class="mut small">You got ${fmt(S.charmRefund)} rupees back for the charms you owned.</span></div></div>`; S.charmRefund = 0; }
+  h += S.mandala ? mandalaCard(S.mandala, 'Current') : '<p class="mut small">You have no mandala yet.</p>';
+  h += `<h3>Generate</h3>` + MANDALA_TIERS.map((tr, i) => {
+    const okBl = bl >= tr.bl, ok = okBl && S.rp >= tr.cost && Object.entries(tr.req).every(([k, n]) => (S.items[k] || 0) >= n);
+    return `<div class="item gear"><span class="ib" style="--c:${tr.col}">${ic('wheel')}</span><div class="it"><b>${tr.n}</b><span class="mut small">${tr.lines} bonus lines${tr.star ? ' + main passive' : ''} · needs ${tr.bl} Blessed</span>
+      <div class="req"><span class="${okBl ? 'ok' : 'no'}">${ic('star')}${Math.min(bl, tr.bl)}/${tr.bl} Blessed</span>${Object.entries(tr.req).map(([k, n]) => `<span class="${(S.items[k] || 0) >= n ? 'ok' : 'no'}">${ic(ITEMS[k].i)}${Math.min(S.items[k] || 0, n)}/${n} ${ITEMS[k].n}</span>`).join('')}</div></div>
+      <button class="btn sm primary" ${ok ? '' : 'disabled'} onclick="genMandala(${i})">${money(tr.cost)}</button></div>`;
+  }).join('');
+  h += `<h3>Main passives</h3>` + Object.values(MANDALA_PAS).map(p => `<div class="syn">${ib('star', p.col === 'any' ? '#9b6ef3' : TOKEN_COL[p.col])}<div><b>${p.n}</b><div class="small">${p.d}</div></div></div>`).join('');
+  return h;
+}
+function rollMandala(i) {
+  const tr = MANDALA_TIERS[i], pool = MANDALA_STATS.slice().sort(() => Math.random() - .5).slice(0, tr.lines);
+  const lines = pool.map(([k, a, b]) => [k, Math.round((a + Math.random() * (b - a)) * tr.mul * 1000) / 1000]);
+  const pas = [];
+  if (tr.star) { const ids = Object.keys(MANDALA_PAS); pas.push(pick(ids)); if (Math.random() < .15) { const rest = ids.filter(x => x !== pas[0]); pas.push(pick(rest)); } }
+  return { tier: tr.id, lines, pas };
+}
+let pendingMandala = null;
+function genMandala(i) {
+  const tr = MANDALA_TIERS[i];
+  if (blessedCount() < tr.bl || S.rp < tr.cost || !Object.entries(tr.req).every(([k, n]) => (S.items[k] || 0) >= n)) return;
+  spend(tr.cost); for (const k in tr.req) S.items[k] -= tr.req[k];
+  pendingMandala = rollMandala(i); S.stats.mandalas = (S.stats.mandalas || 0) + 1; save();
+  showModal(`<div class="reveal" style="--rc:${tr.col}"><div class="burst"></div><div class="mbig" style="--tc:${tr.col}">${ic('wheel')}</div></div><h2>${tr.n}</h2>${pendingMandala.pas.length > 1 ? '<div class="new">Double passive</div>' : ''}
+    ${mandalaCard(pendingMandala, 'New')}${S.mandala ? mandalaCard(S.mandala, 'Current') : ''}
+    <div class="row2"><button class="btn primary" onclick="keepMandala(true)"><span>Keep new</span></button><button class="btn" onclick="keepMandala(false)"><span>${S.mandala ? 'Keep current' : 'Discard'}</span></button></div>`);
+}
+function keepMandala(yes) { if (yes && pendingMandala) { S.mandala = pendingMandala; S.comet = S.gstar = S.cswing = 0; recompute(); toast('Mandala equipped', 'wheel'); } pendingMandala = null; closeModal(); save(); if (panel) renderPanel(); }

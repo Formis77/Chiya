@@ -253,6 +253,21 @@ function drawPlayer(c, t, mv, swing, dokoCol, gear) {
   }, t, mv, false);
 }
 
+/* ---------------- mandala shrine ---------------- */
+function drawMandalaShrine(c, t) {
+  ell(c, 0, 4, 70, 16, 'rgba(0,0,0,.15)', false);
+  rr(c, -60, -18, 120, 20, 5, '#d8cfc2'); rr(c, -48, -30, 96, 14, 4, '#e6ded2');
+  c.save(); c.translate(0, -70); c.rotate(t * .6);
+  for (let k = 0; k < 12; k++) { c.rotate(TAU / 12); ell(c, 22, 0, 14, 6, k % 2 ? '#9b6ef3' : '#f0b429'); }
+  circ(c, 0, 0, 14, '#ffffff'); circ(c, 0, 0, 8, '#1abc9c');
+  c.restore();
+  line(c, 0, -30, 0, -48, OUT, 5); line(c, 0, -30, 0, -48, '#9a6a45', 3);
+  c.font = '900 10px -apple-system,system-ui,sans-serif'; const tw = c.measureText('Mandala Shrine').width + 30;
+  P(c); c.roundRect(-tw / 2, -128, tw, 22, 11); fs(c, '#ffffff', 1.8);
+  drawIcon(c, 'wheel', -tw / 2 + 13, -117, 12, '#9b6ef3', 2.4);
+  c.fillStyle = OUT; c.textAlign = 'left'; c.fillText('Mandala Shrine', -tw / 2 + 23, -113);
+}
+
 /* ---------------- shops ---------------- */
 function drawShop(c, sh, t) {
   ell(c, 0, 4, 66, 14, 'rgba(0,0,0,.15)', false);

@@ -248,3 +248,10 @@ html.gapfix #toast{bottom:150px}
 .gchip{display:flex;align-items:center;gap:7px;padding:5px 11px 5px 5px;border-radius:14px;background:var(--card);font-weight:800;font-size:13px;border:2px solid transparent}
 .gchip.on{border-color:var(--acc2);background:#fff6ec}
 .gchip .ib{width:30px;height:30px;border-radius:10px}.gchip .ib .ic{width:17px;height:17px}
+.mcardm{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--card);border-radius:18px;padding:12px;margin:8px 0;border:2px solid color-mix(in srgb,var(--tc) 45%,#fff)}
+.mart,.mbig{flex-shrink:0;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;background:conic-gradient(from 0deg,var(--tc),color-mix(in srgb,var(--tc) 40%,#fff),var(--tc))}
+.mart .ic{width:28px;height:28px}
+.mbig{position:relative;width:150px;height:150px;margin:10px auto;animation:rise .6s cubic-bezier(.2,1.5,.4,1),spin 10s linear infinite}
+.mbig .ic{width:80px;height:80px}
+.mlines{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.mlines span{font-size:11.5px;font-weight:800;background:var(--soft);padding:3px 8px;border-radius:8px}

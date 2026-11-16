@@ -120,25 +120,25 @@ const TOOLS = [
   { id: 'shears',  n: 'Tea Shears',      i: 'shears',  cost: 3e4,   r: 46,  amt: 6,   sw: .65, col: 'cloud', cb: .6, req: { teaLeaf: 8 } },
   { id: 'broom',   n: 'Juniper Broom',   i: 'broom',   cost: 1.2e5, r: 56,  amt: 9,   sw: .6,  st: { gather: .1 }, req: { petal: 10, wool: 10, momo: 20 } },
   { id: 'staff',   n: 'Prayer Staff',    i: 'staff',   cost: 4e5,   r: 62,  amt: 12,  sw: .6,  st: { cdr: .05 }, req: { berry: 15, selroti: 10 } },
-  { id: 'esickle', n: 'Ember Sickle',    i: 'sickle',  cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'spice', cb: .8, req: { petal: 30, ginger: 30, dalbhat: 5 } },
+  { id: 'esickle', n: 'Ember Sickle',    i: 'sickle',  cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'spice', cb: .8, st: { conv: .03 }, req: { petal: 30, ginger: 30, dalbhat: 5 } },
   { id: 'gpick',   n: 'Glacier Pick',    i: 'pick',    cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'ice',   cb: .8, req: { ice: 40, berry: 15, dalbhat: 5 } },
   { id: 'crake',   n: 'Cloud Rake',      i: 'rake',    cost: 2e6,   r: 64,  amt: 20,  sw: .58, col: 'cloud', cb: .8, req: { wool: 40, teaLeaf: 30, dalbhat: 5 } },
   { id: 'claw',    n: 'Yeti Claw',       i: 'claw',    cost: 8e6,   r: 72,  amt: 28,  sw: .55, req: { berry: 30, saffron: 10 } },
-  { id: 'talon',   n: 'Danphe Talon',    i: 'talon',   cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'spice', cb: 1, pas: 'strike', req: { saffron: 40, petal: 60, goldenMomo: 1 } },
+  { id: 'talon',   n: 'Danphe Talon',    i: 'talon',   cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'spice', cb: 1, st: { conv: .06 }, pas: 'strike', req: { saffron: 40, petal: 60, goldenMomo: 1 } },
   { id: 'scythe',  n: 'Frostbite Scythe',i: 'scythe',  cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'ice',   cb: 1, pas: 'stomp',  req: { ice: 80, berry: 40, goldenMomo: 1 } },
   { id: 'fan',     n: 'Wind Fan',        i: 'fan',     cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'cloud', cb: 1, pas: 'dance',  req: { wool: 80, bead: 20, goldenMomo: 1 } },
   { id: 'wheel',   n: 'Spirit Wheel',    i: 'wheel',   cost: 1.5e8, r: 92,  amt: 60,  sw: .5,  crit: .1, req: { bead: 30, saffron: 30, dalbhat: 30 } },
-  { id: 'banner',  n: 'Summit Banner',   i: 'banner',  cost: 1e9,   r: 110, amt: 120, sw: .45, st: { gather: .2 }, pas: 'summitBless', req: { gem: 60, goldenMomo: 3, mysticWheel: 5 } }
+  { id: 'banner',  n: 'Summit Banner',   i: 'banner',  cost: 1e9,   r: 110, amt: 120, sw: .45, st: { gather: .2, conv: .05 }, pas: 'summitBless', req: { gem: 60, goldenMomo: 3, mysticWheel: 5 } }
 ];
 const HEADGEAR = [
   { id: 'woolCap',    n: 'Wool Cap',      i: 'hat', cost: 1.5e4, st: { cloud: .1, cap: .05 }, req: { wool: 5, momo: 10 } },
   { id: 'gingerTopi', n: 'Ginger Topi',   i: 'hat', cost: 1.5e4, st: { spice: .1, cap: .05 }, req: { ginger: 5, momo: 10 } },
   { id: 'iceHood',    n: 'Ice Hood',      i: 'hat', cost: 1.5e4, st: { ice: .1, cap: .05 },   req: { ice: 5, momo: 10 } },
   { id: 'sherpaHat',  n: 'Sherpa Hat',    i: 'hat', cost: 6e5,   st: { gather: .12, speed: .05 }, req: { wool: 25, berry: 15, selroti: 20 } },
-  { id: 'emberCrown', n: 'Ember Crown',   i: 'hat', col: 'spice', cost: 2.5e7, st: { spice: .4, crit: .05 }, pas: 'wildfire',   req: { petal: 50, saffron: 30, dalbhat: 30, goldenMomo: 1 } },
+  { id: 'emberCrown', n: 'Ember Crown',   i: 'hat', col: 'spice', cost: 2.5e7, st: { spice: .4, crit: .05, conv: .04 }, pas: 'wildfire',   req: { petal: 50, saffron: 30, dalbhat: 30, goldenMomo: 1 } },
   { id: 'frostCrown', n: 'Frost Crown',   i: 'hat', col: 'ice',   cost: 2.5e7, st: { ice: .4, crit: .05 },   pas: 'polar',      req: { ice: 60, berry: 40, dalbhat: 30, goldenMomo: 1 } },
   { id: 'cloudCrown', n: 'Cloud Crown',   i: 'hat', col: 'cloud', cost: 2.5e7, st: { cloud: .4, cap: .1 },   pas: 'cloudburst', req: { wool: 60, bead: 30, dalbhat: 30, goldenMomo: 1 } },
-  { id: 'spiritMask', n: 'Spirit Mask',   i: 'hat', cost: 1e9,   st: { gather: .3, crit: .05 }, pas: 'spirit', req: { gem: 100, goldenMomo: 3, mysticWheel: 10 } }
+  { id: 'spiritMask', n: 'Spirit Mask',   i: 'hat', cost: 1e9,   st: { gather: .3, crit: .05, conv: .05 }, pas: 'spirit', req: { gem: 100, goldenMomo: 3, mysticWheel: 10 } }
 ];
 const CHARMS = [
   { id: 'beads',     n: 'Prayer Beads',      i: 'amulet', cost: 6e4,   st: { cdr: .1 },               req: { petal: 10, selroti: 15 } },
@@ -213,12 +213,33 @@ const LODGE = [
 /* shops on the map: each zone sells gear for its stage of the game */
 const SHOPS = [
   { id: 'bazaar',    n: 'Base Bazaar',      col: '#ff8a3d', x: 800,  y: 5300, z: 0, sells: { tool: ['sickle', 'trowel', 'rake', 'hook', 'axe', 'scoop', 'shears'], doko: ['basket', 'woven', 'frame'], boots: ['sandals', 'runners'], hat: ['woolCap', 'gingerTopi', 'iceHood'] }, extra: ['supplies', 'lodge'] },
-  { id: 'outfitter', n: 'Forest Outfitter', col: '#3fae6b', x: 1250, y: 3600, z: 1, sells: { tool: ['broom', 'staff'], doko: ['saddle', 'exped'], boots: ['crampon'], hat: ['sherpaHat'], charm: ['beads', 'turquoise', 'yakBell'] }, extra: ['sprinklers'] },
-  { id: 'smithy',    n: 'Pasture Smithy',   col: '#b0784a', x: 1750, y: 2700, z: 2, sells: { tool: ['esickle', 'gpick', 'crake', 'claw'], doko: ['glacier'], boots: ['sherpa'], charm: ['emberAm', 'glacierHt', 'cloudFth'] } },
+  { id: 'outfitter', n: 'Forest Outfitter', col: '#3fae6b', x: 1250, y: 3600, z: 1, sells: { tool: ['broom', 'staff'], doko: ['saddle', 'exped'], boots: ['crampon'], hat: ['sherpaHat'] }, extra: ['sprinklers'] },
+  { id: 'smithy',    n: 'Pasture Smithy',   col: '#b0784a', x: 1750, y: 2700, z: 2, sells: { tool: ['esickle', 'gpick', 'crake', 'claw'], doko: ['glacier'], boots: ['sherpa'] } },
   { id: 'snowshop',  n: 'Snowline Lodge',   col: '#2ea4dc', x: 420,  y: 1450, z: 3, sells: { tool: ['talon', 'scythe', 'fan', 'wheel'], doko: ['spirit'], boots: ['wind'], hat: ['emberCrown', 'frostCrown', 'cloudCrown'] } },
-  { id: 'shrine',    n: 'Summit Shrine',    col: '#9b6ef3', x: 600,  y: 1150, z: 4, sells: { tool: ['banner'], doko: ['kiln', 'vault', 'nimbus'], hat: ['spiritMask'], charm: ['mountainHt'] } }
+  { id: 'shrine',    n: 'Summit Shrine',    col: '#9b6ef3', x: 600,  y: 1150, z: 4, sells: { tool: ['banner'], doko: ['kiln', 'vault', 'nimbus'], hat: ['spiritMask'] } }
 ];
-const SLOT_N = { tool: 'Tools', doko: 'Bags', boots: 'Boots', hat: 'Hats', charm: 'Charms' };
+const SLOT_N = { tool: 'Tools', doko: 'Bags', boots: 'Boots', hat: 'Hats' };
+
+/* Mandala generator (replaces charms). Tiers need Blessed crew; lines roll randomly; Celestial rolls a main passive */
+const MANDALA_TIERS = [
+  { id: 'copper',    n: 'Copper Mandala',    col: '#c97a3d', bl: 1,  cost: 25000, req: { momo: 15 },              lines: 2, mul: 1 },
+  { id: 'silver',    n: 'Silver Mandala',    col: '#9aa7b8', bl: 3,  cost: 5e5,   req: { selroti: 15 },           lines: 3, mul: 1.6 },
+  { id: 'gold',      n: 'Golden Mandala',    col: '#f0b429', bl: 6,  cost: 1e7,   req: { dalbhat: 15 },           lines: 4, mul: 2.4 },
+  { id: 'turquoise', n: 'Turquoise Mandala', col: '#1abc9c', bl: 10, cost: 2.5e8, req: { goldenMomo: 1, dalbhat: 25 }, lines: 5, mul: 3.5 },
+  { id: 'celestial', n: 'Celestial Mandala', col: '#9b6ef3', bl: 15, cost: 5e9,   req: { goldenMomo: 3, mysticWheel: 5 }, lines: 6, mul: 5, star: true }
+];
+const MANDALA_STATS = [
+  ['spice', .05, .12], ['ice', .05, .12], ['cloud', .05, .12], ['gather', .03, .07], ['cap', .05, .12],
+  ['crit', .01, .03], ['brew', .05, .1], ['cdr', .02, .05], ['conv', .01, .03], ['speed', .02, .05], ['tool', .05, .12]
+];
+const MANDALA_PAS = {
+  kilnStar:    { n: 'Kiln Star',    col: 'spice', d: '8% of everything you gather is brewed into rupees instantly, skipping the doko.' },
+  cometStar:   { n: 'Comet Star',   col: 'spice', d: 'Every 40 crits charges a comet: for 6s every crit hits x5.' },
+  glacierStar: { n: 'Glacier Star', col: 'ice',   d: 'Every Ice ability adds +1% capacity, up to +50%. Resets when you finish brewing.' },
+  frostStar:   { n: 'Frost Star',   col: 'ice',   d: 'Frost Marks can reach level 4 (x3 Ice) and last 25s.' },
+  cloudStar:   { n: 'Cloud Star',   col: 'cloud', d: 'Your tool gathers Cloud flowers x1.5. Every 60 swings that gather: Cloud Burst for 10s.' },
+  pilgrimStar: { n: 'Pilgrim Star', col: 'any',   d: 'Every 10 minutes a random open field becomes your pilgrimage: +60% gathering there.' }
+};
 
 /* sprinklers: water a circle of flowers (faster regrowth + gathering bonus) */
 const SPRINKLERS = [
@@ -248,7 +269,8 @@ const BUFFS = {
   polar:      { n: 'Polar Power',  i: 'snow',    d: 'Ice gathering x3 and +15% crit chance.' },
   cloudburst: { n: 'Cloud Burst',  i: 'cloud',   d: 'Tool reach x1.5 and tool gathering x3.' },
   spirit:     { n: 'Mountain Spirit', i: 'mountain', d: 'All gathering x2.' },
-  herd:       { n: 'Herd Call',    i: 'horns',   d: 'Your crew move 50% faster.' }
+  herd:       { n: 'Herd Call',    i: 'horns',   d: 'Your crew move 50% faster.' },
+  comet:      { n: 'Comet',        i: 'star',    d: 'Every crit hits x5.' }
 };
 
 const ITEMS = {
