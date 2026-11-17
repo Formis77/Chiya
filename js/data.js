@@ -538,6 +538,10 @@ const SPROUT = {
   legendary: { n: 'Legendary Sprout', c: '#ffb020', hp: 25, drops: 13, o: 3, s: 1.42 },
   mythic:    { n: 'Mythic Sprout',    c: '#ff4fa3', hp: 50, drops: 20, o: 4, s: 1.6 }
 };
+/* Bee Swarm sprout pollen (rare 250k, epic 2.5M, legendary 10M; common and mythic estimated), x(1 + zone) in higher fields.
+   Low-capacity players still get the old capacity-based amount if it is smaller. */
+const SPROUT_HP = { common: 5e4, rare: 2.5e5, epic: 2.5e6, legendary: 1e7, mythic: 5e7 };
+const LANTERN_HP = [3e5, 1.5e6, 6e6, 2e7, 6e7];
 const SPROUT_WILD = { common: .55, rare: .27, epic: .12, legendary: .05, mythic: .01 };
 const SPROUT_SEED = { common: .2, rare: .36, epic: .28, legendary: .13, mythic: .03 };
 

@@ -1383,8 +1383,8 @@ function startNight() {
   const cap = capMax(); E.diyas = []; E.litF = {};
   { const open = FIELDS.map((f, i) => i).filter(fieldOpen); let tot = 0; open.forEach(i => tot += 5 - FIELDS[i].z); let q = Math.random() * tot, fi = open[0];
     for (const i of open) { q -= 5 - FIELDS[i].z; if (q <= 0) { fi = i; break; } }
-    const f = FIELDS[fi]; E.diyas.push({ fi, x: f.x + f.w * rand(.3, .7), y: f.yy + f.h * rand(.35, .7), need: cap * (.6 + f.z * .45), prog: 0, lit: false, ph: rand(0, TAU), big: true }); }
-  E.stray = Math.random() < STRAY_CHANCE ? (() => { const open = FIELDS.map((f, i) => i).filter(fieldOpen), fi = pick(open), f = FIELDS[fi]; return { fi, x: f.x + f.w / 2, y: f.yy + f.h / 2, tx: f.x + f.w / 2, ty: f.yy + f.h / 2, need: cap * (.8 + f.z * .15), trust: 0, wait: rand(10, 60), on: false, hop: 0, face: 1, anim: 0 }; })() : null;
+    const f = FIELDS[fi]; E.diyas.push({ fi, x: f.x + f.w * rand(.3, .7), y: f.yy + f.h * rand(.35, .7), need: Math.min(cap * (.6 + f.z * .45), LANTERN_HP[f.z]), prog: 0, lit: false, ph: rand(0, TAU), big: true }); }
+  E.stray = Math.random() < STRAY_CHANCE ? (() => { const open = FIELDS.map((f, i) => i).filter(fieldOpen), fi = pick(open), f = FIELDS[fi]; return { fi, x: f.x + f.w / 2, y: f.yy + f.h / 2, tx: f.x + f.w / 2, ty: f.yy + f.h / 2, need: Math.min(cap * (.8 + f.z * .15), LANTERN_HP[f.z] * 2), trust: 0, wait: rand(10, 60), on: false, hop: 0, face: 1, anim: 0 }; })() : null;
   toast(`Diyo Night! A great lantern waits in ${FIELDS[E.diyas[0].fi].n}`, 'diya');
 }
 function endNight() {
@@ -1419,7 +1419,7 @@ function spawnSprout(fi, odds, wild) {
   if (S.sprouts.length >= 3 || (wild && S.sprouts.some(s2 => s2.wild))) return false;
   if (fi < 0) { const open = FIELDS.map((f, i) => i).filter(i => fieldOpen(i)); fi = pick(open); }
   const f = FIELDS[fi], r = rollOdds(odds), def = SPROUT[r];
-  const sp = { f: fi, x: f.x + rand(70, f.w - 70), y: f.yy + rand(70, f.h - 50), r, wild, max: Math.round(capMax() * def.hp * (1 + f.z * .5)) };
+  const sp = { f: fi, x: f.x + rand(70, f.w - 70), y: f.yy + rand(70, f.h - 50), r, wild, max: Math.round(Math.min(capMax() * def.hp * (1 + f.z * .5), SPROUT_HP[r] * (1 + f.z))) };
   if (fi === fieldAt(player.x, player.y) && !wild) { sp.x = clamp(player.x, f.x + 60, f.x + f.w - 60); sp.y = clamp(player.y - 40, f.yy + 60, f.yy + f.h - 40); }
   sp.hp = sp.max; S.sprouts.push(sp);
   burst(sp.x, sp.y - 10, 18, { type: 'leaf', col: def.c, spd: 120, life: .8, size: 3.4, g: 80 });
