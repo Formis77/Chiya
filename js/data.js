@@ -48,7 +48,7 @@ const CREW = {
   lama:         { n: 'Lama',                r: 'legendary', c: 'neutral', spd: 85,  amt: 6,  gt: 2.8, brew: 12, fav: 'dalbhat', bp: ['cdr', 10],   tags: ['human'], ab: 'blessing', cd: 35, pas: 'Each Lama adds +0.2% Blessed chance on permits and Mystic Wheels.', d: 'Wise, calm, and slightly mischievous.' },
   yeti:         { n: 'Yeti',                r: 'mythic',    c: 'ice',     spd: 100, amt: 14, gt: 2.6, brew: 15, fav: 'momo',    bp: ['ice', 40],    tags: ['beast'], ab: 'footprints', cd: 26, d: 'Real. Very real. And surprisingly gentle.' },
   danphe:       { n: 'Golden Danphe',       r: 'mythic',    c: 'spice',   spd: 140, amt: 14, gt: 2.2, brew: 12, fav: 'selroti', bp: ['spice', 40],  tags: ['bird'],  ab: 'dive', cd: 22, d: 'The rainbow pheasant of Nepal, wreathed in fire.' },
-  leopard:      { n: 'Storm Leopard', r: 'mythic',    c: 'cloud',   spd: 150, amt: 12, gt: 2.2, brew: 12, fav: 'dalbhat', bp: ['cloud', 40],  tags: ['cat'],   ab: 'sbomb', cd: 16, d: 'Crackles every time it lands.' },
+  leopard:      { n: 'Storm Leopard', r: 'mythic',    c: 'cloud',   spd: 150, amt: 17, gt: 2.2, brew: 12, fav: 'dalbhat', bp: ['cloud', 40],  tags: ['cat'],   ab: 'sbomb', cd: 16, d: 'Crackles every time it lands.' },
   fireKid:      { n: 'Firecracker Kid',     r: 'rare',      c: 'neutral', spd: 100, amt: 2,  gt: 3.0, brew: 3,  fav: 'selroti', bp: ['crit', 3],    tags: ['human'], ab: 'firecracker', cd: 14, d: 'Saves every Tihar firecracker for the fields.' },
   iceFisher:    { n: 'Ice Fisher',          r: 'epic',      c: 'ice',     spd: 85,  amt: 5,  gt: 2.8, brew: 7,  fav: 'momo',    bp: ['ice', 15],    tags: ['human'], ab: 'iceBoost', cd: 15, d: 'Patient as a frozen lake.' },
   woolSpinner:  { n: 'Spark Spinner',        r: 'epic',      c: 'cloud',   spd: 85,  amt: 5,  gt: 2.8, brew: 7,  fav: 'selroti', bp: ['cloud', 15],  tags: ['human'], ab: 'cloudBoost', cd: 15, d: 'Spins static out of yak wool.' },
@@ -59,7 +59,7 @@ const CREW = {
   gurkha:       { n: 'Gurkha Marksman',     r: 'mythic',    c: 'spice',   spd: 130, amt: 14, gt: 2.2, brew: 12, fav: 'dalbhat', bp: ['crit', 8],    tags: ['human'], ab: 'bullseye', cd: 20, d: 'Never misses. Asks you not to either.' },
   naga:         { n: 'Lake Naga',           r: 'mythic',    c: 'ice',     spd: 110, amt: 13, gt: 2.4, brew: 14, fav: 'selroti', bp: ['ice', 40],    tags: ['spirit'], ab: 'bubbles', cd: 20, d: 'Serpent spirit of the turquoise lakes.' },
   skyLantern:   { n: 'Sky Lantern',         r: 'mythic',    c: 'ice',     spd: 120, amt: 11, gt: 2.4, brew: 14, fav: 'momo',    bp: ['cap', 40],    tags: ['spirit'], ab: 'inflate', cd: 26, d: 'Drifts above the teahouse on festival nights.' },
-  mistYak:      { n: 'Thunder Yak',            r: 'mythic',    c: 'cloud',   spd: 95,  amt: 15, gt: 2.6, brew: 16, fav: 'selroti', bp: ['cloud', 40],  tags: ['yak'], ab: 'lpole', cd: 18, d: 'Its horns pull lightning out of the sky.' },
+  mistYak:      { n: 'Thunder Yak',            r: 'mythic',    c: 'cloud',   spd: 95,  amt: 20, gt: 2.6, brew: 16, fav: 'selroti', bp: ['cloud', 40],  tags: ['yak'], ab: 'lpole', cd: 18, d: 'Its horns pull lightning out of the sky.' },
   bear:         { n: 'Himalayan Bear',      r: 'event',     c: 'neutral', spd: 105, amt: 8,  gt: 2.6, brew: 10, fav: 'momo',    bp: ['tool', 25],   tags: ['beast'], ab: 'bearMorph', cd: 30, d: 'Big, black, and very fond of honey.' },
   tiharDog:     { n: 'Tihar Dog',           r: 'event',     c: 'neutral', spd: 155, amt: 14, gt: 2.2, brew: 12, fav: 'momo',    bp: ['crit', 10],   tags: ['dog'],   ab: 'sniff', cd: 24, pas: 'Loyal: every crew member in your field gathers 10% faster while the Tihar Dog works with them.', d: 'Honored with marigolds on Kukur Tihar. A very good, very hard-working boy.' },
   kiteFlyer:    { n: 'Kite Flyer',          r: 'event',     c: 'neutral', spd: 100, amt: 6,  gt: 2.8, brew: 8,  fav: 'selroti', bp: ['tool', 25],   tags: ['human'], ab: 'gust', cd: 22, d: 'Dashain kite season, all year round.' }
@@ -199,7 +199,7 @@ const PASSIVES = {
   summitBless: { n: 'Summit Blessing', col: 'any',   need: 30, d: 'Every 30 abilities: a free Blessing (+25% everything for 15s).' },
   kiln:        { n: 'Kiln',            col: 'always', need: 0, d: '15% of everything your flames gather is brewed into rupees on the spot, and every 20s while you gather 6% of your doko is brewed too.' },
   deepfreeze:  { n: 'Deep Freeze',     col: 'always', need: 0, d: 'Chill stacks last 60s instead of 30 and you can hold 40 instead of 20. Popping a bubble inside a Frost Mark gives 2 stacks.' },
-  nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Storm Charge also adds capacity: +25% per full +1 (up to +75%).' }
+  nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Vajra bolts and pole strikes gather x1.5, and Storm Charge also adds capacity: +25% per full +1 (up to +75%).' }
 };
 /* crafting materials drop while gathering in each field */
 /* fruits: drop while gathering (by flower color), from quests and sprouts */

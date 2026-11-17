@@ -1490,7 +1490,7 @@ function runChain(ms, start) {
   order.forEach((p, i) => later(i * .09, () => { boltFx(px, py, p.x, p.y - 47); px = p.x; py = p.y - 47; burst(p.x, p.y - 47, 6, { type: 'spark', col: '#ffe36e', spd: 140, life: .4, size: 2 }); }));
   const n = Math.min(5, order.length), endP = order[order.length - 1];
   later(order.length * .09, () => {
-    const base = tool().amt * 5; let sum = 0; tilesNear(endP.fi, endP.x, endP.y, endP.r).forEach(t => sum += collect(t, base, 'neutral', 1, true));
+    const base = tool().amt * 5 * (doko().pas === 'nimbus' ? 1.5 : 1); let sum = 0; tilesNear(endP.fi, endP.x, endP.y, endP.r).forEach(t => sum += collect(t, base, 'neutral', 1, true));
     ring(endP.x, endP.y, endP.r, '#ffe36e', .5, 6); burst(endP.x, endP.y - 20, 26, { type: 'star', col: '#e9ddff', spd: 200, life: .8, size: 2.6 }); shake(5);
     S.storm = Math.min(3, (S.storm || 0) + STORM_GAIN[n]); S.stormUntil = Date.now() + 3600e3;
     pop(endP.x, endP.y - 70, `Storm +${STORM_GAIN[n].toFixed(3)}`, '#d8c6ff', true); if (sum) pop(endP.x, endP.y - 50, '+' + fmt(sum), '#ffe36e');
@@ -1502,7 +1502,7 @@ function vajraBolt(fi) {
   const hits = B.sfork ? 3 : 1; if (B.sfork && --B.sfork.st <= 0) delete B.sfork;
   if (grp) { for (let k = 0; k < hits; k++) later(k * .25, () => runChain(grp.ms, grp.ms.slice().sort((a, b) => dist(a.x, a.y, player.x, player.y) - dist(b.x, b.y, player.x, player.y))[0])); return; }
   const ts = tilesNear(fi, player.x, player.y, tool().r * 1.6); if (!ts.length) return; const t0 = pick(ts);
-  for (let k = 0; k < hits; k++) later(k * .2, () => { boltFx(t0.x + 20, t0.y - 260, t0.x, t0.y); let sum = 0; tilesNear(fi, t0.x, t0.y, 65).forEach(t => sum += collect(t, tool().amt * 4, 'neutral', 1, true)); ring(t0.x, t0.y, 65, '#c9b0ff', .35, 4); if (sum) pop(t0.x, t0.y - 30, '+' + fmt(sum), '#d8c6ff'); });
+  for (let k = 0; k < hits; k++) later(k * .2, () => { boltFx(t0.x + 20, t0.y - 260, t0.x, t0.y); let sum = 0; tilesNear(fi, t0.x, t0.y, 65).forEach(t => sum += collect(t, tool().amt * 4 * (doko().pas === 'nimbus' ? 1.5 : 1), 'neutral', 1, true)); ring(t0.x, t0.y, 65, '#c9b0ff', .35, 4); if (sum) pop(t0.x, t0.y - 30, '+' + fmt(sum), '#d8c6ff'); });
 }
 /* ---------------- Prayer flags (Cloud, retired) ---------------- */
 const POLE_LIFE = 40, FLAG_COLS = ['#2e7bd6', '#ffffff', '#e5484d', '#3fae6b', '#f5c518'];
