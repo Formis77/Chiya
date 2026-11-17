@@ -89,7 +89,7 @@ const ABIL = {
   iceBoost:    { n: 'Ice Boost',     i: 'snow',   tok: true,  d: 'Bubble. Ice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also releases 2 bubbles.' },
   cloudBoost:  { n: 'Lightning Boost', i: 'bolt', tok: true,  d: 'Bubble. Lightning gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer.' },
   lpole:       { n: 'Lightning Pole', i: 'bolt', tok: true,  d: 'Bubble. Plants a lightning pole where it lay for 25s (bigger when Blessed). Up to 15 poles at once. Lightning flowers inside gather x1.25; poles that touch connect: 2 connected x1.5, 3 or more x2. When your Vajra Staff fires a bolt while you stand inside a pole, the bolt runs through every connected pole and adds Storm Charge.' },
-  sbomb:       { n: 'Static Bomb',   i: 'bolt',   tok: true,  d: 'Bubble. Explodes when you grab it: gathers everything within 85 at x2.5 and raises those flowers +1 level for 12s. Blessed Storm Leopards sometimes drop a Static Haze instead.' },
+  sbomb:       { n: 'Static Bomb',   i: 'bolt',   tok: true,  d: 'Bubble. Explodes when you grab it: gathers everything within 85 at x3.5 and raises those flowers +1 level for 12s. Blessed Storm Leopards sometimes drop a Static Haze instead.' },
   haze:        { n: 'Static Haze',   i: 'cloud',  tok: true,  d: 'Bubble (Blessed Storm Leopard). A violet haze settles over the field for 90s: every 0.5s a random flower inside gets +1 level until the haze lifts.' },
   stormCall:   { n: 'Storm Call',    i: 'bolt',   tok: true,  d: 'Bubble. Every lightning pole on the field strikes once, gathering the flowers inside its radius.' },
   sfork:       { n: 'Spark Fork',    i: 'bolt',   tok: true,  d: 'Bubble. Your next 3 Vajra bolts each strike 3 times in the same spot.' },
@@ -158,7 +158,7 @@ const TOOLS = [
   { id: 'claw',    n: 'Yeti Claw',       i: 'claw',    cost: 8e6,   r: 72,  amt: 28,  sw: .55, req: { berry: 30, walnut: 10 } },
   { id: 'talon',   n: 'Danphe Talon',    i: 'talon',   cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'spice', cb: 1, st: { conv: .06 }, pas: 'strike', req: { walnut: 40, chili: 60, goldenMomo: 1 } },
   { id: 'scythe',  n: 'Frostbite Scythe',i: 'scythe',  cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'ice',   cb: 1, pas: 'stomp',  req: { berry: 120, goldenMomo: 1 } },
-  { id: 'fan',     n: 'Vajra Staff',     i: 'bolt',     cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'cloud', cb: 1, pas: 'vajra',  req: { apple: 80, walnut: 20, goldenMomo: 1 } },
+  { id: 'fan',     n: 'Vajra Staff',     i: 'bolt',     cost: 4e7,   r: 85,  amt: 60,  sw: .48, col: 'cloud', cb: 1.5, pas: 'vajra',  req: { apple: 80, walnut: 20, goldenMomo: 1 } },
   { id: 'wheel',   n: 'Spirit Wheel',    i: 'wheel',   cost: 8e7, r: 92,  amt: 60,  sw: .5,  crit: .1, req: { walnut: 60, dalbhat: 30 } },
   { id: 'banner',  n: 'Summit Banner',   i: 'banner',  cost: 4e8,   r: 110, amt: 120, sw: .45, st: { gather: .2, conv: .05 }, pas: 'summitBless', req: { gem: 60, goldenMomo: 3, mysticWheel: 5 } }
 ];
@@ -186,7 +186,7 @@ const PASSIVES = {
   wildfire:    { n: 'Inferno',         col: 'spice', need: 30, d: 'Every 30 Spice abilities: every flame in your field erupts (x3 around it) and +100% Spice gathering for 15s.' },
   polar:       { n: 'Polar Power',     col: 'ice',   need: 30, d: 'Every 30 Ice abilities: +100% Ice gathering and +10% crit for 15s, and 6 bubbles rise around you.' },
   cloudburst:  { n: 'Electrify',       col: 'cloud', need: 50, cd: 45, d: 'Every 50 Lightning abilities: your field is electrified for 15s and its flowers do not run down at all. 45s cooldown.' },
-  vajra:       { n: 'Vajra',           col: 'always', need: 0, d: 'Every 3rd swing releases a lightning bolt that strikes near you at x2 tool power. If you stand inside a lightning pole, the bolt runs to it instead, through every connected pole, and adds Storm Charge: +0.002 with 1 pole, +0.006 with 2, +0.01 with 3, +0.016 with 4, +0.02 with 5 or more.' },
+  vajra:       { n: 'Vajra',           col: 'always', need: 0, d: 'Every 3rd swing releases a lightning bolt that strikes near you at x4 tool power. If you stand inside a lightning pole, the bolt runs to it instead, through every connected pole, and adds Storm Charge: +0.002 with 1 pole, +0.006 with 2, +0.01 with 3, +0.016 with 4, +0.02 with 5 or more.' },
   spirit:      { n: 'Mountain Spirit', col: 'any',   need: 50, d: 'Every 50 abilities: +100% to all gathering for 20s.' },
   herd:        { n: 'Herd Call',       col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: your crew move 50% faster for 15s.' },
   spark:       { n: 'Spark',           col: 'spice', need: 20, d: 'Every 20 Spice abilities: a Chili Burst explodes around you.' },

@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '44';
+const VERSION = '45';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;

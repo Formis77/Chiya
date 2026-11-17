@@ -413,7 +413,7 @@ const FX = {
   lpole(e, fi, tk) { if (fi < 0) return; const ps = E.decals.filter(d2 => d2.kind === 'lpole'); if (ps.length >= 15) E.decals.splice(E.decals.indexOf(ps[0]), 1);
     E.decals.push({ kind: 'lpole', x: tk.x, y: tk.y, r: e.m.bl ? 95 : 72, age: 0, dur: 25, fi }); ring(tk.x, tk.y, 60, '#c9b0ff', .4, 4); },
   sbomb(e, fi, tk) { if (fi < 0) return; let sum = 0; const base = crewAmount(e);
-    tilesNear(fi, tk.x, tk.y, 85).forEach(t => { t.bump = { lv: 1, until: now + 12 }; sum += collect(t, base, 'cloud', 2.5); });
+    tilesNear(fi, tk.x, tk.y, 85).forEach(t => { t.bump = { lv: 1, until: now + 12 }; sum += collect(t, base, 'cloud', 3.5); });
     ring(tk.x, tk.y, 85, '#c9b0ff', .45, 6); burst(tk.x, tk.y, 20, { type: 'spark', col: '#e9ddff', spd: 220, life: .5, size: 2.4 }); shake(4); if (sum) pop(tk.x, tk.y - 24, '+' + fmt(sum), '#d8c6ff', true); },
   haze(e, fi) { if (fi < 0) return; E.haze = { fi, t: 90, tick: 0 }; toast('A static haze settles over the field', 'cloud'); },
   stormCall(e) { const base = crewAmount(e); for (const p of E.decals) if (p.kind === 'lpole') { tilesNear(p.fi, p.x, p.y, p.r).forEach(t => collect(t, base * .5, 'cloud', 1)); boltFx(p.x, p.y - 260, p.x, p.y - 44); } },
@@ -1490,7 +1490,7 @@ function runChain(ms, start) {
   order.forEach((p, i) => later(i * .09, () => { boltFx(px, py, p.x, p.y - 47); px = p.x; py = p.y - 47; burst(p.x, p.y - 47, 6, { type: 'spark', col: '#ffe36e', spd: 140, life: .4, size: 2 }); }));
   const n = Math.min(5, order.length), endP = order[order.length - 1];
   later(order.length * .09, () => {
-    const base = tool().amt * 2; let sum = 0; tilesNear(endP.fi, endP.x, endP.y, endP.r).forEach(t => sum += collect(t, base, 'neutral', 1, true));
+    const base = tool().amt * 5; let sum = 0; tilesNear(endP.fi, endP.x, endP.y, endP.r).forEach(t => sum += collect(t, base, 'neutral', 1, true));
     ring(endP.x, endP.y, endP.r, '#ffe36e', .5, 6); burst(endP.x, endP.y - 20, 26, { type: 'star', col: '#e9ddff', spd: 200, life: .8, size: 2.6 }); shake(5);
     S.storm = Math.min(3, (S.storm || 0) + STORM_GAIN[n]); S.stormUntil = Date.now() + 3600e3;
     pop(endP.x, endP.y - 70, `Storm +${STORM_GAIN[n].toFixed(3)}`, '#d8c6ff', true); if (sum) pop(endP.x, endP.y - 50, '+' + fmt(sum), '#ffe36e');
@@ -1502,7 +1502,7 @@ function vajraBolt(fi) {
   const hits = B.sfork ? 3 : 1; if (B.sfork && --B.sfork.st <= 0) delete B.sfork;
   if (grp) { for (let k = 0; k < hits; k++) later(k * .25, () => runChain(grp.ms, grp.ms.slice().sort((a, b) => dist(a.x, a.y, player.x, player.y) - dist(b.x, b.y, player.x, player.y))[0])); return; }
   const ts = tilesNear(fi, player.x, player.y, tool().r * 1.6); if (!ts.length) return; const t0 = pick(ts);
-  for (let k = 0; k < hits; k++) later(k * .2, () => { boltFx(t0.x + 20, t0.y - 260, t0.x, t0.y); let sum = 0; tilesNear(fi, t0.x, t0.y, 55).forEach(t => sum += collect(t, tool().amt * 2, 'neutral', 1, true)); ring(t0.x, t0.y, 55, '#c9b0ff', .35, 4); if (sum) pop(t0.x, t0.y - 30, '+' + fmt(sum), '#d8c6ff'); });
+  for (let k = 0; k < hits; k++) later(k * .2, () => { boltFx(t0.x + 20, t0.y - 260, t0.x, t0.y); let sum = 0; tilesNear(fi, t0.x, t0.y, 65).forEach(t => sum += collect(t, tool().amt * 4, 'neutral', 1, true)); ring(t0.x, t0.y, 65, '#c9b0ff', .35, 4); if (sum) pop(t0.x, t0.y - 30, '+' + fmt(sum), '#d8c6ff'); });
 }
 /* ---------------- Prayer flags (Cloud, retired) ---------------- */
 const POLE_LIFE = 40, FLAG_COLS = ['#2e7bd6', '#ffffff', '#e5484d', '#3fae6b', '#f5c518'];
