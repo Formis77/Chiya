@@ -15,7 +15,7 @@ const RAR = {
 const COL = {
   spice:   { n: 'Spice',   c: '#ff6b4a', i: 'flame' },
   ice:     { n: 'Ice',     c: '#4fc3ff', i: 'snow' },
-  cloud:   { n: 'Cloud',   c: '#eef2ff', i: 'cloud' },
+  cloud:   { n: 'Lightning', c: '#9b6ef3', i: 'bolt' },
   neutral: { n: 'Neutral', c: '#d8c3a0', i: 'dot' }
 };
 
@@ -31,7 +31,7 @@ const CREW = {
   porter:       { n: 'Porter',              r: 'common',    c: 'neutral', spd: 70,  amt: 3,  gt: 3.2, brew: 4,  fav: 'momo',    bp: ['cap', 10],    tags: ['human'], d: 'The backbone of every expedition. Slow, steady, never complains.' },
   yakCalf:      { n: 'Yak Calf',            r: 'rare',      c: 'cloud',   spd: 75,  amt: 4,  gt: 3.0, brew: 3,  fav: 'selroti', bp: ['cloud', 8],   tags: ['yak'],   d: 'A fluffy baby yak. Counts toward the Herd.' },
   trekker:      { n: 'Trekker',             r: 'rare',      c: 'neutral', spd: 125, amt: 2,  gt: 2.4, brew: 3,  fav: 'dalbhat', bp: ['speed', 6],   tags: ['human'], d: 'Fast on the trail, small loads.' },
-  teaPicker:    { n: 'Tea Picker',          r: 'rare',      c: 'cloud',   spd: 85,  amt: 3,  gt: 2.8, brew: 4,  fav: 'momo',    bp: ['cloud', 10],  tags: ['human'], pas: 'Gathers ×1.5 in Cloud fields.', d: 'Nimble fingers, wide straw hat.' },
+  teaPicker:    { n: 'Tea Picker',          r: 'rare',      c: 'cloud',   spd: 85,  amt: 3,  gt: 2.8, brew: 4,  fav: 'momo',    bp: ['cloud', 10],  tags: ['human'], ab: 'reach', cd: 20, d: 'Nimble fingers, wide straw hat.' },
   gingerFarmer: { n: 'Ginger Farmer',       r: 'rare',      c: 'spice',   spd: 85,  amt: 3,  gt: 3.0, brew: 3,  fav: 'dalbhat', bp: ['spice', 10],  tags: ['human'], ab: 'spiceBoost', cd: 16, d: 'Grows the spiciest ginger in the valley.' },
   waterCarrier: { n: 'Water Carrier',       r: 'rare',      c: 'ice',     spd: 80,  amt: 3,  gt: 3.0, brew: 14, fav: 'selroti', bp: ['brew', 8],    tags: ['human'], pas: 'Brews very fast at the teahouse.', d: 'Carries glacier water in a copper gagri.' },
   tourist:      { n: 'Lost Tourist',        r: 'rare',      c: 'neutral', spd: 90,  amt: 2,  gt: 3.5, brew: 2,  fav: 'momo',    bp: ['crit', 3],    tags: ['human'], ab: 'random', cd: 22, d: 'Nobody knows how they got here. Sometimes useless, sometimes a jackpot.' },
@@ -43,22 +43,23 @@ const CREW = {
   honeyHunter:  { n: 'Honey Hunter',        r: 'epic',      c: 'spice',   spd: 95,  amt: 5,  gt: 3.0, brew: 5,  fav: 'momo',    bp: ['brew', 10],   tags: ['human'], ab: 'honey', cd: 26, d: 'Climbs cliffs for wild Himalayan honey.' },
   rhodoSpirit:  { n: 'Rhododendron Spirit', r: 'legendary', c: 'spice',   spd: 100, amt: 7,  gt: 2.4, brew: 8,  fav: 'selroti', bp: ['spice', 25],  tags: ['spirit'], ab: 'petalStorm', cd: 22, d: 'The national flower, awake and dancing.' },
   iceClimber:   { n: 'Ice Climber',         r: 'legendary', c: 'ice',     spd: 105, amt: 7,  gt: 2.3, brew: 8,  fav: 'dalbhat', bp: ['ice', 25],    tags: ['human'], ab: 'frostMark', cd: 10, d: 'Two axes, zero fear.' },
-  snowLion:     { n: 'Snow Lion',           r: 'legendary', c: 'cloud',   spd: 110, amt: 8,  gt: 2.6, brew: 9,  fav: 'momo',    bp: ['cloud', 25],  tags: ['cat'],   ab: 'roar', cd: 26, d: 'A mythical lion with a turquoise mane.' },
+  snowLion:     { n: 'Thunder Lion',           r: 'legendary', c: 'cloud',   spd: 110, amt: 8,  gt: 2.6, brew: 9,  fav: 'momo',    bp: ['cloud', 25],  tags: ['cat'],   ab: 'stormCall', cd: 26, d: 'Its roar rolls like thunder through the valleys.' },
   yakKing:      { n: 'Yak King',            r: 'legendary', c: 'cloud',   spd: 80,  amt: 12, gt: 3.4, brew: 14, fav: 'selroti', bp: ['cap', 25],    tags: ['yak'],   ab: 'caravan', cd: 24, d: 'Ruler of every herd above 4000 m.' },
   lama:         { n: 'Lama',                r: 'legendary', c: 'neutral', spd: 85,  amt: 6,  gt: 2.8, brew: 12, fav: 'dalbhat', bp: ['cdr', 10],   tags: ['human'], ab: 'blessing', cd: 35, pas: 'Each Lama adds +0.2% Blessed chance on permits and Mystic Wheels.', d: 'Wise, calm, and slightly mischievous.' },
   yeti:         { n: 'Yeti',                r: 'mythic',    c: 'ice',     spd: 100, amt: 14, gt: 2.6, brew: 15, fav: 'momo',    bp: ['ice', 40],    tags: ['beast'], ab: 'footprints', cd: 26, d: 'Real. Very real. And surprisingly gentle.' },
   danphe:       { n: 'Golden Danphe',       r: 'mythic',    c: 'spice',   spd: 140, amt: 14, gt: 2.2, brew: 12, fav: 'selroti', bp: ['spice', 40],  tags: ['bird'],  ab: 'dive', cd: 22, d: 'The rainbow pheasant of Nepal, wreathed in fire.' },
-  leopard:      { n: 'Snow Leopard Spirit', r: 'mythic',    c: 'cloud',   spd: 150, amt: 12, gt: 2.2, brew: 12, fav: 'dalbhat', bp: ['cloud', 40],  tags: ['cat'],   ab: 'pounce', cd: 18, d: 'The ghost of the mountains.' },
+  leopard:      { n: 'Storm Leopard', r: 'mythic',    c: 'cloud',   spd: 150, amt: 12, gt: 2.2, brew: 12, fav: 'dalbhat', bp: ['cloud', 40],  tags: ['cat'],   ab: 'sbomb', cd: 16, d: 'Crackles every time it lands.' },
   fireKid:      { n: 'Firecracker Kid',     r: 'rare',      c: 'neutral', spd: 100, amt: 2,  gt: 3.0, brew: 3,  fav: 'selroti', bp: ['crit', 3],    tags: ['human'], ab: 'firecracker', cd: 14, d: 'Saves every Tihar firecracker for the fields.' },
   iceFisher:    { n: 'Ice Fisher',          r: 'epic',      c: 'ice',     spd: 85,  amt: 5,  gt: 2.8, brew: 7,  fav: 'momo',    bp: ['ice', 15],    tags: ['human'], ab: 'iceBoost', cd: 15, d: 'Patient as a frozen lake.' },
-  woolSpinner:  { n: 'Wool Spinner',        r: 'epic',      c: 'cloud',   spd: 85,  amt: 5,  gt: 2.8, brew: 7,  fav: 'selroti', bp: ['cloud', 15],  tags: ['human'], ab: 'cloudBoost', cd: 15, d: 'Spins yak wool into clouds.' },
+  woolSpinner:  { n: 'Spark Spinner',        r: 'epic',      c: 'cloud',   spd: 85,  amt: 5,  gt: 2.8, brew: 7,  fav: 'selroti', bp: ['cloud', 15],  tags: ['human'], ab: 'cloudBoost', cd: 15, d: 'Spins static out of yak wool.' },
   ropeFixer:    { n: 'Rope Fixer',          r: 'legendary', c: 'neutral', spd: 110, amt: 6,  gt: 2.6, brew: 9,  fav: 'dalbhat', bp: ['cap', 15],   tags: ['human'], ab: 'link', cd: 30, d: 'Fixes the ropes so everyone else can climb.' },
+  drumBoy:      { n: 'Drum Boy',            r: 'epic',      c: 'cloud',   spd: 95,  amt: 5,  gt: 2.6, brew: 7,  fav: 'momo',    bp: ['tool', 15],   tags: ['human'], ab: 'drum', cd: 18, d: 'Beats the dhol like a thunderstorm.' },
   littleMonk:   { n: 'Little Monk',         r: 'legendary', c: 'cloud',   spd: 95,  amt: 6,  gt: 2.6, brew: 10, fav: 'momo',    bp: ['cloud', 25],  tags: ['human'], ab: 'littleLove', cd: 28, d: 'Tiny, cheerful, and somehow everyone works harder around him.' },
-  teaMaster:    { n: 'Tea Master',          r: 'legendary', c: 'cloud',   spd: 90,  amt: 7,  gt: 2.6, brew: 16, fav: 'dalbhat', bp: ['brew', 20],   tags: ['human'], ab: 'teaMark', cd: 24, d: 'Can brew chiya from the air itself.' },
+  teaMaster:    { n: 'Storm Lama',          r: 'legendary', c: 'cloud',   spd: 90,  amt: 7,  gt: 2.6, brew: 16, fav: 'dalbhat', bp: ['brew', 20],   tags: ['human'], ab: 'sfork', cd: 24, d: 'Reads the sky and calls the bolt where it is needed.' },
   gurkha:       { n: 'Gurkha Marksman',     r: 'mythic',    c: 'spice',   spd: 130, amt: 14, gt: 2.2, brew: 12, fav: 'dalbhat', bp: ['crit', 8],    tags: ['human'], ab: 'bullseye', cd: 20, d: 'Never misses. Asks you not to either.' },
   naga:         { n: 'Lake Naga',           r: 'mythic',    c: 'ice',     spd: 110, amt: 13, gt: 2.4, brew: 14, fav: 'selroti', bp: ['ice', 40],    tags: ['spirit'], ab: 'bubbles', cd: 20, d: 'Serpent spirit of the turquoise lakes.' },
   skyLantern:   { n: 'Sky Lantern',         r: 'mythic',    c: 'ice',     spd: 120, amt: 11, gt: 2.4, brew: 14, fav: 'momo',    bp: ['cap', 40],    tags: ['spirit'], ab: 'inflate', cd: 26, d: 'Drifts above the teahouse on festival nights.' },
-  mistYak:      { n: 'Mist Yak',            r: 'mythic',    c: 'cloud',   spd: 95,  amt: 15, gt: 2.6, brew: 16, fav: 'selroti', bp: ['cloud', 40],  tags: ['yak'], ab: 'mist', cd: 22, d: 'Walks out of the clouds and leaves them behind.' },
+  mistYak:      { n: 'Thunder Yak',            r: 'mythic',    c: 'cloud',   spd: 95,  amt: 15, gt: 2.6, brew: 16, fav: 'selroti', bp: ['cloud', 40],  tags: ['yak'], ab: 'lpole', cd: 18, d: 'Its horns pull lightning out of the sky.' },
   bear:         { n: 'Himalayan Bear',      r: 'event',     c: 'neutral', spd: 105, amt: 8,  gt: 2.6, brew: 10, fav: 'momo',    bp: ['tool', 25],   tags: ['beast'], ab: 'bearMorph', cd: 30, d: 'Big, black, and very fond of honey.' },
   tiharDog:     { n: 'Tihar Dog',           r: 'event',     c: 'neutral', spd: 155, amt: 14, gt: 2.2, brew: 12, fav: 'momo',    bp: ['crit', 10],   tags: ['dog'],   ab: 'sniff', cd: 24, pas: 'Loyal: every crew member in your field gathers 10% faster while the Tihar Dog works with them.', d: 'Honored with marigolds on Kukur Tihar. A very good, very hard-working boy.' },
   kiteFlyer:    { n: 'Kite Flyer',          r: 'event',     c: 'neutral', spd: 100, amt: 6,  gt: 2.8, brew: 8,  fav: 'selroti', bp: ['tool', 25],   tags: ['human'], ab: 'gust', cd: 22, d: 'Dashain kite season, all year round.' }
@@ -86,7 +87,14 @@ const ABIL = {
   sniff:       { n: 'Kukur Puja',    i: 'paw', tok: true,  d: 'Bubble. The whole crew is honored: +50% to all gathering for 15s. The dog also digs up 1 to 3 items: food, extracts, Incense, and rarely a Mystic Wheel, Permit or Golden Momo.' },
   spiceBoost:  { n: 'Spice Boost',   i: 'flame',  tok: true,  d: 'Bubble. Spice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also leaves a flame where the bubble lay.' },
   iceBoost:    { n: 'Ice Boost',     i: 'snow',   tok: true,  d: 'Bubble. Ice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also releases 2 bubbles.' },
-  cloudBoost:  { n: 'Cloud Boost',   i: 'cloud',  tok: true,  d: 'Bubble. Cloud gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also plants a prayer flag pole where the bubble lay.' },
+  cloudBoost:  { n: 'Lightning Boost', i: 'bolt', tok: true,  d: 'Bubble. Lightning gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer.' },
+  lpole:       { n: 'Lightning Pole', i: 'bolt', tok: true,  d: 'Bubble. Plants a lightning pole where it lay for 25s (bigger when Blessed). Lightning flowers inside gather x1.25; poles that touch connect: 2 connected x1.5, 3 or more x2. When your Vajra Staff fires a bolt while you stand inside a pole, the bolt runs through every connected pole and adds Storm Charge. Up to 5 poles.' },
+  sbomb:       { n: 'Static Bomb',   i: 'bolt',   tok: true,  d: 'Bubble. Explodes when you grab it: gathers everything within 85 at x2.5 and raises those flowers +1 level for 12s. Blessed Storm Leopards sometimes drop a Static Haze instead.' },
+  haze:        { n: 'Static Haze',   i: 'cloud',  tok: true,  d: 'Bubble (Blessed Storm Leopard). A violet haze settles over the field for 90s: every 0.5s a random flower inside gets +1 level until the haze lifts.' },
+  stormCall:   { n: 'Storm Call',    i: 'bolt',   tok: true,  d: 'Bubble. Every lightning pole on the field strikes once, gathering the flowers inside its radius.' },
+  sfork:       { n: 'Spark Fork',    i: 'bolt',   tok: true,  d: 'Bubble. Your next 3 Vajra bolts each strike 3 times in the same spot.' },
+  reach:       { n: 'Long Reach',    i: 'tool',   tok: true,  d: 'Bubble. Your next 15 tool swings reach 50% further.' },
+  drum:        { n: 'Thunder Drum',  i: 'drum',   tok: true,  d: 'Bubble. +25% tool swing speed for 10s, stacks up to 3 times.' },
   firecracker: { n: 'Firecracker',   i: 'burst',  tok: true,  d: 'Bubble. Explodes on pickup, gathering every flower within 60 range at x2. Each firecracker within 12s of the last adds +1 combo (max 10): +6 range and +0.3x per combo. Combos of 5 or more leave a flame.' },
   link:        { n: 'Fixed Rope',    i: 'compass', tok: true, d: 'Bubble. Pulls in and collects every other bubble lying in the field at once.' },
   littleLove:  { n: 'Little Love',   i: 'heart',  tok: true,  d: 'Bubble. All gathering x1.5 for 12s.' },
@@ -150,7 +158,7 @@ const TOOLS = [
   { id: 'claw',    n: 'Yeti Claw',       i: 'claw',    cost: 8e6,   r: 72,  amt: 28,  sw: .55, req: { berry: 30, walnut: 10 } },
   { id: 'talon',   n: 'Danphe Talon',    i: 'talon',   cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'spice', cb: 1, st: { conv: .06 }, pas: 'strike', req: { walnut: 40, chili: 60, goldenMomo: 1 } },
   { id: 'scythe',  n: 'Frostbite Scythe',i: 'scythe',  cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'ice',   cb: 1, pas: 'stomp',  req: { berry: 120, goldenMomo: 1 } },
-  { id: 'fan',     n: 'Wind Fan',        i: 'fan',     cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'cloud', cb: 1, pas: 'dance',  req: { apple: 80, walnut: 20, goldenMomo: 1 } },
+  { id: 'fan',     n: 'Vajra Staff',     i: 'bolt',     cost: 4e7,   r: 78,  amt: 45,  sw: .52, col: 'cloud', cb: 1, pas: 'vajra',  req: { apple: 80, walnut: 20, goldenMomo: 1 } },
   { id: 'wheel',   n: 'Spirit Wheel',    i: 'wheel',   cost: 8e7, r: 92,  amt: 60,  sw: .5,  crit: .1, req: { walnut: 60, dalbhat: 30 } },
   { id: 'banner',  n: 'Summit Banner',   i: 'banner',  cost: 4e8,   r: 110, amt: 120, sw: .45, st: { gather: .2, conv: .05 }, pas: 'summitBless', req: { gem: 60, goldenMomo: 3, mysticWheel: 5 } }
 ];
@@ -161,7 +169,7 @@ const HEADGEAR = [
   { id: 'sherpaHat',  n: 'Sherpa Hat',    i: 'hat', cost: 6e5,   st: { cap: .12, speed: .05 }, req: { apple: 25, berry: 15, selroti: 20 } },
   { id: 'emberCrown', n: 'Ember Crown',   i: 'hat', col: 'spice', cost: 2.5e7, st: { spice: .4, crit: .05, conv: .04 }, pas: 'wildfire',   req: { chili: 50, walnut: 30, dalbhat: 30, goldenMomo: 1 } },
   { id: 'frostCrown', n: 'Frost Crown',   i: 'hat', col: 'ice',   cost: 2.5e7, st: { ice: .4, crit: .05 },   pas: 'polar',      req: { berry: 100, dalbhat: 30, goldenMomo: 1 } },
-  { id: 'cloudCrown', n: 'Cloud Crown',   i: 'hat', col: 'cloud', cost: 2.5e7, st: { cloud: .4, cap: .1 },   pas: 'cloudburst', req: { apple: 60, walnut: 30, dalbhat: 30, goldenMomo: 1 } },
+  { id: 'cloudCrown', n: 'Storm Crown',   i: 'hat', col: 'cloud', cost: 2.5e7, st: { cloud: .4, cap: .1 },   pas: 'cloudburst', req: { apple: 60, walnut: 30, dalbhat: 30, goldenMomo: 1 } },
   { id: 'spiritMask', n: 'Spirit Mask',   i: 'hat', cost: 4e8,   st: { gather: .3, crit: .05, conv: .05 }, pas: 'spirit', req: { gem: 100, goldenMomo: 3, mysticWheel: 10 } }
 ];
 const CHARMS = [
@@ -177,7 +185,8 @@ const CHARMS = [
 const PASSIVES = {
   wildfire:    { n: 'Inferno',         col: 'spice', need: 30, d: 'Every 30 Spice abilities: every flame in your field erupts (x3 around it) and +100% Spice gathering for 15s.' },
   polar:       { n: 'Polar Power',     col: 'ice',   need: 30, d: 'Every 30 Ice abilities: +100% Ice gathering and +10% crit for 15s, and 6 bubbles rise around you.' },
-  cloudburst:  { n: 'Cloud Burst',     col: 'cloud', need: 30, d: 'Every 30 Cloud abilities: all your prayer flag poles tie together into sacred ground at once (if you have fewer than 3, four new poles go up around you first), plus tool reach x1.5 and tool gathering x2 for 15s.' },
+  cloudburst:  { n: 'Thunderstorm',    col: 'cloud', need: 30, d: 'Every 30 Lightning abilities: a bolt runs through every pole group on the field (adding Storm Charge for each), and tool reach x1.5 for 15s.' },
+  vajra:       { n: 'Vajra',           col: 'always', need: 0, d: 'Every 3rd swing releases a lightning bolt that strikes near you at x2 tool power. If you stand inside a lightning pole, the bolt runs to it instead, through every connected pole, and adds Storm Charge: +0.01 with 1 pole, +0.03 with 2, +0.05 with 3, +0.08 with 4, +0.1 with 5.' },
   spirit:      { n: 'Mountain Spirit', col: 'any',   need: 50, d: 'Every 50 abilities: +100% to all gathering for 20s.' },
   herd:        { n: 'Herd Call',       col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: your crew move 50% faster for 15s.' },
   spark:       { n: 'Spark',           col: 'spice', need: 20, d: 'Every 20 Spice abilities: a Chili Burst explodes around you.' },
@@ -190,7 +199,7 @@ const PASSIVES = {
   summitBless: { n: 'Summit Blessing', col: 'any',   need: 30, d: 'Every 30 abilities: a free Blessing (+25% everything for 15s).' },
   kiln:        { n: 'Kiln',            col: 'always', need: 0, d: '15% of everything your flames gather is brewed into rupees on the spot, and every 20s while you gather 6% of your doko is brewed too.' },
   deepfreeze:  { n: 'Deep Freeze',     col: 'always', need: 0, d: 'Chill stacks last 60s instead of 30 and you can hold 40 instead of 20. Popping a bubble inside a Frost Mark gives 2 stacks.' },
-  nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Every Lungta stack also adds +2% capacity (up to +100%).' }
+  nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Storm Charge also adds capacity: +25% per full +1 (up to +75%).' }
 };
 /* crafting materials drop while gathering in each field */
 /* fruits: drop while gathering (by flower color), from quests and sprouts */
@@ -237,7 +246,7 @@ const DOKOS = [
   { id: 'spirit', n: 'Spirit Satchel',  i: 'backpack', cost: 2.5e8,   cap: 8e6 },
   { id: 'kiln',   n: 'Ember Kiln Pack', i: 'backpack', col: 'spice', cost: 1.2e9, cap: 3.2e7,   pas: 'kiln',       req: { chili: 150, walnut: 80, goldenMomo: 3 } },
   { id: 'vault',  n: 'Glacier Vault',   i: 'backpack', col: 'ice',   cost: 1.2e9, cap: 4e7, pas: 'deepfreeze', req: { berry: 230, goldenMomo: 3 } },
-  { id: 'nimbus', n: 'Nimbus Bag',      i: 'backpack', col: 'cloud', cost: 1.2e9, cap: 4e7,   pas: 'nimbus',     req: { apple: 150, walnut: 80, goldenMomo: 3 } }
+  { id: 'nimbus', n: 'Copper Urn',      i: 'backpack', col: 'cloud', cost: 1.2e9, cap: 4e7,   pas: 'nimbus',     req: { apple: 150, walnut: 80, goldenMomo: 3 } }
 ];
 const BOOTS = [
   { id: 'sandals', n: 'Sandals',      i: 'boot', cost: 0,   spd: 120 },
@@ -281,9 +290,9 @@ const MANDALA_STATS = [
 const MANDALA_PAS = {
   blazingStar: { n: 'Blazing Star', col: 'spice', main: true, d: 'Flames last twice as long, burn twice as often, count x2 inside instead of x1.5 (Dark Flames x3), and Heat builds 50% faster.' },
   glacierStar: { n: 'Glacier Star', col: 'ice',   main: true, d: 'Permanently x1.25 capacity while you are in an Ice field. Every 45th Ice Boost bubble you collect (1 minute cooldown) summons the Glacier Star for 45s: x2 Ice gathering and +10% instant Ice conversion, plus 2 minutes of Ice Swell. Every bubble you pop while it shines adds +1% (up to x3) and 4s of Ice Swell. When it fades it leaves bubbles behind, more for every bubble popped.' },
-  butterStar:  { n: 'Lungta Star',  col: 'cloud', main: true, d: 'Every sacred ground you close sends a white wind horse galloping twice around its edge, gathering everything it passes at x3. Lungta stacks build twice as fast.' },
+  butterStar:  { n: 'Vajra Star',   col: 'cloud', main: true, d: 'Your Vajra Staff releases a lightning bolt every 2nd swing instead of every 3rd.' },
   guidingStar: { n: 'Wayfinder Star', col: 'any', main: false, d: 'Every 250 boost bubbles you collect (Spice, Ice or Cloud Boost), a random open field becomes your wayfinder field for 10 minutes: x2.5 gathering there.' },
-  starSaw:     { n: 'Chakra Saw',   col: 'any',   main: false, d: 'Use 3 Marigolds to spin up a Chakra Saw for 30s (the third Marigold is given back). It circles you in fields, measures every flower it touches at x50 tool power (without draining them) and brews that same amount out of your doko into rupees. It never adds to your doko, so it works best when the doko is full.' },
+  starSaw:     { n: 'Chakra Saw',   col: 'any',   main: false, d: 'Use 3 Marigolds to spin up a Chakra Saw for 30s (the third Marigold is given back). While it spins it brews ingredients straight out of your doko into rupees, about 20 times as fast as you have been gathering lately, so the stronger your build gathers, the more it brews. It never adds to your doko.' },
   starShower:  { n: 'Comet Rain',   col: 'any',   main: false, d: 'Every 45s while you gather, 10 green circles appear across the field and a comet lands on each one. Stand in a circle when its comet lands for Inspire: x2 gathering for 5s, and every further comet adds +1x (up to x11).' }
 };
 const OLD_STAR = { kilnStar: 'blazingStar', cometStar: 'blazingStar', blazingStar: 'blazingStar', glacierStar: 'glacierStar', frostStar: 'glacierStar', bubbleStar: 'glacierStar', cloudStar: 'butterStar', butterStar: 'butterStar', pilgrimStar: 'guidingStar' };
@@ -324,12 +333,15 @@ const BUFFS = {
   lbless:     { n: 'Lantern Blessing', i: 'diya', d: 'From the teahouse lantern: +3% capacity and +1.5% teahouse brewing value per stack (x4 and x2.5 at 100).' },
   nimbusb:    { n: 'Nimbus',       i: 'cloud',   d: '+2% capacity per stack.' },
   inspire:    { n: 'Inspire',      i: 'sparkle', d: 'All gathering multiplied by (1 + stacks): x2 at one stack. Lasts 5s, refreshed by more comets or Inspire bubbles.' },
-  saw:        { n: 'Chakra Saw',   i: 'star',    d: 'A spinning saw circles you, brews as much out of your doko as it gathers (x50 tool power).' },
+  saw:        { n: 'Chakra Saw',   i: 'star',    d: 'A spinning saw circles you and brews your doko into rupees.' },
   kukur:      { n: 'Kukur Puja',   i: 'paw',     d: '+50% to all gathering.' },
   litfield:   { n: 'Lit field',    i: 'diya',    d: 'You lit every diya in this field: +50% gathering here until the night ends.' },
-  lungta:     { n: 'Lungta',       i: 'flag',    d: '+2% Cloud gathering and +3% brewing value (rupees per ingredient) per stack, up to 50. Earned by closing sacred ground; lasts 60s, refreshed by every new shape.' },
+  storm:      { n: 'Storm Charge', i: 'bolt',    d: 'Lightning gathering and tool swing speed, up to x4 each. Built by Vajra bolts running through lightning poles. Lasts 1 hour, refreshed every time it grows.' },
+  drum:       { n: 'Thunder Drum', i: 'drum',    d: '+25% tool swing speed per stack.' },
+  reach:      { n: 'Long Reach',   i: 'tool',    d: 'Tool reach +50% for the next swings.' },
+  sfork:      { n: 'Spark Fork',   i: 'bolt',    d: 'Your next Vajra bolts strike 3 times.' },
   polar:      { n: 'Polar Power',  i: 'snow',    d: '+100% Ice gathering and +10% crit chance.' },
-  cloudburst: { n: 'Cloud Burst',  i: 'cloud',   d: 'Tool reach x1.5 and tool gathering x2.' },
+  cloudburst: { n: 'Thunderstorm', i: 'bolt',    d: 'Tool reach x1.5.' },
   spirit:     { n: 'Mountain Spirit', i: 'mountain', d: '+100% to all gathering.' },
   herd:       { n: 'Herd Call',    i: 'horns',   d: 'Your crew move 50% faster.' },
   comet:      { n: 'Comet',        i: 'star',    d: 'Every crit hits x5.' },

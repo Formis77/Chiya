@@ -85,6 +85,7 @@ const ITEMSART = {
 const HUMANS = {
   porter:       { body: '#8d6e4f', trim: '#5d4037', hat: 'headband', back: ITEMSART.basket, skin: '#c98c5f' },
   trekker:      { body: '#e74c3c', hat: 'cap', hatC: '#2f6fdb', pants: '#2d3436', hand: ITEMSART.poles, back(c) { line(c, -6, -20, -10, 0, '#555', 1.6); } },
+  drumBoy:      { body: '#c0392b', trim: '#f5c518', hat: 'topi', skin: '#c98c5f', front(c) { rr(c, -8, -10, 16, 11, 4, '#e67e22'); line(c, -8, -5, 8, -5, '#f5c518', 1.4); line(c, 9, -16, 4, -9, '#8a5a3b', 1.6); } },
   teaPicker:    { body: '#27ae60', trim: '#1e8449', hat: 'straw', hand: ITEMSART.smallBasket, skin: '#d29a6a' },
   gingerFarmer: { body: '#f39c12', trim: '#ca6f1e', hat: 'topi', hand: ITEMSART.root, skin: '#c98c5f' },
   waterCarrier: { body: '#16a085', trim: '#0e6655', hat: 'none', front: ITEMSART.gagri, skin: '#b9784c' },
@@ -258,7 +259,7 @@ const ANIMALS = {
   }
 };
 
-ANIMALS.mistYak = (c, t, mv, a) => { c.save(); c.globalAlpha = .85; yak(c, t, mv, a, { s: 1.05, fur: '#eef2fb', fringe: '#cfd6ec', leg: '#b8c1de', horn: '#9fb0dd', nose: '#8e9bd6' }); c.restore(); for (let k = 0; k < 3; k++) { c.globalAlpha = .35; circ(c, -14 + k * 12 + Math.sin(t * 2 + k) * 2, -4, 6, '#ffffff', false); c.globalAlpha = 1; } };
+ANIMALS.mistYak = (c, t, mv, a) => { yak(c, t, mv, a, { s: 1.05, fur: '#5b4a8a', fringe: '#3e3170', leg: '#2e2550', horn: '#ffe36e', nose: '#2e2550' }); P(c); c.moveTo(16, -30); c.lineTo(12, -24); c.lineTo(16, -24); c.lineTo(11, -16); c.strokeStyle = '#ffe36e'; c.lineWidth = 2; c.stroke(); };
 ANIMALS.naga = (c, t, mv) => {
   const w = Math.sin(t * (mv ? 10 : 3));
   P(c); c.moveTo(-16, -4); c.bezierCurveTo(-10, -10 + w * 3, -4, 2 - w * 3, 4, -6); c.lineCap = 'round'; c.strokeStyle = OUT; c.lineWidth = 9; c.stroke(); c.strokeStyle = '#2ea4dc'; c.lineWidth = 6.5; c.stroke();
@@ -344,6 +345,22 @@ function drawTiharStall(c, t) {
   P(c); c.roundRect(-tw / 2, -118, tw, 22, 11); fs(c, '#ffffff', 1.8);
   drawIcon(c, 'marigold', -tw / 2 + 13, -107, 12, '#ff9f1a', 2.2);
   c.fillStyle = OUT; c.textAlign = 'left'; c.fillText('Tihar Stall', -tw / 2 + 23, -103);
+}
+
+/* ---------------- lightning poles ---------------- */
+function drawLPoles(c) {
+  for (const g2 of poleGroups()) {
+    const mul = g2.ms.length >= 3 ? 2 : g2.ms.length === 2 ? 1.5 : 1.25, col = mul >= 2 ? '#7c3aed' : mul >= 1.5 ? '#9b6ef3' : '#b9a3f5';
+    for (const [p, q] of g2.links) { c.save(); c.globalAlpha = .6; P(c); c.moveTo(p.x, p.y - 44); for (let k = 1; k < 6; k++) c.lineTo(p.x + (q.x - p.x) * k / 6 + rand(-5, 5), p.y - 44 + (q.y - p.y) * k / 6 + rand(-5, 5)); c.lineTo(q.x, q.y - 44); c.strokeStyle = '#e9ddff'; c.lineWidth = 2; c.stroke(); c.restore(); }
+    for (const p of g2.ms) {
+      const fade = Math.min(1, p.age * 4, (p.dur - p.age) * 2);
+      c.save(); c.globalAlpha = .16 * fade; circ(c, p.x, p.y, p.r, col, false); c.restore();
+      c.save(); c.globalAlpha = .7 * fade; P(c); c.arc(p.x, p.y, p.r, 0, TAU); c.setLineDash([8, 6]); c.lineDashOffset = -now * 20; c.strokeStyle = col; c.lineWidth = 2.5; c.stroke(); c.setLineDash([]); c.restore();
+      line(c, p.x, p.y, p.x, p.y - 44, OUT, 4.6); line(c, p.x, p.y, p.x, p.y - 44, '#c87533', 2.8);
+      circ(c, p.x, p.y - 47, 5, '#ffe36e'); c.save(); c.globalAlpha = .4 + Math.sin(now * 9 + p.x) * .2; circ(c, p.x, p.y - 47, 10, '#c9b0ff', false); c.restore();
+    }
+    if (g2.ms.length) { const p = g2.ms[0]; c.font = '900 10px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; c.fillStyle = OUT; c.fillText('x' + mul, p.x, p.y - 60); }
+  }
 }
 
 /* ---------------- prayer flags ---------------- */
@@ -463,7 +480,7 @@ const TILE_ART = {
   snow(c) { circ(c, 0, 2, 12, '#e3f2fd'); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; line(c, 0, 0, Math.cos(a) * 11, Math.sin(a) * 11, '#90caf9', 1.6); line(c, Math.cos(a) * 6, Math.sin(a) * 6, Math.cos(a + .5) * 9, Math.sin(a + .5) * 9, '#90caf9', 1.2); } circ(c, 0, 0, 2.4, '#ffffff'); }
 };
 const FLOWER = {
-  cloud: { p: '#ffffff', p2: '#e9ecfb', c: '#ffcf4d' },
+  cloud: { p: '#9b6ef3', p2: '#c9b0ff', c: '#ffe36e' },
   spice: { p: '#ff5d5d', p2: '#ff9a7a', c: '#ffd166' },
   ice:   { p: '#45aee6', p2: '#9edcff', c: '#ffffff' }
 };

@@ -59,6 +59,8 @@ const ICONS = {
   fan:      'M12 20L4 8a11 11 0 0 1 16 0zM12 20V9M12 20L8 9.5M12 20l4-10.5',
   banner:   'M6 21V3M6 4h12l-3 4 3 4H6M6 8h9',
   marigold: circle(12, 12, 3)+circle(18.2, 12.0, 2.6)+circle(16.38, 16.38, 2.6)+circle(12.0, 18.2, 2.6)+circle(7.62, 16.38, 2.6)+circle(5.8, 12.0, 2.6)+circle(7.62, 7.62, 2.6)+circle(12.0, 5.8, 2.6)+circle(16.38, 7.62, 2.6),
+  bolt:     'M13.5 2.5L5 13.5h6l-1.5 8L19 10h-6.5z',
+  drum:     'M5 8c0-2 3-3 7-3s7 1 7 3v8c0 2-3 3-7 3s-7-1-7-3zM5 8c0 2 3 3 7 3s7-1 7-3M3 3l5 4M21 3l-5 4',
   menu:     'M4 7h16M4 12h16M4 17h16',
   info:     circle(12, 12, 9) + 'M12 11v6M12 7.5v.5',
   sprout:   'M12 21v-9M12 12c0-4-3-6.5-7.5-6.5 0 4.5 3 6.5 7.5 6.5zM12 10.5c0-4 3-6.5 7.5-6.5 0 4.5-3 6.5-7.5 6.5zM7 21h10',
@@ -134,6 +136,7 @@ function drawIcon(c, name, x, y, size, col, lw = 2.2) {
 
 /* accent color per icon, for item tiles */
 const ICOL = {
+  bolt: '#8b5cf6', drum: '#c0392b',
   sprout: '#3fae6b', badge: '#f0b429', diya: '#ff9f1a', garland: '#ff9f1a', flower: '#ff9f1a', marigold: '#ff9f1a',
   apple: '#e5484d', walnut: '#a0522d', chili: '#f05a3a', blender: '#2ea4dc',
   leaf: '#4cb782', root: '#e0a43c', ice: '#4fb6e6', petal: '#ef5b6b', wool: '#9aa3c7', berry: '#5a6fd6', thread: '#e5484d', bead: '#c8913e', gem: '#9b6ef3', hat: '#ff8a3d', amulet: '#3fae6b',

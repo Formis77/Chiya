@@ -5,7 +5,8 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '41';
+const VERSION = '42';
+const SAW_K = 20;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -42,14 +43,14 @@ function uiTick(dt) {
   const fi = fieldAt(player.x, player.y);
   $('loc').innerHTML = ic(brewing ? 'cup' : fi >= 0 ? 'leaf' : 'pin') + (brewing ? 'Brewing at the teahouse' : fi >= 0 ? `${FIELDS[fi].n} <b>Lv ${FIELDS[fi].lv[0]}${FIELDS[fi].lv[1] > FIELDS[fi].lv[0] ? "-" + FIELDS[fi].lv[1] : ""}</b>` : dist(player.x, player.y, BREW.x, BREW.y) < 160 ? 'Teahouse' : 'On the trail');
   const bf = [];
-  const BI = { lungta: 'flag', popstar: 'snow', swell: 'drop', lbless: 'diya', inspire: 'sparkle', saw: 'star', precision: 'focus', darkheat: 'flame', kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
+  const BI = { storm: 'bolt', drum: 'drum', reach: 'tool', sfork: 'bolt', popstar: 'snow', swell: 'drop', lbless: 'diya', inspire: 'sparkle', saw: 'star', precision: 'focus', darkheat: 'flame', kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   { const fl = frostAt(player.x, player.y); if (fl) bf.push(`<button class="chip frostc" data-b="frostmark">${ic('snow')}<b>x${FROST_MUL[fl]}</b></button>`); }
   if (S.sawN > 0 && now - (S.sawLast || -99) <= 20) bf.push(`<button class="chip schip side" data-b="sawcount">${ic('marigold')}<b>${S.sawN}/3</b></button>`); else if (S.sawN) S.sawN = 0;
-  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : k === 'popstar' ? 'schip main' : k === 'lungta' ? 'schip main' : k === 'saw' || k === 'inspire' ? 'schip side' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'popstar' ? '<i>x' + (2 + Math.min(1, B[k].st * .01)).toFixed(2) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'swell' ? '<i>x' + swellMul().toFixed(1) + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : k === 'lbless' ? '<i>x' + B[k].st + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : k === 'lungta' ? '<i>x' + B[k].st + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
+  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : k === 'popstar' ? 'schip main' : k === 'storm' ? 'dark' : k === 'saw' || k === 'inspire' ? 'schip side' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${k === 'storm' ? '<b>x' + (1 + B[k].st).toFixed(2) + '</b>' : B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'popstar' ? '<i>x' + (2 + Math.min(1, B[k].st * .01)).toFixed(2) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'swell' ? '<i>x' + swellMul().toFixed(1) + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : k === 'lbless' ? '<i>x' + B[k].st + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : k === 'storm' ? '<b>x' + (1 + B[k].st).toFixed(2) + '</b>' : k === 'reach' || k === 'sfork' ? '<b>' + B[k].st + '</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
   for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0, cdl = p.cd ? Math.ceil((((S.pasCd || {})[g.pas] || 0) - Date.now()) / 1000) : 0;
     bf.push(cdl > 0 ? `<button class="chip pchip" data-p="${g.pas}">${ic('clock')}<b>${cdl}s</b></button>` : `<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
-  if (E.poles.length) bf.push(`<button class="chip" data-b="poles">${ic('flag')}<b>${E.poles.length}/6</b></button>`);
-  if (E.sacred) bf.push(`<button class="chip schip main" data-b="sacred">${ic('star')}<i>Lv+${E.sacred.lv}</i><b>${Math.ceil(E.sacred.t)}s</b></button>`);
+  if (tool().pas === 'vajra') { const need = mpas('butterStar') ? 2 : 3; bf.push(`<button class="chip pchip" data-b="vajra">${ic('bolt')}<b>${(S.swingN || 0)}/${need}</b></button>`); }
+  if (E.haze) bf.push(`<button class="chip" data-b="hazec">${ic('cloud')}<b>${Math.ceil(E.haze.t)}s</b></button>`);
   /* star amulet counters: main star gold, side star mint */
   if (mpas('glacierStar')) { const cdl = Math.ceil(((S.popCd || 0) - Date.now()) / 1000); if (!B.popstar) bf.push(`<button class="chip schip main" data-b="glaciercount">${ic('snow')}<b>${cdl > 0 ? cdl + 's' : (S.blueN || 0) + '/45'}</b></button>`); }
   if (mpas('guidingStar')) bf.push(`<button class="chip schip side" data-b="guidecount">${ic('star')}<b>${S.pilgrim ? Math.ceil((S.pilgrim.until - Date.now()) / 60000) + 'm' : (S.guideN || 0) + '/250'}</b></button>`);
@@ -428,7 +429,7 @@ function useItem(k) {
   if (k === 'marigold') {
     if (!mpas('starSaw')) { S.items[k]++; toast('Marigolds spin up the Chakra Saw star. Spend them at the Tihar Stall otherwise.', 'marigold'); return; }
     if (now - (S.sawLast || -99) > 20) S.sawN = 0; S.sawLast = now; S.sawN = (S.sawN || 0) + 1;
-    if (S.sawN >= 3) { S.sawN = 0; S.items[k]++; B.saw = { t: 30, st: 1 }; toast('Chakra Saw spinning for 30s (1 Marigold saved)', 'star'); }
+    if (S.sawN >= 3) { S.sawN = 0; S.items[k]++; B.saw = { t: 30, st: 1, rate: Math.max(capMax() * .01, gRate * SAW_K) }; toast('Chakra Saw spinning for 30s (1 Marigold saved)', 'star'); }
 
     save(); renderPanel(); return; }
   if (k === 'garland') { if (S.crew.length >= S.beds) { S.items[k]++; toast('You need a free bed first', 'bed'); return; } addCrew('tiharDog', false); save(); renderPanel(); return; }
@@ -771,6 +772,9 @@ function showPop(el, html, above) {
 function hidePop() { $('pop').className = ''; }
 function buffTip(k, el) {
   el = el || document.querySelector(`[data-b="${k}"]`); if (!el) return;
+  if (k === 'vajra') { showPop(el, `<b>Vajra</b><span>Every ${mpas('butterStar') ? 2 : 3}${mpas('butterStar') ? 'nd' : 'rd'} swing releases a bolt. Stand inside a lightning pole to send it through the poles for Storm Charge.</span>`); return; }
+  if (k === 'hazec') { showPop(el, `<b>Static Haze</b><span>A random flower gets +1 level every 0.5s until it lifts.</span>`); return; }
+  if (k === 'storm') { showPop(el, `<b>Storm Charge x${(1 + stormSt()).toFixed(2)}</b><span>Lightning gathering and tool swing speed. Up to x4. ${Math.ceil(((S.stormUntil || 0) - Date.now()) / 60000)} min left.</span>`); return; }
   if (k === 'poles') { showPop(el, `<b>Prayer flags</b><span>${E.poles.length} poles up. ${E.sacred ? 'You can tie a new shape when the current sacred ground fades.' : E.poles.length >= 3 ? 'Walk to the glowing first pole to tie the flags into sacred ground.' : 'Cloud abilities plant poles. With 3 or more, walk to the glowing first pole to tie them into sacred ground.'}</span>`); return; }
   if (k === 'sacred') { showPop(el, `<b>Sacred ground</b><span>Flowers inside count +${E.sacred.lv} level and Cloud flowers gather x1.5.</span>`); return; }
   if (k === 'glaciercount') { const cdl = Math.ceil(((S.popCd || 0) - Date.now()) / 1000); showPop(el, `<b>Glacier Star</b><span>${cdl > 0 ? `Cooling down for ${cdl}s.` : `${S.blueN || 0}/45 Ice Boost bubbles collected.`}</span>`); return; }
@@ -903,8 +907,8 @@ const TEST_BUILDS = {
            tool: 'talon', doko: 'kiln', hat: 'emberCrown', stars: ['blazingStar', 'starSaw'], lines: [['spice', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'ember' },
   ice:   { crew: { naga: 7, yeti: 7, skyLantern: 10, iceClimber: 5, iceFisher: 5, glacierGuide: 3, littleMonk: 4, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, monk: 2 },
            tool: 'scythe', doko: 'vault', hat: 'frostCrown', stars: ['glacierStar', 'starShower'], lines: [['ice', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'frost' },
-  cloud: { crew: { leopard: 9, mistYak: 9, snowLion: 4, littleMonk: 6, woolSpinner: 5, yakKing: 3, teaMaster: 2, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, teaPicker: 5 },
-           tool: 'fan', doko: 'nimbus', hat: 'cloudCrown', stars: ['butterStar', 'starShower'], lines: [['cloud', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'flags' }
+  cloud: { crew: { mistYak: 9, leopard: 9, snowLion: 4, teaMaster: 4, drumBoy: 6, woolSpinner: 5, teaPicker: 3, lama: 2, sherpa: 2, ropeFixer: 2, bear: 1, littleMonk: 3 },
+           tool: 'fan', doko: 'nimbus', hat: 'cloudCrown', stars: ['butterStar', 'starSaw'], lines: [['cloud', .6], ['crit', .15], ['conv', .15], ['tool', .6], ['cap', .6], ['cdr', .25]], field: 'flags' }
 };
 function buildTestSave(col) {
   const b = TEST_BUILDS[col], s2 = newSave();
