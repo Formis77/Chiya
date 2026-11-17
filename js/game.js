@@ -252,10 +252,10 @@ function effLv(t) {
   return t.lv;
 }
 function collect(t, base, srcCol, extra = 1, isTool = false) {
-  if (!fieldOpen(t.f) || t.v < .04) return 0;
+  if (!fieldOpen(t.f) || (t.v < .04 && !sawMode)) return 0;
   const space = capMax() - S.doko;
-  if (space <= 0 && !E.balloons.some(bl => !bl.home && bl.fi === t.f && bl.held < bl.cap && dist(t.x, t.y, bl.x, bl.y) < 120)) { fullWarn(); return 0; }
-  const tv = t.v; t.v = Math.max(0, tv - .22);
+  if (space <= 0 && !sawMode && !E.balloons.some(bl => !bl.home && bl.fi === t.f && bl.held < bl.cap && dist(t.x, t.y, bl.x, bl.y) < 120)) { fullWarn(); return 0; }
+  const tv = sawMode ? Math.max(.6, t.v) : t.v; if (!sawMode) t.v = Math.max(0, tv - .22);
   let amt = base * FIELDS[t.f].y * LVM[effLv(t)] * (.35 + .65 * tv) * extra;
   const match = srcCol === t.col ? 1.5 : srcCol === 'neutral' ? 1.15 : 1;
   amt *= match * gMult(t.col, isTool) * zoneMult(t.x, t.y, t.col, srcCol) * (t.wet || 1);
@@ -269,7 +269,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   if (E.litF && E.litF[t.f]) amt *= 1.5;
   amt *= fieldBonus(t.f);
   const inTea = E.decals.some(d => d.kind === 'teamark' && dist(t.x, t.y, d.x, d.y) < d.r);
-  const conv = sup ? 1 : Math.min(.8, bp('conv') + (B.popstar && t.col === 'ice' ? .1 : 0) + (B.darkheat ? B.darkheat.st * .005 : 0) + (kilnFlame ? .15 : 0) + (B.masala ? .08 : 0) + (D.syn.has('fullHouse') ? .05 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
+  const conv = sup || (sawMode && space <= 0) ? 1 : sawMode ? .6 : Math.min(.8, bp('conv') + (B.popstar && t.col === 'ice' ? .1 : 0) + (B.darkheat ? B.darkheat.st * .005 : 0) + (kilnFlame ? .15 : 0) + (B.masala ? .08 : 0) + (D.syn.has('fullHouse') ? .05 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
   if (conv > 0) { const inst = amt * conv, val = inst * brewValue(); S.rp += val; S.stats.earn += val; amt -= inst;
     if (sup) { S.stats.gather += inst; S.stats.col[t.col] = (S.stats.col[t.col] || 0) + inst; const fd = FIELDS[t.f].id; S.stats.field[fd] = (S.stats.field[fd] || 0) + inst; } }
   if (E.balloons.length) for (const bl of E.balloons) { if (bl.home || bl.fi !== t.f || dist(t.x, t.y, bl.x, bl.y) > 120) continue; const toB = Math.min(bl.cap - bl.held, amt * .75); if (toB > 0) { bl.held += toB; amt -= toB; } break; }
@@ -718,10 +718,8 @@ function update(dt) {
   // Chakra Saw: brews a big share of the doko straight into rupees while it spins (works with a full bag too)
   if (pf >= 0 && fieldOpen(pf) && mpas('starSaw') && B.saw) { sawT -= dt; if (sawT <= 0) { sawT = .12;
     const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50;
-    if (S.doko < capMax()) tilesNear(pf, sx, sy, 38).forEach(t => collect(t, tool().amt * .5, 'neutral', 1));
-    const cv2 = Math.min(S.doko, S.doko * .012 + capMax() * .002);
-    if (cv2 > 0) { const val = cv2 * brewValue(); S.doko -= cv2; S.rp += val; S.stats.earn += val; sawAcc += val;
-      burst(sx, sy - 6, 3, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.4 }); E.parts.push({ type: 'dot', x: player.x, y: player.y - 30, vx: (sx - player.x) * 2.5, vy: (sy - player.y - 10) * 2.5, g: 0, life: .4, max: .4, size: 3, col: '#ffcf5a' }); }
+    const r0 = S.rp; sawMode = true; tilesNear(pf, sx, sy, 48).forEach(t => collect(t, tool().amt * 100, 'neutral', 1, true)); sawMode = false;
+    const val = S.rp - r0; if (val > 0) { sawAcc += val; burst(sx, sy - 6, 3, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.4 }); }
     sawPopT += .12; if (sawPopT >= .6 && sawAcc > 0) { pop(sx, sy - 30, '+' + fmt(sawAcc), '#ff9f1a', true); sawAcc = 0; sawPopT = 0; } } }
   if (pf >= 0 && fieldOpen(pf) && S.doko < capMax()) {
     if (mpas('starShower')) { showerT -= dt; if (showerT <= 0 && !E.decals.some(d => d.kind === 'starspot')) { showerT = 45; const f = FIELDS[pf];
@@ -1450,7 +1448,7 @@ function dropMat(fi) {
   burst(player.x, player.y - 30, 8, { type: 'star', col: '#d6b4ff', spd: 80, life: .7, size: 2 });
 }
 const abNameT = {};
-let lastPopSt = 0, popWas = false, sawAcc = 0, sawPopT = 0, heatT = 0, combo = { n: 0, t: -99 }, bullHits = 0, sawT = 0, showerT = 0;
+let sawMode = false, lastPopSt = 0, popWas = false, sawAcc = 0, sawPopT = 0, heatT = 0, combo = { n: 0, t: -99 }, bullHits = 0, sawT = 0, showerT = 0;
 function spawnBubble(fi, x, y, base) {
   if (fi < 0 || E.decals.filter(d => d.kind === 'bubble').length > 40) return;
   const f = FIELDS[fi];
