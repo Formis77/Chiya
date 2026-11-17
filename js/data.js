@@ -334,7 +334,7 @@ const BUFFS = {
   saw:        { n: 'Chakra Saw',   i: 'star',    d: 'A spinning saw circles you and brews your doko into rupees.' },
   kukur:      { n: 'Kukur Puja',   i: 'paw',     d: '+50% to all gathering.' },
   litfield:   { n: 'Lit field',    i: 'diya',    d: 'You lit every diya in this field: +50% gathering here until the night ends.' },
-  storm:      { n: 'Storm Charge', i: 'bolt',    d: 'Lightning gathering and tool swing speed, up to x4 each. Built by Vajra bolts running through lightning poles. Lasts 1 hour, refreshed every time it grows.' },
+  storm:      { n: 'Storm Charge', i: 'bolt',    d: 'Lightning gathering (up to x6) and tool swing speed (up to x4). Built by Vajra bolts running through lightning poles. Lasts 1 hour, refreshed every time it grows.' },
   drum:       { n: 'Thunder Drum', i: 'drum',    d: '+25% tool swing speed per stack.' },
   reach:      { n: 'Long Reach',   i: 'tool',    d: 'Tool reach +50% for the next swings.' },
   sfork:      { n: 'Spark Fork',   i: 'bolt',    d: 'Your next Vajra bolts strike 3 times.' },

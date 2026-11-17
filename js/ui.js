@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '46';
+const VERSION = '47';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -774,7 +774,7 @@ function buffTip(k, el) {
   el = el || document.querySelector(`[data-b="${k}"]`); if (!el) return;
   if (k === 'vajra') { showPop(el, `<b>Vajra</b><span>Every ${mpas('butterStar') ? 2 : 3}${mpas('butterStar') ? 'nd' : 'rd'} swing releases a bolt. Stand inside a lightning pole to send it through the poles for Storm Charge.</span>`); return; }
   if (k === 'hazec') { showPop(el, `<b>Static Haze</b><span>A random flower gets +1 level every 0.5s until it lifts.</span>`); return; }
-  if (k === 'storm') { showPop(el, `<b>Storm Charge x${(1 + stormSt()).toFixed(2)}</b><span>Lightning gathering and tool swing speed. Up to x4. ${Math.ceil(((S.stormUntil || 0) - Date.now()) / 60000)} min left.</span>`); return; }
+  if (k === 'storm') { showPop(el, `<b>Storm Charge x${(1 + stormSt()).toFixed(2)}</b><span>Lightning gathering up to x6, tool swing speed up to x4 (now x${(1 + stormSw()).toFixed(2)}). ${Math.ceil(((S.stormUntil || 0) - Date.now()) / 60000)} min left.</span>`); return; }
   if (k === 'poles') { showPop(el, `<b>Prayer flags</b><span>${E.poles.length} poles up. ${E.sacred ? 'You can tie a new shape when the current sacred ground fades.' : E.poles.length >= 3 ? 'Walk to the glowing first pole to tie the flags into sacred ground.' : 'Cloud abilities plant poles. With 3 or more, walk to the glowing first pole to tie them into sacred ground.'}</span>`); return; }
   if (k === 'sacred') { showPop(el, `<b>Sacred ground</b><span>Flowers inside count +${E.sacred.lv} level and Cloud flowers gather x1.5.</span>`); return; }
   if (k === 'glaciercount') { const cdl = Math.ceil(((S.popCd || 0) - Date.now()) / 1000); showPop(el, `<b>Glacier Star</b><span>${cdl > 0 ? `Cooling down for ${cdl}s.` : `${S.blueN || 0}/45 Ice Boost bubbles collected.`}</span>`); return; }

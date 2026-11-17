@@ -671,7 +671,7 @@ function update(dt) {
   player.swingT -= dt;
   const pf = fieldAt(player.x, player.y);
   if (pf >= 0 && fieldOpen(pf) && S.doko < capMax() && player.swingT <= 0) {
-    const tl = tool(); player.swingT = tl.sw / ((1 + stormSt()) * (B.drum ? 1 + .25 * B.drum.st : 1)); player.swing = 1;
+    const tl = tool(); player.swingT = tl.sw / ((1 + stormSw()) * (B.drum ? 1 + .25 * B.drum.st : 1)); player.swing = 1;
     const cx = player.x + player.face * 10, cy = player.y - 4;
     let sum = 0;
     const reach = tl.r * (B.cloudburst ? 1.5 : 1) * (B.bear ? 1.3 : 1) * (B.reach ? 1.5 : 1);
@@ -1472,7 +1472,8 @@ function dropMat(fi) {
 }
 const abNameT = {};
 /* ---------------- Lightning (tool, poles, Storm Charge) ---------------- */
-const stormSt = () => Math.min(3, S.storm || 0);
+const stormSt = () => Math.min(5, S.storm || 0);   /* gathering: up to x6 */
+const stormSw = () => Math.min(3, S.storm || 0);   /* swing speed: up to x4 */
 const STORM_GAIN = [0, .002, .006, .01, .016, .02];
 function poleGroups() {
   const ps = E.decals.filter(d2 => d2.kind === 'lpole'), par = ps.map((_, i) => i), find = i => par[i] === i ? i : (par[i] = find(par[i])), links = [];
@@ -1492,7 +1493,7 @@ function runChain(ms, start) {
   later(order.length * .09, () => {
     const base = tool().amt * 5 * (doko().pas === 'nimbus' ? 1.5 : 1); let sum = 0; tilesNear(endP.fi, endP.x, endP.y, endP.r).forEach(t => sum += collect(t, base, 'neutral', 1, true));
     ring(endP.x, endP.y, endP.r, '#ffe36e', .5, 6); burst(endP.x, endP.y - 20, 26, { type: 'star', col: '#e9ddff', spd: 200, life: .8, size: 2.6 }); shake(5);
-    S.storm = Math.min(3, (S.storm || 0) + STORM_GAIN[n]); S.stormUntil = Date.now() + 3600e3;
+    S.storm = Math.min(5, (S.storm || 0) + STORM_GAIN[n]); S.stormUntil = Date.now() + 3600e3;
     pop(endP.x, endP.y - 70, `Storm +${STORM_GAIN[n].toFixed(3)}`, '#d8c6ff', true); if (sum) pop(endP.x, endP.y - 50, '+' + fmt(sum), '#ffe36e');
   });
 }
