@@ -1627,6 +1627,7 @@ function boot() {
   if (S.mandala && S.mandala.pas.length) { const ps = [...new Set(S.mandala.pas.map(p => OLD_STAR[p] || p).filter(p => MANDALA_PAS[p]))]; const mains = ps.filter(p => MANDALA_PAS[p].main), sides = ps.filter(p => !MANDALA_PAS[p].main); S.mandala.pas = mains.length && sides.length ? [mains[0], sides[0]] : mains.length > 1 ? [mains[0], pick(['guidingStar', 'starSaw', 'starShower'])] : ps.slice(0, 1); }
   if (S.butter == null) S.butter = 0;
   if (S.guideN == null) S.guideN = 0;
+  if (S.items.butterDrop) delete S.items.butterDrop; if (S.hotbar) S.hotbar = S.hotbar.map(k => k === 'butterDrop' ? null : k);
   if (S.swingN == null) S.swingN = 0; if (S.storm == null) { S.storm = 0; S.stormUntil = 0; }
   for (const k of ['hiveBal', 'hiveBalTot', 'blueN', 'popCd']) if (S[k] == null) S[k] = 0;
   if (S.balloon) { S.hiveBal += S.balloon; S.balloon = 0; }

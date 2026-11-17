@@ -380,3 +380,31 @@ body.panel #quest{display:none}
 .chip.dark{background:#2b1a40;color:#d3b2ff}.chip.dark b,.chip.dark i{color:#fff}
 
 .chip.schip.main{background:#fff1c2;color:#a5700a;box-shadow:0 2px 8px rgba(165,112,10,.22)}.chip.schip.side{background:#d9f7e4;color:#1f8a4c;box-shadow:0 2px 8px rgba(31,138,76,.2)}
+
+/* v48 shop fit */
+#place{display:none!important}
+.tabs button{padding:7px 8px;font-size:12px}
+.item{flex-wrap:wrap}
+.item .it{flex:1 1 140px;min-width:0}
+.item>.buyrow{margin-left:auto}
+#sheet.fit .gcard{max-height:calc(100vh - 175px);overflow-y:auto;overscroll-behavior:contain}
+.gcard{grid-template-columns:58px 1fr;padding:10px;column-gap:10px}
+.gcard .gart{width:58px;height:58px;border-radius:18px}
+.gcard .gart .ic{width:32px;height:32px}
+.gcard .gst{gap:4px}
+.gcard .gst span,.gcard .gst b,.gcard .gst i{font-size:11px;padding:3px 7px}
+.gcard h3{font-size:15px;margin:0}
+.gcard .pas{font-size:12px;margin-top:4px}
+.gcard .req span{font-size:11px}
+.gcard .gbuy{margin-top:6px}
+.gcard{grid-template-columns:96px 1fr;grid-auto-flow:row dense}
+.gcard .gart{grid-column:1;grid-row:1/span 2;justify-self:center}
+.gcard .gbuy{grid-column:1;grid-row:3/span 4;margin-top:8px;align-self:start}
+.gcard .gbuy .btn,.gcard .gbuy .tag{width:100%;padding:8px 4px;font-size:12px;min-height:0}
+.gcard .gbuy .btn .ic{width:13px;height:13px}
+.gcard .req{grid-column:1;grid-row:4/span 4;flex-direction:column;align-items:stretch;gap:3px;margin-top:6px}
+.gcard .req span{font-size:10px;padding:2px 5px;justify-content:center}
+.gcard .gst span{font-size:10.5px;padding:2px 6px}
+#sheet.fit .ph h2{font-size:20px}
+#sheet.fit .tabs{margin-bottom:8px}
+#sheet.fit .gcard{max-height:calc(100vh - 150px)}

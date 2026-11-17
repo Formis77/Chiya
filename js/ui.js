@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '47';
+const VERSION = '48';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -16,7 +16,7 @@ function uiInit() {
   $('menub').addEventListener('click', () => { if (panel) { closePanel(); document.body.classList.remove('menu'); } else document.body.classList.toggle('menu'); });
   $('gearq').addEventListener('click', ev => { const b = ev.target.closest('[data-g]'); if (b) gearPop(b); });
   addEventListener('pointerdown', ev => { if (!ev.target.closest('#pop,[data-g],[data-b],[data-p]')) hidePop(); }, true);
-  if (!S.hotbar || S.hotbar.length !== HOTBAR_N) S.hotbar = ['permit', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
+  if (!S.hotbar || S.hotbar.length !== HOTBAR_N || S.hbv !== 2) { S.hotbar = Array(HOTBAR_N).fill(null); S.hbv = 2; }
   $('hotbar').addEventListener('pointerdown', ev => { const sl = ev.target.closest('.hslot'); if (!sl) return; ev.preventDefault(); dragStart(ev, S.hotbar[+sl.dataset.i], +sl.dataset.i); });
   addEventListener('pointermove', dragMove); addEventListener('pointerup', dragEnd); addEventListener('pointercancel', dragEnd);
   setTimeout(() => checkUpdate(true), 2500);
@@ -28,7 +28,6 @@ function uiInit() {
   });
   $('quest').addEventListener('click', () => openPanel('quests'));
   $('talk').addEventListener('click', () => talk());
-  $('place').addEventListener('click', () => placeSprinkler());
   $('buffs').addEventListener('pointerdown', ev => { const b = ev.target.closest('[data-b]'), p = ev.target.closest('[data-p]'); if (b) { ev.preventDefault(); buffTip(b.dataset.b, b); } else if (p) { ev.preventDefault(); pasTip(p.dataset.p, p); } });
   uiTick(1);
 }
@@ -58,9 +57,7 @@ function uiTick(dt) {
   $('quest').innerHTML = questTracker();
   renderHotbar();
   { const eq = equippedSlots(), sig = eq.map(([k, it]) => it.id).join(); if ($('gearq').dataset.sig !== sig) { $('gearq').innerHTML = eq.map(([k, it]) => `<button data-g="${k}" style="color:${gearCol(it)}">${ic(it.i)}</button>`).join(''); $('gearq').dataset.sig = sig; } }
-  const pf = fieldAt(player.x, player.y), canPlace = S.spr.n > 0 && pf >= 0 && fieldOpen(pf) && !panel;
-  $('place').classList.toggle('on', canPlace);
-  if (canPlace) $('place').innerHTML = `${ic('drop')}<span><small>${SPRINKLERS[S.spr.lv].n}</small>Place ${S.spr.placed.length}/${S.spr.n}</span>`;
+  S.items.sprinkler = S.spr.n || 0; if (S.spr.n) ITEMS.sprinkler.n = SPRINKLERS[S.spr.lv].n;
   if (nearNpc && Math.random() < .2) updateTalk();
   if (panel === 'shop' || panel === 'crew') refreshCosts();
 }
@@ -96,7 +93,7 @@ function closePanel() { panel = null; crewSel = null; $('sheet').classList.remov
 function renderPanel() {
   const fn = { inv: pItems, tihar: pTihar, badges: pBadges, blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
   if (!fn) return;
-  $('sheet').classList.toggle('fit', panel === 'shop');
+  $('sheet').classList.toggle('fit', panel === 'shop' && ['tool', 'doko', 'boots', 'hat'].includes(panelTab));
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
   document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.a === panel || (b.dataset.a === 'items' && panel === 'inv')));
 }
@@ -161,7 +158,7 @@ function pCrew() {
 function hiveBox() {
   const n = S.crew.length, c = D.cnt;
   const bar = ['spice', 'ice', 'cloud'].map(k => `<i class="cb-${k}" style="width:${n ? c[k] / n * 100 : 0}%"></i>`).join('');
-  return `<div class="hive"><div class="hbar">${bar}</div>${D.hive ? `<div class="hrow">${ib(HIVE[D.hive].i, icol(HIVE[D.hive].i))}<div><b>${HIVE[D.hive].n}</b> ${info('hive', D.hive)}</div></div>` : `<span class="mut small">No teahouse color yet. When half your crew (8+) share a color, you unlock Spice, Ice or Cloud bonuses.</span>`}</div>`;
+  return `<div class="hive"><div class="hbar">${bar}</div>${D.hive ? `<div class="hrow">${ib(HIVE[D.hive].i, icol(HIVE[D.hive].i))}<div><b>${HIVE[D.hive].n}</b> ${info('hive', D.hive)}</div></div>` : `<span class="mut small">No teahouse color yet. When half your crew (8+) share a color, you unlock Spice, Ice or Lightning bonuses.</span>`}</div>`;
 }
 function pCrewDetail(i) {
   const m = S.crew[i], d = CREW[m.id], need = xpNeed(m.lvl), ab = d.ab ? ABIL[d.ab] : null;
@@ -186,7 +183,7 @@ function pCrewDetail(i) {
     <button class="btn" ${(S.items.mysticWheel || 0) ? '' : 'disabled'} onclick="reroll(${i},'blessed')"><span>Blessed</span></button></div>`;
   return h;
 }
-const STATN = { cdr: 'ability recharge', conv: 'instant conversion', cap: 'doko capacity', gather: 'all gathering', spice: 'Spice gathering', ice: 'Ice gathering', cloud: 'Cloud gathering', brew: 'brewing value', speed: 'move speed', crit: 'crit chance', offline: 'offline earnings', tool: 'tool gathering' };
+const STATN = { cdr: 'ability recharge', conv: 'instant conversion', cap: 'doko capacity', gather: 'all gathering', spice: 'Spice gathering', ice: 'Ice gathering', cloud: 'Lightning gathering', brew: 'brewing value', speed: 'move speed', crit: 'crit chance', offline: 'offline earnings', tool: 'tool gathering' };
 
 function rollOdds(odds) { let r = Math.random(), acc = 0; for (const k in odds) { acc += odds[k]; if (r < acc) return k; } return Object.keys(odds)[1]; }
 function rollCrew(odds) { const r = rollOdds(odds); return pick(CREW_IDS.filter(id => CREW[id].r === r)); }
@@ -313,7 +310,7 @@ function shopExtra(t) {
   if (t === 'supplies') {
     h += `<div class="item">${ib('ticket', icol('ticket'))}<div class="it"><b>Trekking Permit</b><span class="mut small">Recruit a crew member. Price rises.</span></div><button class="btn sm primary" data-cost="${permitCost()}" onclick="buyItem('permit',${permitCost()})">${money(permitCost())}</button></div>`;
     h += `<div class="item">${ib('wheel', icol('wheel'))}<div class="it"><b>Mystic Wheel</b><span class="mut small">Reroll a crew member. No Commons. Price stops rising at 2.5M.</span></div><div class="buyrow"><button class="btn sm primary" data-cost="${wheelCost()}" onclick="buyItem('mysticWheel',${wheelCost()})">${money(wheelCost())}</button><button class="btn sm" data-cost="${wheelBulk(10)}" onclick="buyItem('mysticWheel',${wheelBulk(10)},10)"><span>x10</span></button><button class="btn sm" data-cost="${wheelBulk(100)}" onclick="buyItem('mysticWheel',${wheelBulk(100)},100)"><span>x100</span></button></div></div>`;
-    for (const k of ['momo', 'selroti', 'dalbhat', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'butterDrop', 'goldenMomo']) {
+    for (const k of ['momo', 'selroti', 'dalbhat', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'goldenMomo']) {
       const it = ITEMS[k];
       h += `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k] || 0}</span> ${info('it', k)}</b></div><div class="buyrow"><button class="btn sm primary" data-cost="${it.price}" onclick="buyItem('${k}',${it.price})">${money(it.price)}</button>${it.price * 10 < 1e9 ? `<button class="btn sm" data-cost="${it.price * 10}" onclick="buyItem('${k}',${it.price * 10},10)"><span>x10</span></button>` : ''}</div></div>`;
     }
@@ -338,7 +335,7 @@ function pGear() {
   h += `<h3>Shops</h3><p class="mut small">Shops are on the map. Walk up to one to browse its gear.</p>` + SHOPS.map(sh => { const open = zoneOpen(sh.z); return `<div class="item ${open ? '' : 'dim'}">${ib(open ? 'shop' : 'lock', open ? sh.col : '#9aa0ad')}<div class="it"><b>${sh.n}</b><span class="mut small">${ZONES[sh.z].n} · ${Object.keys(sh.sells).map(k => SLOT_N[k]).concat((sh.extra || []).map(e => ({ supplies: 'Supplies', lodge: 'Lodge', sprinklers: 'Sprinklers' })[e])).join(', ')}</span></div>${open ? `<button class="btn sm" onclick="goTo(${sh.x},${sh.y + 40})"><span>Go</span></button>` : ''}</div>`; }).join('');
   return h;
 }
-const STATN2 = { conv: 'instant conversion', cap: 'capacity', gather: 'all gathering', spice: 'Spice', ice: 'Ice', cloud: 'Cloud', brew: 'brewing', speed: 'speed', crit: 'crit', offline: 'offline', tool: 'tool', cdr: 'faster abilities', yak: 'yak gathering' };
+const STATN2 = { conv: 'instant conversion', cap: 'capacity', gather: 'all gathering', spice: 'Spice', ice: 'Ice', cloud: 'Lightning', brew: 'brewing', speed: 'speed', crit: 'crit', offline: 'offline', tool: 'tool', cdr: 'faster abilities', yak: 'yak gathering' };
 const canAfford = it => S.rp >= it.cost && Object.entries(it.req || {}).every(([k, n]) => (S.items[k] || 0) >= n);
 function buyGear(key, id) {
   const list = { tool: TOOLS, doko: DOKOS, boots: BOOTS, hat: HEADGEAR, charm: CHARMS }[key], it = list.find(x => x.id === id);
@@ -376,7 +373,7 @@ function pItems() {
 /* ---------------- HOTBAR ---------------- */
 let hbSig = '';
 function renderHotbar() {
-  if (!S.hotbar) S.hotbar = ['permit', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
+  if (!S.hotbar) S.hotbar = Array(HOTBAR_N).fill(null);
   if (dragS && dragS.on) return;
   const sig = S.hotbar.map(k => k ? k + ':' + (S.items[k] || 0) : '-').join('|');
   if (sig === hbSig) return; hbSig = sig;
@@ -419,6 +416,7 @@ function dragEnd(ev) {
 }
 function useItem(k) {
   if (!(S.items[k] > 0)) return; S.items[k]--;
+  if (k === 'sprinkler') { S.items[k]++; const pf = fieldAt(player.x, player.y); if (pf < 0 || !fieldOpen(pf)) { toast('Stand in a field to place a sprinkler', 'drop'); return; } placeSprinkler(); return; }
   if (k === 'butterTea') { addTimed('haste', 180, 1800); B.haste.st = Math.max(B.haste.st, 3); }
   if (k === 'spiceShot') addTimed('shot_spice', 600);
   if (k === 'glacierShard') addTimed('shot_ice', 600);
@@ -434,7 +432,6 @@ function useItem(k) {
     save(); renderPanel(); return; }
   if (k === 'garland') { if (S.crew.length >= S.beds) { S.items[k]++; toast('You need a free bed first', 'bed'); return; } addCrew('tiharDog', false); save(); renderPanel(); return; }
   if (k === 'lotusSeed') { if (fieldAt(player.x, player.y) < 0 || !window.plantSprout) { S.items[k]++; toast('Stand in a field to plant it', 'leaf'); return; } plantSprout(fieldAt(player.x, player.y)); }
-  if (k === 'butterDrop') { if (fieldAt(player.x, player.y) < 0) { S.items[k]++; toast('Stand in a field to drop butter', 'drop'); return; } E.decals.push({ kind: 'goo', x: player.x, y: player.y, r: 110, age: 0, dur: mpas('butterStar') ? 80 : 40 }); }
   ring(player.x, player.y, 80, '#ffd24a', .5, 5);
   burst(player.x, player.y - 20, 24, { type: 'star', col: '#fff1a8', spd: 120, life: .9, size: 2.4 });
   toast(`${ITEMS[k].n} active`, ITEMS[k].i); renderPanel();
@@ -731,7 +728,7 @@ function pStats() {
     ${tile('shop', '#e5484d', 'Rupees spent', fmt(st.spent))}
     ${tile('star', '#f0b429', 'Biggest single gather', fmt(st.best))}</div>`;
   const ct = (st.col.spice || 0) + (st.col.ice || 0) + (st.col.cloud || 0);
-  h += `<h3>Gathered by color</h3><div class="sbox">${bars([['Spice', st.col.spice || 0, '#f26b4a', 'flame'], ['Ice', st.col.ice || 0, '#4fb6e6', 'snow'], ['Cloud', st.col.cloud || 0, '#8e9bd6', 'cloud']], ct)}</div>`;
+  h += `<h3>Gathered by color</h3><div class="sbox">${bars([['Spice', st.col.spice || 0, '#f26b4a', 'flame'], ['Ice', st.col.ice || 0, '#4fb6e6', 'snow'], ['Lightning', st.col.cloud || 0, '#8e9bd6', 'cloud']], ct)}</div>`;
   const lt = [1, 2, 3, 4, 5].reduce((a, l) => a + (st.lv[l] || 0), 0);
   h += `<h3>Gathered by flower level</h3><div class="sbox">${bars([1, 2, 3, 4, 5].map(l => [`Level ${l}`, st.lv[l] || 0, ['#cfd6dd', '#8fd18f', '#5ab0e6', '#a77de8', '#f0b429'][l - 1]]), lt)}</div>`;
   const fmax = Math.max(1, ...FIELDS.map(f => st.field[f.id] || 0));
@@ -775,8 +772,8 @@ function buffTip(k, el) {
   if (k === 'vajra') { showPop(el, `<b>Vajra</b><span>Every ${mpas('butterStar') ? 2 : 3}${mpas('butterStar') ? 'nd' : 'rd'} swing releases a bolt. Stand inside a lightning pole to send it through the poles for Storm Charge.</span>`); return; }
   if (k === 'hazec') { showPop(el, `<b>Static Haze</b><span>A random flower gets +1 level every 0.5s until it lifts.</span>`); return; }
   if (k === 'storm') { showPop(el, `<b>Storm Charge x${(1 + stormSt()).toFixed(2)}</b><span>Lightning gathering up to x6, tool swing speed up to x4 (now x${(1 + stormSw()).toFixed(2)}). ${Math.ceil(((S.stormUntil || 0) - Date.now()) / 60000)} min left.</span>`); return; }
-  if (k === 'poles') { showPop(el, `<b>Prayer flags</b><span>${E.poles.length} poles up. ${E.sacred ? 'You can tie a new shape when the current sacred ground fades.' : E.poles.length >= 3 ? 'Walk to the glowing first pole to tie the flags into sacred ground.' : 'Cloud abilities plant poles. With 3 or more, walk to the glowing first pole to tie them into sacred ground.'}</span>`); return; }
-  if (k === 'sacred') { showPop(el, `<b>Sacred ground</b><span>Flowers inside count +${E.sacred.lv} level and Cloud flowers gather x1.5.</span>`); return; }
+  if (k === 'poles') { showPop(el, `<b>Prayer flags</b><span>${E.poles.length} poles up. ${E.sacred ? 'You can tie a new shape when the current sacred ground fades.' : E.poles.length >= 3 ? 'Walk to the glowing first pole to tie the flags into sacred ground.' : 'Lightning abilities plant poles. With 3 or more, walk to the glowing first pole to tie them into sacred ground.'}</span>`); return; }
+  if (k === 'sacred') { showPop(el, `<b>Sacred ground</b><span>Flowers inside count +${E.sacred.lv} level and Lightning flowers gather x1.5.</span>`); return; }
   if (k === 'glaciercount') { const cdl = Math.ceil(((S.popCd || 0) - Date.now()) / 1000); showPop(el, `<b>Glacier Star</b><span>${cdl > 0 ? `Cooling down for ${cdl}s.` : `${S.blueN || 0}/45 Ice Boost bubbles collected.`}</span>`); return; }
   if (k === 'guidecount') { showPop(el, `<b>Wayfinder Star</b><span>${S.pilgrim ? `${FIELDS[S.pilgrim.f].n} gathers x2.5 for ${Math.ceil((S.pilgrim.until - Date.now()) / 60000)} more minutes.` : `${S.guideN || 0}/250 boost bubbles collected.`}</span>`); return; }
   if (k === 'sawcount') { showPop(el, `<b>Chakra Saw</b><span>${S.sawN}/3 Marigolds used. Use ${3 - S.sawN} more within ${Math.max(0, Math.ceil(20 - (now - S.sawLast)))}s.</span>`); return; }
