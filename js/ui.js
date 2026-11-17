@@ -5,8 +5,8 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '42';
-const SAW_K = 20;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
+const VERSION = '43';
+const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -304,10 +304,10 @@ function shopExtra(t) {
   let h = '';
   if (t === 'sprinklers') {
     const sp = S.spr, cur = SPRINKLERS[sp.lv], nx = SPRINKLERS[sp.lv + 1];
-    h += `<p class="mut small">Sprinklers water a circle of flowers: they regrow faster and give more when gathered. Stand in a field and tap <b>Place</b> to set one down. Placing more than you own moves the oldest one.</p>`;
-    h += `<div class="item eq">${ib('drop', '#2ea4dc')}<div class="it"><b>${cur.n}</b><span class="mut small">Radius ${cur.r} · x${cur.wet} gathering · x${cur.rg} regrowth</span></div><span class="tag">${sp.placed.length}/${sp.n} placed</span></div>`;
-    h += `<div class="item">${ib('plus', '#3fae6b')}<div class="it"><b>Extra sprinkler</b><span class="mut small">${sp.n >= SPR_MAX ? 'Maximum reached' : `Own ${sp.n} of ${SPR_MAX}. Price triples each time.`}</span></div>${sp.n >= SPR_MAX ? '<span class="tag dim">Max</span>' : `<button class="btn sm primary" data-cost="${sprCountCost(sp.n)}" onclick="buySprinkler()">${money(sprCountCost(sp.n))}</button>`}</div>`;
-    h += `<div class="item">${ib('up', '#9b6ef3')}<div class="it"><b>${nx ? 'Upgrade to ' + nx.n : 'Fully upgraded'}</b><span class="mut small">${nx ? `Radius ${nx.r} · x${nx.wet} gathering · x${nx.rg} regrowth` : 'The best sprinklers on the mountain.'}</span></div>${nx ? `<button class="btn sm primary" data-cost="${sprLevelCost(sp.lv)}" onclick="upgradeSprinkler()">${money(sprLevelCost(sp.lv))}</button>` : ''}</div>`;
+    h += `<p class="mut small">Sprinklers water a circle of flowers: they regrow faster and give more when gathered. Each tier gives you a set number of sprinklers; the Spirit Saturator is a single huge one that keeps its flowers almost always full. Stand in a field and tap <b>Place</b>.</p>`;
+    if (sp.n > 0) h += `<div class="item eq">${ib('drop', '#2ea4dc')}<div class="it"><b>${cur.n}</b><span class="mut small">${cur.cnt} sprinkler${cur.cnt > 1 ? 's' : ''} · radius ${cur.r} · x${cur.wet} gathering · x${cur.rg} regrowth</span></div><span class="tag">${sp.placed.length}/${sp.n} placed</span></div>`;
+    const nxt = sp.n > 0 ? nx : SPRINKLERS[0];
+    h += `<div class="item">${ib('up', '#9b6ef3')}<div class="it"><b>${nxt ? (sp.n > 0 ? 'Upgrade to ' : 'Buy ') + nxt.n : 'Fully upgraded'}</b><span class="mut small">${nxt ? `${nxt.cnt} sprinkler${nxt.cnt > 1 ? 's' : ''} · radius ${nxt.r} · x${nxt.wet} gathering · x${nxt.rg} regrowth` : 'The best sprinkler on the mountain.'}</span></div>${nxt ? `<button class="btn sm primary" data-cost="${nxt.cost}" onclick="upgradeSprinkler()">${money(nxt.cost)}</button>` : ''}</div>`;
     if (sp.placed.length) h += `<button class="btn" onclick="S.spr.placed=[];refreshWet();save();renderPanel()"><span>Pick up all sprinklers</span></button>`;
   }
   if (t === 'supplies') {
@@ -756,8 +756,8 @@ function pStats() {
   return h;
 }
 
-function buySprinkler() { const c = sprCountCost(S.spr.n); if (S.rp < c || S.spr.n >= SPR_MAX) return; spend(c); S.spr.n++; toast(`Sprinkler ${S.spr.n} bought. Stand in a field and tap Place`, 'drop'); save(); renderPanel(); }
-function upgradeSprinkler() { const c = sprLevelCost(S.spr.lv); if (S.rp < c || !SPRINKLERS[S.spr.lv + 1]) return; spend(c); S.spr.lv++; refreshWet(); toast(`Upgraded to ${SPRINKLERS[S.spr.lv].n}`, 'drop'); save(); renderPanel(); }
+function buySprinkler() { upgradeSprinkler(); }
+function upgradeSprinkler() { const nl = S.spr.n > 0 ? S.spr.lv + 1 : 0, nx = SPRINKLERS[nl]; if (!nx || S.rp < nx.cost) return; spend(nx.cost); S.spr.lv = nl; S.spr.n = nx.cnt; S.spr.placed = S.spr.placed.slice(-nx.cnt); refreshWet(); toast(`Upgraded to ${SPRINKLERS[S.spr.lv].n}`, 'drop'); save(); renderPanel(); }
 let tipT = null, popT = null;
 const slotAt = (x, y) => [...document.querySelectorAll('.hslot')].find(s2 => { const r = s2.getBoundingClientRect(); return x >= r.left - 4 && x <= r.right + 4 && y >= r.top - 14 && y <= r.bottom + 10; });
 /* small popover anchored to a chip or gear button */
@@ -917,7 +917,7 @@ function buildTestSave(col) {
   s2.rp = 1e12; s2.tools = TOOLS.map(t => t.id); s2.tool = b.tool; s2.dokos = DOKOS.map(d => d.id); s2.dokoId = b.doko; s2.bootsOwned = BOOTS.map(x => x.id); s2.boots = 'wind';
   s2.hats = HEADGEAR.map(x => x.id); s2.hat = b.hat; s2.lodge = LODGE.length - 1;
   s2.mandala = { tier: 'celestial', lines: b.lines, pas: b.stars };
-  s2.spr = { n: SPR_MAX, lv: SPRINKLERS.length - 1, placed: [] };
+  s2.spr = { n: 1, lv: SPRINKLERS.length - 1, placed: [] }; s2.sprv = 2;
   s2.items = {}; for (const k in ITEMS) s2.items[k] = 500; s2.hotbar = ['marigold', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
   s2.found = {}; for (const id of CREW_IDS) s2.found[id] = true;
   s2.q = { didi: 48, pemba: 99, dolma: 99, norbu: 99, yeti: 99, prof: 0 }; s2.qv = 2; s2.bv = 2; s2.hiveBal = 0; s2.hiveBalTot = 0; s2.blueN = 0; s2.popCd = 0; s2.perm = {}; s2.fperm = {}; s2.badges = {}; s2.sprouts = [];

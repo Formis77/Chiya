@@ -409,7 +409,7 @@ function takeToken(tk) {
   abilityFired(CREW[tk.e.m.id].c);
 }
 const FX = {
-  lpole(e, fi, tk) { if (fi < 0) return; const ps = E.decals.filter(d2 => d2.kind === 'lpole'); if (ps.length >= 5) E.decals.splice(E.decals.indexOf(ps[0]), 1);
+  lpole(e, fi, tk) { if (fi < 0) return; const ps = E.decals.filter(d2 => d2.kind === 'lpole'); if (ps.length >= 15) E.decals.splice(E.decals.indexOf(ps[0]), 1);
     E.decals.push({ kind: 'lpole', x: tk.x, y: tk.y, r: e.m.bl ? 95 : 72, age: 0, dur: 25, fi }); ring(tk.x, tk.y, 60, '#c9b0ff', .4, 4); },
   sbomb(e, fi, tk) { if (fi < 0) return; let sum = 0; const base = crewAmount(e);
     tilesNear(fi, tk.x, tk.y, 85).forEach(t => { t.bump = { lv: 1, until: now + 12 }; sum += collect(t, base, 'cloud', 2.5); });
@@ -1471,7 +1471,7 @@ function dropMat(fi) {
 const abNameT = {};
 /* ---------------- Lightning (tool, poles, Storm Charge) ---------------- */
 const stormSt = () => Math.min(3, S.storm || 0);
-const STORM_GAIN = [0, .01, .03, .05, .08, .1];
+const STORM_GAIN = [0, .002, .006, .01, .016, .02];
 function poleGroups() {
   const ps = E.decals.filter(d2 => d2.kind === 'lpole'), par = ps.map((_, i) => i), find = i => par[i] === i ? i : (par[i] = find(par[i])), links = [];
   for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) if (ps[i].fi === ps[j].fi && dist(ps[i].x, ps[i].y, ps[j].x, ps[j].y) <= ps[i].r + ps[j].r) { par[find(i)] = find(j); links.push([ps[i], ps[j]]); }
@@ -1491,7 +1491,7 @@ function runChain(ms, start) {
     const base = tool().amt * 2; let sum = 0; tilesNear(endP.fi, endP.x, endP.y, endP.r).forEach(t => sum += collect(t, base, 'neutral', 1, true));
     ring(endP.x, endP.y, endP.r, '#ffe36e', .5, 6); burst(endP.x, endP.y - 20, 26, { type: 'star', col: '#e9ddff', spd: 200, life: .8, size: 2.6 }); shake(5);
     S.storm = Math.min(3, (S.storm || 0) + STORM_GAIN[n]); S.stormUntil = Date.now() + 3600e3;
-    pop(endP.x, endP.y - 70, `Storm +${STORM_GAIN[n].toFixed(2)}`, '#d8c6ff', true); if (sum) pop(endP.x, endP.y - 50, '+' + fmt(sum), '#ffe36e');
+    pop(endP.x, endP.y - 70, `Storm +${STORM_GAIN[n].toFixed(3)}`, '#d8c6ff', true); if (sum) pop(endP.x, endP.y - 50, '+' + fmt(sum), '#ffe36e');
   });
 }
 function vajraBolt(fi) {
@@ -1611,6 +1611,7 @@ function boot() {
   if (!S) S = newSave();
   statDefaults();
   if (!S.spr) S.spr = { n: 0, lv: 0, placed: [] };
+  if (S.sprv !== 2) { S.sprv = 2; if (S.spr.n > 0) { S.spr.lv = [0, 1, 2, 3, 3, 4][Math.min(5, S.spr.lv || 0)]; S.spr.n = SPRINKLERS[S.spr.lv].cnt; S.spr.placed = S.spr.placed.slice(-S.spr.n); } else S.spr.lv = 0; }
   if (!S.hats) { S.hats = []; S.hat = null; S.charms = []; S.charm = null; S.pas = {}; }
   if (S.charms && S.charms.length) { let refund = 0; for (const id of S.charms) { const ch = CHARMS.find(c2 => c2.id === id); if (ch) refund += ch.cost; } S.rp += refund; S.charms = []; S.charm = null; S.charmRefund = refund; }
   if (S.mandala === undefined) S.mandala = null;

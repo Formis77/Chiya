@@ -88,7 +88,7 @@ const ABIL = {
   spiceBoost:  { n: 'Spice Boost',   i: 'flame',  tok: true,  d: 'Bubble. Spice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also leaves a flame where the bubble lay.' },
   iceBoost:    { n: 'Ice Boost',     i: 'snow',   tok: true,  d: 'Bubble. Ice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also releases 2 bubbles.' },
   cloudBoost:  { n: 'Lightning Boost', i: 'bolt', tok: true,  d: 'Bubble. Lightning gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer.' },
-  lpole:       { n: 'Lightning Pole', i: 'bolt', tok: true,  d: 'Bubble. Plants a lightning pole where it lay for 25s (bigger when Blessed). Lightning flowers inside gather x1.25; poles that touch connect: 2 connected x1.5, 3 or more x2. When your Vajra Staff fires a bolt while you stand inside a pole, the bolt runs through every connected pole and adds Storm Charge. Up to 5 poles.' },
+  lpole:       { n: 'Lightning Pole', i: 'bolt', tok: true,  d: 'Bubble. Plants a lightning pole where it lay for 25s (bigger when Blessed). Up to 15 poles at once. Lightning flowers inside gather x1.25; poles that touch connect: 2 connected x1.5, 3 or more x2. When your Vajra Staff fires a bolt while you stand inside a pole, the bolt runs through every connected pole and adds Storm Charge.' },
   sbomb:       { n: 'Static Bomb',   i: 'bolt',   tok: true,  d: 'Bubble. Explodes when you grab it: gathers everything within 85 at x2.5 and raises those flowers +1 level for 12s. Blessed Storm Leopards sometimes drop a Static Haze instead.' },
   haze:        { n: 'Static Haze',   i: 'cloud',  tok: true,  d: 'Bubble (Blessed Storm Leopard). A violet haze settles over the field for 90s: every 0.5s a random flower inside gets +1 level until the haze lifts.' },
   stormCall:   { n: 'Storm Call',    i: 'bolt',   tok: true,  d: 'Bubble. Every lightning pole on the field strikes once, gathering the flowers inside its radius.' },
@@ -186,7 +186,7 @@ const PASSIVES = {
   wildfire:    { n: 'Inferno',         col: 'spice', need: 30, d: 'Every 30 Spice abilities: every flame in your field erupts (x3 around it) and +100% Spice gathering for 15s.' },
   polar:       { n: 'Polar Power',     col: 'ice',   need: 30, d: 'Every 30 Ice abilities: +100% Ice gathering and +10% crit for 15s, and 6 bubbles rise around you.' },
   cloudburst:  { n: 'Thunderstorm',    col: 'cloud', need: 30, d: 'Every 30 Lightning abilities: a bolt runs through every pole group on the field (adding Storm Charge for each), and tool reach x1.5 for 15s.' },
-  vajra:       { n: 'Vajra',           col: 'always', need: 0, d: 'Every 3rd swing releases a lightning bolt that strikes near you at x2 tool power. If you stand inside a lightning pole, the bolt runs to it instead, through every connected pole, and adds Storm Charge: +0.01 with 1 pole, +0.03 with 2, +0.05 with 3, +0.08 with 4, +0.1 with 5.' },
+  vajra:       { n: 'Vajra',           col: 'always', need: 0, d: 'Every 3rd swing releases a lightning bolt that strikes near you at x2 tool power. If you stand inside a lightning pole, the bolt runs to it instead, through every connected pole, and adds Storm Charge: +0.002 with 1 pole, +0.006 with 2, +0.01 with 3, +0.016 with 4, +0.02 with 5 or more.' },
   spirit:      { n: 'Mountain Spirit', col: 'any',   need: 50, d: 'Every 50 abilities: +100% to all gathering for 20s.' },
   herd:        { n: 'Herd Call',       col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: your crew move 50% faster for 15s.' },
   spark:       { n: 'Spark',           col: 'spice', need: 20, d: 'Every 20 Spice abilities: a Chili Burst explodes around you.' },
@@ -292,23 +292,21 @@ const MANDALA_PAS = {
   glacierStar: { n: 'Glacier Star', col: 'ice',   main: true, d: 'Permanently x1.25 capacity while you are in an Ice field. Every 45th Ice Boost bubble you collect (1 minute cooldown) summons the Glacier Star for 45s: x2 Ice gathering and +10% instant Ice conversion, plus 2 minutes of Ice Swell. Every bubble you pop while it shines adds +1% (up to x3) and 4s of Ice Swell. When it fades it leaves bubbles behind, more for every bubble popped.' },
   butterStar:  { n: 'Vajra Star',   col: 'cloud', main: true, d: 'Your Vajra Staff releases a lightning bolt every 2nd swing instead of every 3rd.' },
   guidingStar: { n: 'Wayfinder Star', col: 'any', main: false, d: 'Every 250 boost bubbles you collect (Spice, Ice or Cloud Boost), a random open field becomes your wayfinder field for 10 minutes: x2.5 gathering there.' },
-  starSaw:     { n: 'Chakra Saw',   col: 'any',   main: false, d: 'Use 3 Marigolds to spin up a Chakra Saw for 30s (the third Marigold is given back). While it spins it brews ingredients straight out of your doko into rupees, about 20 times as fast as you have been gathering lately, so the stronger your build gathers, the more it brews. It never adds to your doko.' },
+  starSaw:     { n: 'Chakra Saw',   col: 'any',   main: false, d: 'Use 3 Marigolds to spin up a Chakra Saw for 30s (the third Marigold is given back). While it spins it brews ingredients straight out of your doko into rupees, about 60 times as fast as you have been gathering lately, so the stronger your build gathers, the more it brews. It never adds to your doko.' },
   starShower:  { n: 'Comet Rain',   col: 'any',   main: false, d: 'Every 45s while you gather, 10 green circles appear across the field and a comet lands on each one. Stand in a circle when its comet lands for Inspire: x2 gathering for 5s, and every further comet adds +1x (up to x11).' }
 };
 const OLD_STAR = { kilnStar: 'blazingStar', cometStar: 'blazingStar', blazingStar: 'blazingStar', glacierStar: 'glacierStar', frostStar: 'glacierStar', bubbleStar: 'glacierStar', cloudStar: 'butterStar', butterStar: 'butterStar', pilgrimStar: 'guidingStar' };
 
 /* sprinklers: water a circle of flowers (faster regrowth + gathering bonus) */
+/* Bee Swarm style: each tier gives a set number of sprinklers; the top one is a single, very strong one */
 const SPRINKLERS = [
-  { n: 'Bamboo Sprinkler',  r: 70,  wet: 1.2,  rg: 2 },
-  { n: 'Copper Sprinkler',  r: 85,  wet: 1.3,  rg: 2.5 },
-  { n: 'Silver Sprinkler',  r: 100, wet: 1.45, rg: 3 },
-  { n: 'Golden Sprinkler',  r: 115, wet: 1.6,  rg: 3.5 },
-  { n: 'Glacier Sprinkler', r: 130, wet: 1.8,  rg: 4 },
-  { n: 'Spirit Sprinkler',  r: 150, wet: 2.0,  rg: 5 }
+  { n: 'Bamboo Sprinkler',  cnt: 1, r: 75,  wet: 1.25, rg: 3,   cost: 3000 },
+  { n: 'Copper Sprinklers', cnt: 2, r: 80,  wet: 1.3,  rg: 3.5, cost: 5e4 },
+  { n: 'Silver Sprinklers', cnt: 3, r: 85,  wet: 1.4,  rg: 4,   cost: 6e5 },
+  { n: 'Golden Sprinklers', cnt: 4, r: 95,  wet: 1.5,  rg: 5,   cost: 8e6 },
+  { n: 'Spirit Saturator',  cnt: 1, r: 185, wet: 2,    rg: 30,  cost: 2.5e8 }
 ];
-const SPR_MAX = 8;
-const sprCountCost = n => Math.round(3000 * Math.pow(3, n));
-const sprLevelCost = l => Math.round(20000 * Math.pow(6, l));
+const SPR_MAX = 4;
 
 const BUFFS = {
   haste:      { n: 'Haste',        i: 'speed',   d: 'You and your crew move 20% faster per stack.' },
