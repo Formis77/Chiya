@@ -719,7 +719,7 @@ function update(dt) {
   // Chakra Saw: brews a big share of the doko straight into rupees while it spins (works with a full bag too)
   if (pf >= 0 && fieldOpen(pf) && mpas('starSaw') && B.saw) { sawT -= dt; if (sawT <= 0) { sawT = .12;
     const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50;
-    const r0 = S.rp; sawMode = true; tilesNear(pf, sx, sy, 48).forEach(t => collect(t, tool().amt * 25, 'neutral', 1, true)); sawMode = false;
+    const r0 = S.rp; sawMode = true; tilesNear(pf, sx, sy, 48).forEach(t => collect(t, tool().amt * 50, 'neutral', 1, true)); sawMode = false;
     const val = S.rp - r0; if (val > 0) { sawAcc += val; burst(sx, sy - 6, 3, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.4 }); }
     sawPopT += .12; if (sawPopT >= .6 && sawAcc > 0) { pop(sx, sy - 30, '+' + fmt(sawAcc), '#ff9f1a', true); sawAcc = 0; sawPopT = 0; } } }
   if (pf >= 0 && fieldOpen(pf) && S.doko < capMax()) {
