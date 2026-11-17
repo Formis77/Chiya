@@ -220,12 +220,13 @@ function brewValue() { return 1 + bp('brew') + (D.syn.has('teaMasters') ? .15 : 
 function cdMul(def) {
   let m = 1;
   if (D.hive === 'spice') m *= 1 / .85;
-  if (B.incense) m *= 2;
-  m *= 1 / (1 - Math.min(.5, bp('cdr')));
-  if (def.r === 'mythic' && D.syn.has('legends')) m *= 1 / .7;
+  if (B.incense) m *= 1.5;
+  m *= 1 / (1 - Math.min(.3, bp('cdr')));
+  if (def.r === 'mythic' && D.syn.has('legends')) m *= 1 / .8;
   return m;
 }
 const FROST_MUL = [1, 1.25, 1.5, 2, 3];
+const AB_CD = 3;   /* ability cooldowns are 3x the listed value; levels only speed them up a little */
 let lastGoo = false, kilnFlame = false;
 function zoneMult(x, y, col, src) {
   let z = 1, frost = 0, inGoo = false, inFlame = false;
@@ -256,7 +257,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   if (!fieldOpen(t.f) || (t.v < .04 && !sawMode)) return 0;
   const space = capMax() - S.doko;
   if (space <= 0 && !sawMode && !E.balloons.some(bl => !bl.home && bl.fi === t.f && bl.held < bl.cap && dist(t.x, t.y, bl.x, bl.y) < 120)) { fullWarn(); return 0; }
-  const tv = sawMode ? Math.max(.6, t.v) : t.v; if (!sawMode) t.v = Math.max(0, tv - .22);
+  const tv = sawMode ? Math.max(.6, t.v) : t.v; if (!sawMode && !(B.electric && E.elecF === t.f)) t.v = Math.max(0, tv - .22);
   let amt = base * FIELDS[t.f].y * LVM[effLv(t)] * (.35 + .65 * tv) * extra;
   const match = srcCol === t.col ? 1.5 : srcCol === 'neutral' ? 1.15 : 1;
   amt *= match * gMult(t.col, isTool) * zoneMult(t.x, t.y, t.col, srcCol) * (t.wet || 1);
@@ -296,7 +297,7 @@ function rebuildCrew() {
   E.crew = S.crew.map((m, i) => {
     const prev = old.find(e => e.m === m);
     if (prev) return prev;
-    return { m, x: player.x + rand(-40, 40), y: player.y + rand(-30, 30), st: 'idle', t: 0, tile: null, cd: rand(4, (CREW[m.id].cd || 10) * 1.8), anim: rand(0, 9), face: 1, mv: false, act: false, jump: null };
+    return { m, x: player.x + rand(-40, 40), y: player.y + rand(-30, 30), st: 'idle', t: 0, tile: null, cd: rand(4, (CREW[m.id].cd || 10) * AB_CD), anim: rand(0, 9), face: 1, mv: false, act: false, jump: null };
   });
   recompute();
 }
@@ -339,8 +340,8 @@ function updCrew(e, i, dt) {
   if (def.ab) {
     const inField = pf >= 0 && fieldOpen(pf) && fieldAt(e.x, e.y) === pf && (e.st === 'go' || e.st === 'gather');
     if (inField || def.ab === 'haste') {
-      e.cd -= dt * cdMul(def) * (1 + .04 * (e.m.lvl - 1));
-      if (e.cd <= 0) { e.cd = def.cd * 1.8; useAbility(e, pf >= 0 && fieldOpen(pf) ? pf : -1); }
+      e.cd -= dt * cdMul(def) * (1 + .015 * (e.m.lvl - 1));
+      if (e.cd <= 0) { e.cd = def.cd * AB_CD; useAbility(e, pf >= 0 && fieldOpen(pf) ? pf : -1); }
     }
   }
   if (atHome) {
@@ -1044,6 +1045,7 @@ function render() {
   // top decals (rays, flash, focus)
   for (const d of E.decals) drawDecalTop(c, d);
   if (E.decals.some(d2 => d2.kind === 'lpole')) drawLPoles(c);
+  if (B.electric && E.elecF != null) { const f = FIELDS[E.elecF]; if (vis(f.x + f.w / 2, f.yy + f.h / 2, 500)) { c.save(); c.globalAlpha = .12 + Math.sin(now * 12) * .04; c.fillStyle = '#c9b0ff'; P(c); c.roundRect(f.x, f.yy, f.w, f.h, 20); c.fill(); c.restore(); if (Math.random() < .5) boltFx(rand(f.x, f.x + f.w), rand(f.yy, f.yy + f.h) - 40, rand(f.x, f.x + f.w), rand(f.yy, f.yy + f.h)); } }
   if (E.haze && vis(FIELDS[E.haze.fi].x + FIELDS[E.haze.fi].w / 2, FIELDS[E.haze.fi].yy + FIELDS[E.haze.fi].h / 2, 400)) { const f = FIELDS[E.haze.fi]; c.save(); c.globalAlpha = .1; c.fillStyle = '#9b6ef3'; P(c); c.roundRect(f.x, f.yy, f.w, f.h, 20); c.fill(); c.restore(); }
   if (E.horse) drawHorse(c, E.horse);
   for (const bl of E.balloons) if (vis(bl.x, bl.y, 120)) drawSkyBalloon(c, bl);
@@ -1583,7 +1585,7 @@ function runPassive(id, fi) {
     case 'wildfire': addBuff('wildfire', 15); burst(player.x, player.y, 40, { type: 'ember', col: '#ff6a2b', spd: 220, life: 1, size: 3.2, g: -60 });
       E.decals.filter(d => d.kind === 'flame' && d.fi === fi).forEach((d, k) => later(k * .05, () => { tilesNear(fi, d.x, d.y, 60).forEach(t => collect(t, d.base, 'spice', 3)); ring(d.x, d.y, 60, '#ff6a2b', .4, 6); burst(d.x, d.y, 16, { type: 'ember', col: '#ff8a3d', spd: 180, life: .8, size: 3, g: -60 }); })); break;
     case 'polar': addBuff('polar', 15); burst(player.x, player.y, 40, { type: 'snow', col: '#d6f3ff', spd: 200, life: 1, size: 2.6 }); for (let k = 0; k < 6; k++) spawnBubble(fi, player.x + rand(-110, 110), player.y + rand(-80, 80), 8 * (1 + S.crew.length * .05)); break;
-    case 'cloudburst': { addBuff('cloudburst', 15); for (const g2 of poleGroups()) runChain(g2.ms, g2.ms[0]); break; }
+    case 'cloudburst': { B.electric = { t: 15, st: 1 }; E.elecF = fi; burst(player.x, player.y - 20, 40, { type: 'spark', col: '#e9ddff', spd: 260, life: .7, size: 2.4 }); toast(`${FIELDS[fi].n} is electrified: flowers will not run down for 15s`, 'bolt'); break; }
     case 'spirit': addBuff('spirit', 20); E.decals.push({ kind: 'rays', x: player.x, y: player.y, age: 0, dur: 2.2, follow: true }); break;
     case 'herd': addBuff('herd', 15); break;
     case 'spark': FX.burst(pseudo('chiliCook'), fi, { x: player.x, y: player.y }); break;
