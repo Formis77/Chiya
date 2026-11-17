@@ -283,7 +283,7 @@ const MANDALA_PAS = {
   glacierStar: { n: 'Glacier Star', col: 'ice',   main: true, d: 'Permanently x1.25 capacity while you are in an Ice field. Every 45th Ice Boost bubble you collect (1 minute cooldown) summons the Glacier Star for 45s: x2 Ice gathering and +10% instant Ice conversion, plus 2 minutes of Ice Swell. Every bubble you pop while it shines adds +1% (up to x3) and 4s of Ice Swell. When it fades it leaves bubbles behind, more for every bubble popped.' },
   butterStar:  { n: 'Butter Star',  col: 'cloud', main: true, d: 'Butter gathers x3 instead of x2 and lasts 50% longer. Every 150 flowers gathered in butter drops a Butter Bomb that covers the field in butter for 20s.' },
   guidingStar: { n: 'Wayfinder Star', col: 'any', main: false, d: 'Every 250 boost bubbles you collect (Spice, Ice or Cloud Boost), a random open field becomes your wayfinder field for 10 minutes: x2.5 gathering there.' },
-  starSaw:     { n: 'Chakra Saw',   col: 'any',   main: false, d: 'Use 3 Marigolds to spin up a Chakra Saw for 30s (the third Marigold is given back). It circles you in fields, gathers every flower it touches at x100 tool power (without draining them) and brews 60% of what it gathers straight into rupees (all of it when your doko is full).' },
+  starSaw:     { n: 'Chakra Saw',   col: 'any',   main: false, d: 'Use 3 Marigolds to spin up a Chakra Saw for 30s (the third Marigold is given back). It circles you in fields, gathers every flower it touches at x100 tool power (without draining them) and brews everything it gathers straight into rupees, so it never fills your doko.' },
   starShower:  { n: 'Comet Rain',   col: 'any',   main: false, d: 'Every 45s while you gather, 10 green circles appear across the field and a comet lands on each one. Stand in a circle when its comet lands for Inspire: x2 gathering for 5s, and every further comet adds +1x (up to x11).' }
 };
 const OLD_STAR = { kilnStar: 'blazingStar', cometStar: 'blazingStar', blazingStar: 'blazingStar', glacierStar: 'glacierStar', frostStar: 'glacierStar', bubbleStar: 'glacierStar', cloudStar: 'butterStar', butterStar: 'butterStar', pilgrimStar: 'guidingStar' };
@@ -324,7 +324,7 @@ const BUFFS = {
   lbless:     { n: 'Lantern Blessing', i: 'diya', d: 'From the teahouse lantern: +3% capacity and +1.5% teahouse brewing value per stack (x4 and x2.5 at 100).' },
   nimbusb:    { n: 'Nimbus',       i: 'cloud',   d: '+2% capacity per stack.' },
   inspire:    { n: 'Inspire',      i: 'sparkle', d: 'All gathering multiplied by (1 + stacks): x2 at one stack. Lasts 5s, refreshed by more comets or Inspire bubbles.' },
-  saw:        { n: 'Chakra Saw',   i: 'star',    d: 'A spinning saw circles you, gathers at x100 tool power and brews 60% of it straight into rupees (100% when the doko is full).' },
+  saw:        { n: 'Chakra Saw',   i: 'star',    d: 'A spinning saw circles you, gathers at x100 tool power and brews all of it straight into rupees.' },
   kukur:      { n: 'Kukur Puja',   i: 'paw',     d: '+50% to all gathering.' },
   litfield:   { n: 'Lit field',    i: 'diya',    d: 'You lit every diya in this field: +50% gathering here until the night ends.' },
   butterbomb: { n: 'Butter Bomb',  i: 'drop',    d: 'The whole field counts as butter.' },

@@ -269,7 +269,7 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   if (E.litF && E.litF[t.f]) amt *= 1.5;
   amt *= fieldBonus(t.f);
   const inTea = E.decals.some(d => d.kind === 'teamark' && dist(t.x, t.y, d.x, d.y) < d.r);
-  const conv = sup || (sawMode && space <= 0) ? 1 : sawMode ? .6 : Math.min(.8, bp('conv') + (B.popstar && t.col === 'ice' ? .1 : 0) + (B.darkheat ? B.darkheat.st * .005 : 0) + (kilnFlame ? .15 : 0) + (B.masala ? .08 : 0) + (D.syn.has('fullHouse') ? .05 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
+  const conv = sup || sawMode ? 1 : Math.min(.8, bp('conv') + (B.popstar && t.col === 'ice' ? .1 : 0) + (B.darkheat ? B.darkheat.st * .005 : 0) + (kilnFlame ? .15 : 0) + (B.masala ? .08 : 0) + (D.syn.has('fullHouse') ? .05 : 0) + (inTea ? (D.syn.has('teaCeremony') ? .5 : .35) : 0));
   if (conv > 0) { const inst = amt * conv, val = inst * brewValue(); S.rp += val; S.stats.earn += val; amt -= inst;
     if (sup) { S.stats.gather += inst; S.stats.col[t.col] = (S.stats.col[t.col] || 0) + inst; const fd = FIELDS[t.f].id; S.stats.field[fd] = (S.stats.field[fd] || 0) + inst; } }
   if (E.balloons.length) for (const bl of E.balloons) { if (bl.home || bl.fi !== t.f || dist(t.x, t.y, bl.x, bl.y) > 120) continue; const toB = Math.min(bl.cap - bl.held, amt * .75); if (toB > 0) { bl.held += toB; amt -= toB; } break; }
