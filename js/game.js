@@ -33,7 +33,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 let S = null;                 // persistent save
 let D = { k: {}, syn: new Set(), hive: null, bp: {}, cnt: {} };   // derived values
 const B = {};                 // active buffs  id -> {t, st}
-const E = { balloons: [], crew: [], tokens: [], parts: [], decals: [], timers: [], proj: [], pops: [] };
+const E = { poles: [], sacred: null, horse: null, balloons: [], crew: [], tokens: [], parts: [], decals: [], timers: [], proj: [], pops: [] };
 const player = { x: BREW.x, y: BREW.y - 30, face: 1, mv: false, swing: 0, swingT: 0, auto: null, anim: 0 };
 const cam = { x: 0, y: 0, shake: 0 };
 const joy = { on: false, id: null, ox: 0, oy: 0, x: 0, y: 0, kx: 0, ky: 0 };
@@ -182,7 +182,7 @@ const BLESS_MAX = 2e10;
 const blessStacks = p => Math.max(1, Math.min(100, Math.floor(100 * Math.sqrt(p / BLESS_MAX))));
 function capMax() {
   let m = 1 + bp('cap') + (D.syn.has('rainbow') ? .15 : 0) + (D.syn.has('porterUnion') ? .25 : 0) + (D.syn.has('herd') ? .1 : 0) + (D.hive === 'cloud' ? .15 : 0) + .05 * (D.k.dzo || 0);
-  if (B.nimbusb) m *= 1 + B.nimbusb.st * .02;
+  if (B.lungta && doko().pas === 'nimbus') m *= 1 + B.lungta.st * .02;
   if (inIceField()) m *= (mpas('glacierStar') ? 1.25 : 1) * swellMul();
   if (B.lbless) m *= 1 + 3 * B.lbless.st / 100;
   return Math.floor(doko().cap * m);
@@ -199,6 +199,7 @@ function gMult(col, isTool) {
   if (B.spirit) add += 1;
   if (B.kukur) add += .5;
   if (B.heat && col === 'spice') add += Math.floor(B.heat.st) * .01;
+  if (B.lungta && col === 'cloud') add += B.lungta.st * .02;
   if (B.chill && col === 'ice') add += B.chill.st * .01;
   if (isTool) add += bp('tool') + (D.hive === 'cloud' ? .5 : 0);
   let m = 1 + add;
@@ -215,7 +216,7 @@ function critChance() { return .03 + (B.polar ? .1 : 0) + bp('crit') + (B.focus 
 function critMul() { return B.focus ? (D.syn.has('frozenFocus') ? 3 : 2.5) : 2; }
 /* Super Crit: a crit that doubles again and is brewed straight into rupees (never touches the doko) */
 function superChance() { return Math.min(.7, (B.precision ? B.precision.st * .005 : 0) + (B.darkheat ? B.darkheat.st * .01 : 0)); }
-function brewValue() { return 1 + bp('brew') + (D.syn.has('teaMasters') ? .15 : 0) + (D.syn.has('festival') ? .2 : 0) + (D.hive === 'ice' ? .3 : 0); }
+function brewValue() { return 1 + bp('brew') + (B.lungta ? B.lungta.st * .03 : 0) + (D.syn.has('teaMasters') ? .15 : 0) + (D.syn.has('festival') ? .2 : 0) + (D.hive === 'ice' ? .3 : 0); }
 function cdMul(def) {
   let m = 1;
   if (D.hive === 'spice') m *= 1 / .85;
@@ -228,10 +229,9 @@ const FROST_MUL = [1, 1.25, 1.5, 2, 3];
 let lastGoo = false, kilnFlame = false;
 function zoneMult(x, y, col, src) {
   let z = 1, frost = 0, inGoo = false, inFlame = false;
-  if (B.butterbomb) { inGoo = true; z *= mpas('butterStar') ? 3 : 2; if (src === 'cloud') z *= 1.8; }
+  if (E.sacred && col === 'cloud' && inSacred(x, y)) z *= 1.5;
   for (const d of E.decals) {
-    if (d.kind === 'goo' && !inGoo && dist(x, y, d.x, d.y) < d.r) { inGoo = true; z *= mpas('butterStar') ? 3 : 2; if (src === 'cloud') z *= 1.8; }
-    else if (d.kind === 'wheel' && dist(x, y, d.x, d.y) < d.r) z *= 2;
+    if (d.kind === 'wheel' && dist(x, y, d.x, d.y) < d.r) z *= 2;
     else if (d.kind === 'flame' && !inFlame && dist(x, y, d.x, d.y) < d.r) { inFlame = true; z *= d.dark ? (mpas('blazingStar') ? 3 : 2.5) : (mpas('blazingStar') ? 2 : 1.5); }
   }
   lastGoo = inGoo;
@@ -247,6 +247,7 @@ function addBuff(id, dur, max = 1) {
 
 /* ---------------- gathering ---------------- */
 function effLv(t) {
+  if (E.sacred && E.sacred.fi === t.f && inSacred(t.x, t.y)) return Math.min(5, t.lv + E.sacred.lv);
   if (!mistOn) return t.lv;
   for (const d of E.decals) if (d.kind === 'mist' && dist(t.x, t.y, d.x, d.y) < d.r) return Math.min(5, t.lv + 1);
   return t.lv;
@@ -282,7 +283,6 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   const fid = FIELDS[t.f].id; S.stats.field[fid] = (S.stats.field[fid] || 0) + add;
   if (S.sprouts.length && add > 0) sproutHit(t, add);
   if (wasNight && add > 0) nightHit(t, add);
-  if (gooHit && add > 0 && mpas('butterStar') && !B.butterbomb && ++S.butter >= 150) { S.butter = 0; butterBomb(t.f); }
   leafBurst(t, crit ? 5 : 2);
   if (crit) burst(t.x, t.y - 10, 5, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.2 });
   return add;
@@ -419,7 +419,7 @@ const FX = {
   inspire() { if (!B.inspire) B.inspire = { t: 5, st: 1 }; else B.inspire.t = 5; ring(player.x, player.y, 80, '#7ee08a', .5, 5); },
   spiceBoost(e, fi, tk) { if (tk && fi >= 0) addFlame(fi, tk.x, tk.y, crewAmount(e)); addBuff('boost_spice', 15, 10); ring(player.x, player.y, 70, '#ff6b4a', .5, 5); burst(player.x, player.y - 10, 16, { type: 'ember', col: '#ff7b3a', spd: 140, life: .8, size: 2.6, g: -60 }); },
   iceBoost(e, fi, tk) { if (tk && fi >= 0) for (let k = 0; k < 2; k++) spawnBubble(fi, tk.x + rand(-60, 60), tk.y + rand(-40, 40), crewAmount(e)); addBuff('boost_ice', 15, 10); ring(player.x, player.y, 70, '#4fb6e6', .5, 5); burst(player.x, player.y - 10, 16, { type: 'snow', col: '#d6f3ff', spd: 140, life: .8, size: 2.4 }); },
-  cloudBoost(e, fi, tk) { if (tk && fi >= 0) addGoo(tk.x, tk.y, 55, 15); addBuff('boost_cloud', 15, 10); ring(player.x, player.y, 70, '#ffffff', .5, 5); burst(player.x, player.y - 10, 16, { type: 'leaf', col: '#ffffff', spd: 140, life: .8, size: 2.6 }); },
+  cloudBoost(e, fi, tk) { if (tk && fi >= 0) plantPole(fi, tk.x, tk.y); addBuff('boost_cloud', 15, 10); ring(player.x, player.y, 70, '#ffffff', .5, 5); burst(player.x, player.y - 10, 16, { type: 'leaf', col: '#ffffff', spd: 140, life: .8, size: 2.6 }); },
   firecracker(e, fi, tk) {
     const maxC = D.syn.has('fireworks') ? 15 : 10;
     combo.n = now - combo.t < 12 ? Math.min(maxC, combo.n + 1) : 1; combo.t = now;
@@ -446,7 +446,7 @@ const FX = {
     const f = FIELDS[fi], n = D.syn.has('deepWater') ? 12 : 8;
     for (let k = 0; k < n; k++) later(k * .08, () => E.decals.push({ kind: 'bubble', x: rand(f.x + 30, f.x + f.w - 30), y: rand(f.yy + 30, f.yy + f.h - 30), r: 18, age: 0, dur: 12, fi, base: crewAmount(e), ph: rand(0, TAU) }));
   },
-  mist(e, fi, tk) { E.decals.push({ kind: 'mist', x: tk.x, y: tk.y, r: 90, age: 0, dur: 20 }); addGoo(tk.x, tk.y, 60, 20); },
+  mist(e, fi, tk) { if (fi < 0) return; const a = rand(0, TAU); plantPole(fi, tk.x, tk.y); plantPole(fi, tk.x + Math.cos(a) * 110, tk.y + Math.sin(a) * 80); burst(tk.x, tk.y, 16, { type: 'smoke', col: 'rgba(235,240,255,.7)', spd: 90, life: 1, size: 8 }); },
   bearMorph() { addBuff('bear', 15); burst(player.x, player.y - 20, 30, { type: 'smoke', col: 'rgba(60,60,70,.5)', spd: 120, life: .8, size: 9 }); pop(player.x, player.y - 60, 'Bear Morph!', '#ffffff', true); },
   spiceRush(e) {
     addBuff('spiceRush', 15 * (D.syn.has('kitchen') ? 1.5 : 1));
@@ -535,7 +535,7 @@ const FX = {
     if (D.syn.has('bigCats')) { const l = E.crew.find(c => c.m.id === 'leopard'); if (l) FX.pounce(l, fieldAt(player.x, player.y), null, 2); }
   },
   caravan(e) {
-    addBuff('caravan', 12);
+    addBuff('caravan', 12); { const fi = fieldAt(e.x, e.y); if (fi >= 0) plantPole(fi, e.x, e.y); }
     E.crew.filter(c => CREW[c.m.id].tags.includes('yak')).forEach(c => burst(c.x, c.y, 14, { type: 'smoke', col: 'rgba(170,140,100,.45)', spd: 80, life: 1, size: 8 }));
     pop(e.x, e.y - 46, 'Caravan Rush!', '#ffe0a3', true);
   },
@@ -575,7 +575,7 @@ const FX = {
       if (k++ >= count) return;
       const t = pick(TILES[fi]);
       e.jump = { x0: e.x, y0: e.y, x1: t.x, y1: t.y, t: 0, dur: .32, done() {
-        addGoo(t.x, t.y, 48, 10);
+        { const near = E.poles.find(p2 => p2.fi === fi && dist(p2.x, p2.y, t.x, t.y) < 90); if (near) { near.age = 0; ring(near.x, near.y, 40, '#ffffff', .3, 3); } else if (k === count) plantPole(fi, t.x, t.y); }
         let sum = 0; tilesNear(fi, t.x, t.y, 62).forEach(tt => sum += collect(tt, base, 'cloud', 2.5));
         burst(t.x, t.y, 14, { type: 'smoke', col: 'rgba(170,180,210,.5)', spd: 110, life: .7, size: 7 });
         ring(t.x, t.y, 62, '#c8d6ff', .3, 3);
@@ -731,6 +731,16 @@ function update(dt) {
     kilnT += dt;
     if (kilnT >= 20) { kilnT = 0; const conv = S.doko * .06, val = conv * brewValue(); S.doko -= conv; S.rp += val; S.stats.earn += val; pop(player.x, player.y - 70, 'Kiln +' + fmt(val), '#ffb347', true); burst(player.x, player.y - 30, 20, { type: 'ember', col: '#ff8a3d', spd: 140, life: .8, size: 3, g: -60 }); }
   }
+  // prayer flags
+  if (E.poles.length) {
+    for (let i = E.poles.length - 1; i >= 0; i--) { E.poles[i].age += dt; if (E.poles[i].age > POLE_LIFE) E.poles.splice(i, 1); }
+    windT -= dt; if (windT <= 0) { windT = 2; const fi0 = E.poles.length ? E.poles[0].fi : -1; if (fi0 >= 0) windAll(fi0, 2); }
+    const ps = E.poles; if (!E.sacred && ps.length >= 3 && fieldAt(player.x, player.y) === ps[0].fi && dist(player.x, player.y, ps[0].x, ps[0].y) < 34) closeShape(ps[0].fi);
+  }
+  if (E.sacred) { E.sacred.t -= dt; if (E.sacred.t <= 0) E.sacred = null; }
+  if (E.horse) { const h = E.horse; h.d += dt * 380; const pt = polyAt(h.pts, h.d); h.x = pt.x; h.y = pt.y; h.acc += dt;
+    if (h.acc > .1) { h.acc = 0; tilesNear(h.fi, h.x, h.y, 40).forEach(t => collect(t, h.base, 'cloud', 3)); burst(h.x, h.y, 2, { type: 'smoke', col: 'rgba(255,255,255,.7)', spd: 50, life: .5, size: 5 }); }
+    if (h.d >= h.len * 2) E.horse = null; }
   // sky lantern balloons
   for (let i = E.balloons.length - 1; i >= 0; i--) {
     const bl = E.balloons[i];
@@ -936,9 +946,8 @@ function render() {
   FIELDS.forEach((f, fi) => {
     if (!vis(f.x, f.yy, Math.max(f.w, f.h))) return;
     const hasFrost = E.decals.some(d => d.kind === 'frost' && (d.fi2 != null ? d.fi2 : (d.fi2 = fieldAt(d.x, d.y))) === fi);
-    if (hasFrost || B.butterbomb) { c.save(); P(c); c.roundRect(f.x, f.yy, f.w, f.h, 20); c.clip(); drawFrostSheet(c, fi); }
-    if (B.butterbomb && fi === fieldAt(player.x, player.y)) { c.fillStyle = 'rgba(255,232,160,.4)'; c.fillRect(f.x, f.yy, f.w, f.h); }
-    if (hasFrost || B.butterbomb) c.restore();
+    if (hasFrost) { c.save(); P(c); c.roundRect(f.x, f.yy, f.w, f.h, 20); c.clip(); drawFrostSheet(c, fi); c.restore(); }
+    if (E.sacred && E.sacred.fi === fi) drawSacred(c);
     const showLv = FIELDS[fi].lv[1] > 1 && scale > 1.6;
     if (showLv) { c.fillStyle = 'rgba(43,34,51,.55)'; c.font = '800 7px -apple-system,system-ui,sans-serif'; c.textAlign = 'center'; }
     for (const t of TILES[fi]) {
@@ -1028,6 +1037,8 @@ function render() {
   for (const p of E.parts) drawPart(c, p);
   // top decals (rays, flash, focus)
   for (const d of E.decals) drawDecalTop(c, d);
+  if (E.poles.length) drawFlags(c);
+  if (E.horse) drawHorse(c, E.horse);
   for (const bl of E.balloons) if (vis(bl.x, bl.y, 120)) drawSkyBalloon(c, bl);
   if (B.popstar) { const gx = player.x, gy = player.y - 110 - (player.h || 0) + Math.sin(now * 2) * 4, gr = 18 + Math.min(14, B.popstar.st * .06); c.save(); c.globalAlpha = .35 + Math.sin(now * 6) * .1; circ(c, gx, gy, gr * 2, '#bfefff', false); c.restore(); drawStarShape(c, gx, gy, gr, now * 1.5, '#d6f3ff'); drawStarShape(c, gx, gy, gr * .5, -now * 2, '#4fb6e6'); }
   if ((S.hiveBal > 0 || E.balloons.some(b2 => b2.home)) && vis(HLANT.x, HLANT.y, 160)) drawHiveLantern(c);
@@ -1241,6 +1252,7 @@ function drawDecalTop(c, d) {
 }
 function drawStarShape(c, x, y, r, rot, col) { c.save(); c.translate(x, y); c.rotate(rot); P(c); for (let k = 0; k < 10; k++) { const rr2 = k % 2 ? r * .45 : r, a = k / 10 * TAU - Math.PI / 2; c.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2); } c.closePath(); fs(c, col, 1.8); c.restore(); }
 function drawProj(c, p) {
+  if (p.kind === 'windline') { c.save(); c.globalAlpha = .7 * (1 - p.t / p.dur); for (let k = 0; k < 3; k++) { const u = Math.min(1, p.t / p.dur + k * .12); line(c, p.x0 + (p.x1 - p.x0) * (u - .12), p.y0 + (p.y1 - p.y0) * (u - .12) + k * 6 - 6, p.x0 + (p.x1 - p.x0) * u, p.y0 + (p.y1 - p.y0) * u + k * 6 - 6, '#ffffff', 2.4); } c.restore(); return; }
   if (p.kind === 'fallstar') { c.save(); c.globalAlpha = .5; line(c, p.x + 30, p.y - 90, p.x, p.y, '#fff3b0', 4); c.restore(); drawStarShape(c, p.x, p.y, 9, now * 8, '#ffe066'); return; }
   if (p.kind === 'petal') { c.save(); c.translate(p.x, p.y); c.rotate(now * 10 + p.x); ell(c, 0, 0, 4.5, 2.4, '#ff6b81', false); c.restore(); }
   else if (p.kind === 'bird') {
@@ -1449,13 +1461,53 @@ function dropMat(fi) {
   burst(player.x, player.y - 30, 8, { type: 'star', col: '#d6b4ff', spd: 80, life: .7, size: 2 });
 }
 const abNameT = {};
+/* ---------------- Prayer flags (Cloud) ---------------- */
+const POLE_LIFE = 40, FLAG_COLS = ['#2e7bd6', '#ffffff', '#e5484d', '#3fae6b', '#f5c518'];
+let windT = 2;
+function plantPole(fi, x, y) {
+  const f = FIELDS[fi]; x = clamp(x, f.x + 22, f.x + f.w - 22); y = clamp(y, f.yy + 22, f.yy + f.h - 22);
+  if (E.poles.length && E.poles[0].fi !== fi) E.poles.length = 0;
+  E.poles.push({ fi, x, y, age: 0, ph: rand(0, TAU) }); if (E.poles.length > 6) E.poles.shift();
+  burst(x, y - 20, 8, { type: 'leaf', col: pick(FLAG_COLS), spd: 80, life: .6, size: 3, g: 60 });
+}
+function segTiles(fi, a, b, w) { return TILES[fi].filter(t => segDist(t.x, t.y, a, b) < w); }
+function windAll(fi, mul) {
+  const ps = E.poles.filter(p2 => p2.fi === fi); if (ps.length < 2) return;
+  const base = 8 * (1 + S.crew.length * .05) * lvlMult({ lvl: 10 }) * .6; let sum = 0;
+  for (let i = 0; i < ps.length - 1; i++) { segTiles(fi, ps[i], ps[i + 1], 24).forEach(t => sum += collect(t, base, 'cloud', mul)); E.proj.push({ kind: 'windline', x0: ps[i].x, y0: ps[i].y - 30, x1: ps[i + 1].x, y1: ps[i + 1].y - 30, t: 0, dur: .45, arc: 0 }); }
+  if (sum) pop((ps[0].x + ps[ps.length - 1].x) / 2, (ps[0].y + ps[ps.length - 1].y) / 2 - 40, '+' + fmt(sum), '#e6ecff');
+}
+function hull(pts) {
+  const p2 = pts.map(q => ({ x: q.x, y: q.y })).sort((a, b) => a.x - b.x || a.y - b.y), cr = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const lo = [], up = []; for (const p3 of p2) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p3) <= 0) lo.pop(); lo.push(p3); }
+  for (const p3 of p2.reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], p3) <= 0) up.pop(); up.push(p3); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+const polyArea = pts => Math.abs(pts.reduce((a, p3, i) => { const q = pts[(i + 1) % pts.length]; return a + p3.x * q.y - q.x * p3.y; }, 0)) / 2;
+function inSacred(x, y) { const pts = E.sacred.pts; let ins = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const a = pts[i], b = pts[j]; if ((a.y > y) !== (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) ins = !ins; } return ins; }
+function polyAt(pts, d) { const L = pts.length; let per = 0; const seg = []; for (let i = 0; i < L; i++) { const a = pts[i], b = pts[(i + 1) % L], l = dist(a.x, a.y, b.x, b.y); seg.push([a, b, l]); per += l; }
+  d = d % per; for (const [a, b, l] of seg) { if (d <= l) return { x: a.x + (b.x - a.x) * d / l, y: a.y + (b.y - a.y) * d / l }; d -= l; } return pts[0]; }
+function closeShape(fi) {
+  const ps = E.poles.filter(p2 => p2.fi === fi); if (ps.length < 3) return;
+  const pts = hull(ps); if (pts.length < 3) return;
+  const area = polyArea(pts), lv = area > 60000 ? 2 : 1;
+  E.sacred = { fi, pts, lv, t: 20, max: 20 };
+  const gain = (2 + ps.length) * (mpas('butterStar') ? 2 : 1);
+  if (!B.lungta) B.lungta = { t: 60, st: 0 }; B.lungta.st = Math.min(50, B.lungta.st + gain); B.lungta.t = 60;
+  windAll(fi, 3);
+  if (mpas('butterStar')) { let per = 0; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; per += dist(a.x, a.y, b.x, b.y); } E.horse = { fi, pts, d: 0, len: per, x: pts[0].x, y: pts[0].y, acc: 0, base: 10 * (1 + S.crew.length * .05) }; }
+  E.poles.length = 0;
+  pts.forEach(p3 => burst(p3.x, p3.y - 20, 10, { type: 'leaf', col: pick(FLAG_COLS), spd: 120, life: .8, size: 3.4, g: 60 }));
+  pop(player.x, player.y - 70, lv > 1 ? 'Great sacred ground' : 'Sacred ground', '#ffffff', true); shake(5);
+}
 let sawMode = false, lastPopSt = 0, popWas = false, sawAcc = 0, sawPopT = 0, heatT = 0, combo = { n: 0, t: -99 }, bullHits = 0, sawT = 0, showerT = 0;
 function spawnBubble(fi, x, y, base) {
   if (fi < 0 || E.decals.filter(d => d.kind === 'bubble').length > 40) return;
   const f = FIELDS[fi];
   E.decals.push({ kind: 'bubble', x: clamp(x, f.x + 24, f.x + f.w - 24), y: clamp(y, f.yy + 24, f.yy + f.h - 24), r: 18, age: 0, dur: 12, fi, base, ph: rand(0, TAU) });
 }
-function addGoo(x, y, r, dur) {
+function addGoo() { return; }
+function addGooOld(x, y, r, dur) {
   if (fieldAt(x, y) < 0 || E.decals.filter(d => d.kind === 'goo').length > 14) return;
   E.decals.push({ kind: 'goo', x, y, r, age: 0, dur: dur * (mpas('butterStar') ? 1.5 : 1) });
 }
@@ -1467,7 +1519,6 @@ function butterBomb(fi) {
 const pseudo = id => ({ x: player.x, y: player.y, m: { id, lvl: 10, bl: false }, face: player.face, anim: 0 });
 function abilityFired(col) {
   const pf = fieldAt(player.x, player.y);
-  if (col === 'cloud' && doko().pas === 'nimbus') addBuff('nimbusb', 60, 30);
   for (const g of equippedGear()) {
     if (!g.pas) continue;
     const p = PASSIVES[g.pas];
@@ -1491,7 +1542,9 @@ function runPassive(id, fi) {
     case 'wildfire': addBuff('wildfire', 15); burst(player.x, player.y, 40, { type: 'ember', col: '#ff6a2b', spd: 220, life: 1, size: 3.2, g: -60 });
       E.decals.filter(d => d.kind === 'flame' && d.fi === fi).forEach((d, k) => later(k * .05, () => { tilesNear(fi, d.x, d.y, 60).forEach(t => collect(t, d.base, 'spice', 3)); ring(d.x, d.y, 60, '#ff6a2b', .4, 6); burst(d.x, d.y, 16, { type: 'ember', col: '#ff8a3d', spd: 180, life: .8, size: 3, g: -60 }); })); break;
     case 'polar': addBuff('polar', 15); burst(player.x, player.y, 40, { type: 'snow', col: '#d6f3ff', spd: 200, life: 1, size: 2.6 }); for (let k = 0; k < 6; k++) spawnBubble(fi, player.x + rand(-110, 110), player.y + rand(-80, 80), 8 * (1 + S.crew.length * .05)); break;
-    case 'cloudburst': addBuff('cloudburst', 15); addGoo(player.x, player.y, 80, 15); break;
+    case 'cloudburst': { addBuff('cloudburst', 15); const ps = E.poles.filter(p2 => p2.fi === fi);
+      if (ps.length < 3) for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + .4; plantPole(fi, player.x + Math.cos(a) * 130, player.y + Math.sin(a) * 95); }
+      closeShape(fi); break; }
     case 'spirit': addBuff('spirit', 20); E.decals.push({ kind: 'rays', x: player.x, y: player.y, age: 0, dur: 2.2, follow: true }); break;
     case 'herd': addBuff('herd', 15); break;
     case 'spark': FX.burst(pseudo('chiliCook'), fi, { x: player.x, y: player.y }); break;
@@ -1503,7 +1556,7 @@ function runPassive(id, fi) {
         later(k * .03, () => { addFlame(fi, x, y, base, 18, true); burst(x, y, 6, { type: 'ember', col: '#ff8a3d', spd: 120, life: .7, size: 3, g: -60 }); }); }
       break; }
     case 'stomp': FX.footprints(pseudo('yeti'), fi); break;
-    case 'dance': FX.gust(pseudo('kiteFlyer'), fi); later(.6, () => FX.gust(Object.assign(pseudo('kiteFlyer'), { y: player.y + 80 }), fi)); break;
+    case 'dance': windAll(fi, 4); FX.gust(pseudo('kiteFlyer'), fi); break;
     case 'summitBless': FX.blessing(); break;
   }
 }

@@ -76,24 +76,24 @@ const ABIL = {
   petalStorm:  { n: 'Petal Storm',   i: 'flower', tok: true,  d: 'Bubble. 30 petals fly from it to random flowers in the field and gather each one at x2. Now and then a petal sets a flame.' },
   frostMark:   { n: 'Frost Mark',    i: 'snow', tok: true,  d: 'Bubble. Leaves a frost mark (radius 56) on the nearest flower. Ice flowers inside give x1.25. A new mark on top of it upgrades it to x1.5, then x2 (max level 3). Lasts 15s and refreshes on upgrade. A bubble rises on every new mark.' },
   roar:        { n: 'Roar',          i: 'roar', tok: true,  d: 'Bubble. A shockwave from where it lies: your whole crew gathers 50% faster for 10s (20s with Big Cats).' },
-  caravan:     { n: 'Caravan Rush',  i: 'horns', tok: true,  d: 'Bubble. Every yak in your crew (Yak Calf, Dzo, Yak King) gathers x2 and moves 50% faster for 12s.' },
+  caravan:     { n: 'Caravan Rush',  i: 'horns', tok: true,  d: 'Bubble. Every yak in your crew (Yak Calf, Dzo, Yak King) gathers x2 and moves 50% faster for 12s. The Yak King also plants a prayer flag pole where he stands.' },
   blessing:    { n: 'Blessing',      i: 'sparkle', tok: true,  d: 'Bubble. +25% to all gathering and brewing for 15s.' },
   footprints:  { n: 'Yeti Steps',    i: 'foot', tok: true,  d: 'Bubble. Six giant footprints stomp in a line starting from it. Each stomp gathers every flower within 72 range at x3. Every stomp leaves a bubble behind.' },
   dive:        { n: 'Danphe Dive',   i: 'feather', tok: true,  d: 'Bubble. The Danphe dives in a straight line across the whole field, gathering every flower within 40 of its path at x3. Every flame it flies over turns into a Dark Flame: burns twice as hard, counts x2.5 inside, builds Heat twice as fast, and adds to Dark Heat while it burns.' },
-  pounce:      { n: 'Shadow Pounce', i: 'claw', tok: true,  d: 'Bubble. The Snow Leopard pounces to 5 random flowers in the field (8 with Big Cats). Each landing gathers everything within 62 range at x2.5. Every landing leaves butter.' },
+  pounce:      { n: 'Shadow Pounce', i: 'claw', tok: true,  d: 'Bubble. The Snow Leopard pounces to 5 random flowers in the field (8 with Big Cats). Each landing gathers everything within 62 range at x2.5. If it lands near a prayer flag pole it refreshes it, otherwise the last landing plants a new pole.' },
   inflate:     { n: 'Sky Lantern',   i: 'diya', tok: true, d: 'Bubble. Releases a sky lantern that drifts over the field for 20s (+2s per level). It holds 1/6 of your capacity, and 75% of everything gathered under it goes inside instead of your doko. Each Sky Lantern can only have one lantern up; using it again inflates that one (+1/6 capacity, up to 10 times). When time runs out it floats to the teahouse lantern, which you brew after your doko. Brewing it empty gives Lantern Blessing: bigger lanterns, more stacks.' },
   inspire:     { n: 'Inspire',       i: 'sparkle', tok: true, d: 'Rare bubble from any Blessed crew. x2 to all gathering for 5s. Collecting another refreshes the time.' },
   sniff:       { n: 'Kukur Puja',    i: 'paw', tok: true,  d: 'Bubble. The whole crew is honored: +50% to all gathering for 15s. The dog also digs up 1 to 3 items: food, extracts, Incense, and rarely a Mystic Wheel, Permit or Golden Momo.' },
   spiceBoost:  { n: 'Spice Boost',   i: 'flame',  tok: true,  d: 'Bubble. Spice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also leaves a flame where the bubble lay.' },
   iceBoost:    { n: 'Ice Boost',     i: 'snow',   tok: true,  d: 'Bubble. Ice gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also releases 2 bubbles.' },
-  cloudBoost:  { n: 'Cloud Boost',   i: 'cloud',  tok: true,  d: 'Bubble. Cloud gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also spills a butter puddle where the bubble lay.' },
+  cloudBoost:  { n: 'Cloud Boost',   i: 'cloud',  tok: true,  d: 'Bubble. Cloud gathering +10% per stack for 15s, up to 10 stacks (x2). Collecting another refreshes the timer. Also plants a prayer flag pole where the bubble lay.' },
   firecracker: { n: 'Firecracker',   i: 'burst',  tok: true,  d: 'Bubble. Explodes on pickup, gathering every flower within 60 range at x2. Each firecracker within 12s of the last adds +1 combo (max 10): +6 range and +0.3x per combo. Combos of 5 or more leave a flame.' },
   link:        { n: 'Fixed Rope',    i: 'compass', tok: true, d: 'Bubble. Pulls in and collects every other bubble lying in the field at once.' },
   littleLove:  { n: 'Little Love',   i: 'heart',  tok: true,  d: 'Bubble. All gathering x1.5 for 12s.' },
   teaMark:     { n: 'Tea Mark',      i: 'cup',    tok: true,  d: 'Bubble. Leaves a tea mark (radius 64) for 15s. 35% of everything gathered inside is brewed into rupees instantly.' },
   bullseye:    { n: 'Bullseye',      i: 'focus',  tok: true,  d: 'Skill. Three targets appear in the field for 7s (only one set at a time). Step on all three for a Precision stack: +0.5% chance that a crit becomes a Super Crit, which doubles again and is brewed straight into rupees. Up to 40 stacks (20%), 25s.' },
   bubbles:     { n: 'Bubble Bloom',  i: 'drop',   tok: true,  d: 'Skill. Eight bubbles float up around the field for 12s. Walk into them to pop them: each pop gathers every flower within 52 range at x1.5 (Ice flowers x2.5). Bubbles popped inside a Frost Mark gather 50% further.' },
-  mist:        { n: 'Mountain Mist', i: 'cloud',  tok: true,  d: 'Bubble. A mist cloud (radius 90, growing to 140) settles for 20s. Every flower inside counts as one level higher (max 5). Butter settles in the middle of the mist.' },
+  mist:        { n: 'Mountain Mist', i: 'cloud',  tok: true,  d: 'Bubble. Mountain Mist rolls in and the Mist Yak plants two prayer flag poles in it.' },
   bearMorph:   { n: 'Bear Morph',    i: 'paw',    tok: true,  d: 'Bubble. You turn into a bear for 15s: your tool gathers x2, reaches 30% further, and you move 20% faster.' },
   gust:        { n: 'Kite Gust',     i: 'wind', tok: true,  d: 'Bubble. A wind band 92 tall sweeps across the whole field at the bubble\'s height, gathering every flower in it at x2.' }
 };
@@ -177,7 +177,7 @@ const CHARMS = [
 const PASSIVES = {
   wildfire:    { n: 'Inferno',         col: 'spice', need: 30, d: 'Every 30 Spice abilities: every flame in your field erupts (x3 around it) and +100% Spice gathering for 15s.' },
   polar:       { n: 'Polar Power',     col: 'ice',   need: 30, d: 'Every 30 Ice abilities: +100% Ice gathering and +10% crit for 15s, and 6 bubbles rise around you.' },
-  cloudburst:  { n: 'Cloud Burst',     col: 'cloud', need: 30, d: 'Every 30 Cloud abilities: tool reach x1.5 and tool gathering x2 for 15s, and butter spills where you stand.' },
+  cloudburst:  { n: 'Cloud Burst',     col: 'cloud', need: 30, d: 'Every 30 Cloud abilities: all your prayer flag poles tie together into sacred ground at once (if you have fewer than 3, four new poles go up around you first), plus tool reach x1.5 and tool gathering x2 for 15s.' },
   spirit:      { n: 'Mountain Spirit', col: 'any',   need: 50, d: 'Every 50 abilities: +100% to all gathering for 20s.' },
   herd:        { n: 'Herd Call',       col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: your crew move 50% faster for 15s.' },
   spark:       { n: 'Spark',           col: 'spice', need: 20, d: 'Every 20 Spice abilities: a Chili Burst explodes around you.' },
@@ -186,11 +186,11 @@ const PASSIVES = {
   renewal:     { n: 'Renewal',         col: 'any',   need: 40, d: 'Every 40 abilities: every flower in your field regrows instantly.' },
   strike:      { n: 'Ring of Fire',    col: 'spice', need: 25, cd: 30, d: 'Every 25 Spice abilities: 16 flames burst up in a ring around you and burn for 18s. 30s cooldown.' },
   stomp:       { n: 'Yeti Stomp',      col: 'ice',   need: 20, d: 'Every 20 Ice abilities: giant Yeti Steps around you.' },
-  dance:       { n: 'Wind Dance',      col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: two Kite Gusts sweep your field.' },
+  dance:       { n: 'Wind Dance',      col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: a strong wind runs along every prayer flag line at x4, and a Kite Gust sweeps your field.' },
   summitBless: { n: 'Summit Blessing', col: 'any',   need: 30, d: 'Every 30 abilities: a free Blessing (+25% everything for 15s).' },
   kiln:        { n: 'Kiln',            col: 'always', need: 0, d: '15% of everything your flames gather is brewed into rupees on the spot, and every 20s while you gather 6% of your doko is brewed too.' },
   deepfreeze:  { n: 'Deep Freeze',     col: 'always', need: 0, d: 'Chill stacks last 60s instead of 30 and you can hold 40 instead of 20. Popping a bubble inside a Frost Mark gives 2 stacks.' },
-  nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Every Cloud ability adds a Nimbus stack: +2% capacity for 60s, up to 30 stacks (+60%).' }
+  nimbus:      { n: 'Nimbus',          col: 'always', need: 0, d: 'Every Lungta stack also adds +2% capacity (up to +100%).' }
 };
 /* crafting materials drop while gathering in each field */
 /* fruits: drop while gathering (by flower color), from quests and sprouts */
@@ -281,7 +281,7 @@ const MANDALA_STATS = [
 const MANDALA_PAS = {
   blazingStar: { n: 'Blazing Star', col: 'spice', main: true, d: 'Flames last twice as long, burn twice as often, count x2 inside instead of x1.5 (Dark Flames x3), and Heat builds 50% faster.' },
   glacierStar: { n: 'Glacier Star', col: 'ice',   main: true, d: 'Permanently x1.25 capacity while you are in an Ice field. Every 45th Ice Boost bubble you collect (1 minute cooldown) summons the Glacier Star for 45s: x2 Ice gathering and +10% instant Ice conversion, plus 2 minutes of Ice Swell. Every bubble you pop while it shines adds +1% (up to x3) and 4s of Ice Swell. When it fades it leaves bubbles behind, more for every bubble popped.' },
-  butterStar:  { n: 'Butter Star',  col: 'cloud', main: true, d: 'Butter gathers x3 instead of x2 and lasts 50% longer. Every 150 flowers gathered in butter drops a Butter Bomb that covers the field in butter for 20s.' },
+  butterStar:  { n: 'Lungta Star',  col: 'cloud', main: true, d: 'Every sacred ground you close sends a white wind horse galloping twice around its edge, gathering everything it passes at x3. Lungta stacks build twice as fast.' },
   guidingStar: { n: 'Wayfinder Star', col: 'any', main: false, d: 'Every 250 boost bubbles you collect (Spice, Ice or Cloud Boost), a random open field becomes your wayfinder field for 10 minutes: x2.5 gathering there.' },
   starSaw:     { n: 'Chakra Saw',   col: 'any',   main: false, d: 'Use 3 Marigolds to spin up a Chakra Saw for 30s (the third Marigold is given back). It circles you in fields, measures every flower it touches at x50 tool power (without draining them) and brews that same amount out of your doko into rupees. It never adds to your doko, so it works best when the doko is full.' },
   starShower:  { n: 'Comet Rain',   col: 'any',   main: false, d: 'Every 45s while you gather, 10 green circles appear across the field and a comet lands on each one. Stand in a circle when its comet lands for Inspire: x2 gathering for 5s, and every further comet adds +1x (up to x11).' }
@@ -327,7 +327,7 @@ const BUFFS = {
   saw:        { n: 'Chakra Saw',   i: 'star',    d: 'A spinning saw circles you, brews as much out of your doko as it gathers (x50 tool power).' },
   kukur:      { n: 'Kukur Puja',   i: 'paw',     d: '+50% to all gathering.' },
   litfield:   { n: 'Lit field',    i: 'diya',    d: 'You lit every diya in this field: +50% gathering here until the night ends.' },
-  butterbomb: { n: 'Butter Bomb',  i: 'drop',    d: 'The whole field counts as butter.' },
+  lungta:     { n: 'Lungta',       i: 'flag',    d: '+2% Cloud gathering and +3% brewing value (rupees per ingredient) per stack, up to 50. Earned by closing sacred ground; lasts 60s, refreshed by every new shape.' },
   polar:      { n: 'Polar Power',  i: 'snow',    d: '+100% Ice gathering and +10% crit chance.' },
   cloudburst: { n: 'Cloud Burst',  i: 'cloud',   d: 'Tool reach x1.5 and tool gathering x2.' },
   spirit:     { n: 'Mountain Spirit', i: 'mountain', d: '+100% to all gathering.' },

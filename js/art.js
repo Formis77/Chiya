@@ -346,6 +346,40 @@ function drawTiharStall(c, t) {
   c.fillStyle = OUT; c.textAlign = 'left'; c.fillText('Tihar Stall', -tw / 2 + 23, -103);
 }
 
+/* ---------------- prayer flags ---------------- */
+function drawFlags(c) {
+  const ps = E.poles;
+  for (let i = 0; i < ps.length - 1; i++) {
+    const a = ps[i], b = ps[i + 1], ax = a.x, ay = a.y - 38, bx = b.x, by = b.y - 38, mx = (ax + bx) / 2, my = (ay + by) / 2 + 16, n = Math.max(3, Math.floor(dist(ax, ay, bx, by) / 16));
+    c.save(); c.globalAlpha = .18; P(c); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.strokeStyle = '#ffffff'; c.lineWidth = 34; c.lineCap = 'round'; c.stroke(); c.restore();
+    P(c); c.moveTo(ax, ay); c.quadraticCurveTo(mx, my, bx, by); c.strokeStyle = 'rgba(43,34,51,.6)'; c.lineWidth = 1.2; c.stroke();
+    for (let k = 1; k < n; k++) { const u = k / n, x = (1 - u) * (1 - u) * ax + 2 * u * (1 - u) * mx + u * u * bx, y = (1 - u) * (1 - u) * ay + 2 * u * (1 - u) * my + u * u * by, fl = Math.sin(now * 6 + k + i) * 2;
+      P(c); c.moveTo(x - 4, y); c.lineTo(x + 4, y); c.lineTo(x + fl * .5, y + 9 + fl * .3); c.closePath(); c.fillStyle = FLAG_COLS[k % 5]; c.fill(); c.strokeStyle = 'rgba(43,34,51,.35)'; c.lineWidth = .8; c.stroke(); }
+  }
+  ps.forEach((p, i) => {
+    const fade = Math.min(1, (POLE_LIFE - p.age) / 3);
+    c.save(); c.globalAlpha = fade;
+    if (i === 0 && ps.length >= 3 && !E.sacred) { c.save(); c.globalAlpha = .35 + Math.sin(now * 6) * .2; circ(c, p.x, p.y, 30, '#ffd24a', false); c.restore(); P(c); c.arc(p.x, p.y, 30, 0, TAU); c.strokeStyle = '#f5b400'; c.lineWidth = 2.5; c.stroke(); }
+    ell(c, p.x, p.y + 2, 7, 3, 'rgba(0,0,0,.2)', false);
+    line(c, p.x, p.y, p.x, p.y - 42, OUT, 4.4); line(c, p.x, p.y, p.x, p.y - 42, '#a0522d', 2.6);
+    circ(c, p.x, p.y - 44, 3.2, '#f5c518');
+    c.restore();
+  });
+}
+function drawSacred(c) {
+  const s = E.sacred, a = Math.min(1, s.t / 2, (s.max - s.t) * 3);
+  c.save(); c.globalAlpha = a; P(c); s.pts.forEach((p, i) => i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.closePath();
+  c.fillStyle = s.lv > 1 ? 'rgba(255,236,170,.32)' : 'rgba(255,255,255,.28)'; c.fill();
+  c.setLineDash([10, 8]); c.lineDashOffset = -now * 30; c.strokeStyle = '#f5b400'; c.lineWidth = 3; c.stroke(); c.setLineDash([]); c.restore();
+}
+function drawHorse(c, h) {
+  c.save(); c.translate(h.x, h.y - 18); const k = Math.sin(now * 18) * 3;
+  c.globalAlpha = .9; ell(c, 0, 0, 16, 9, '#ffffff'); circ(c, 13, -9 + k * .3, 6.5, '#ffffff');
+  line(c, -8, 6, -10, 15 + k, OUT, 2.2); line(c, 8, 6, 10, 15 - k, OUT, 2.2);
+  P(c); c.moveTo(-15, -2); c.quadraticCurveTo(-26, -8 - k, -30, 2); c.strokeStyle = FLAG_COLS[0]; c.lineWidth = 4; c.stroke();
+  circ(c, 15, -10, 1.2, OUT, false); c.restore();
+}
+
 /* ---------------- sky lantern balloons ---------------- */
 function drawSkyBalloon(c, bl) {
   const f = Math.min(1, bl.held / bl.cap), r = 16 + f * 10, bob = Math.sin(now * 2 + bl.ph) * 4, y = bl.y - 80 + bob;
