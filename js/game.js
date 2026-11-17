@@ -1362,9 +1362,9 @@ function placeSprinkler() {
   burst(player.x, player.y - 10, 24, { type: 'snow', col: '#bfe6ff', spd: 160, life: .8, size: 2.4, g: 120 });
   toast(`${SPRINKLERS[S.spr.lv].n} placed (${P2.length}/${S.spr.n})`, 'drop');
 }
-function addFlame(fi, x, y, base) {
-  if (fieldAt(x, y) !== fi || E.decals.filter(d => d.kind === 'flame').length >= 18) return;
-  E.decals.push({ kind: 'flame', x, y, r: 44, age: 0, dur: mpas('blazingStar') ? 12 : 6, fi, base, tick: 0 });
+function addFlame(fi, x, y, base, dur, force) {
+  if (fieldAt(x, y) !== fi || E.decals.filter(d => d.kind === 'flame').length >= (force ? 50 : 18)) return;
+  E.decals.push({ kind: 'flame', x, y, r: 44, age: 0, dur: (dur || 6) * (mpas('blazingStar') ? 2 : 1), fi, base, tick: 0 });
 }
 /* Diyo Night: every open field gets 3 unlit diyas. Gathering near one lights it (needs a lot).
    Light all three for a field-wide bonus. Sometimes a stray dog shows up to befriend. */
@@ -1474,11 +1474,12 @@ function abilityFired(col) {
     const p = PASSIVES[g.pas];
     if (p.col === 'always') continue;
     if (p.col !== 'any' && p.col !== col) continue;
+    if (p.cd && Date.now() < ((S.pasCd || {})[g.pas] || 0)) continue;
     S.pas[g.pas] = Math.min(p.need, (S.pas[g.pas] || 0) + 1);
     if (S.pas[g.pas] >= p.need) {
       const fi = fieldAt(player.x, player.y);
       if (fi < 0 || !fieldOpen(fi)) continue;
-      S.pas[g.pas] = 0; runPassive(g.pas, fi);
+      S.pas[g.pas] = 0; if (p.cd) { S.pasCd = S.pasCd || {}; S.pasCd[g.pas] = Date.now() + p.cd * 1000; } runPassive(g.pas, fi);
     }
   }
 }
@@ -1498,7 +1499,10 @@ function runPassive(id, fi) {
     case 'freeze': for (let k = 0; k < 3; k++) later(k * .15, () => FX.frostMark(pseudo('iceClimber'), fi)); break;
     case 'updraft': FX.gust(pseudo('kiteFlyer'), fi); break;
     case 'renewal': TILES[fi].forEach(t => t.v = 1); burst(player.x, player.y, 40, { type: 'leaf', col: '#7cc560', spd: 260, life: 1, size: 3.4 }); break;
-    case 'strike': FX.dive(pseudo('danphe'), fi); break;
+    case 'strike': { const f = FIELDS[fi], base = 10 * (1 + S.crew.length * .05) * (1 + bp('spice'));
+      for (let k = 0; k < 16; k++) { const a = k / 16 * TAU, x = clamp(player.x + Math.cos(a) * 125, f.x + 25, f.x + f.w - 25), y = clamp(player.y + Math.sin(a) * 95, f.yy + 25, f.yy + f.h - 25);
+        later(k * .03, () => { addFlame(fi, x, y, base, 18, true); burst(x, y, 6, { type: 'ember', col: '#ff8a3d', spd: 120, life: .7, size: 3, g: -60 }); }); }
+      break; }
     case 'stomp': FX.footprints(pseudo('yeti'), fi); break;
     case 'dance': FX.gust(pseudo('kiteFlyer'), fi); later(.6, () => FX.gust(Object.assign(pseudo('kiteFlyer'), { y: player.y + 80 }), fi)); break;
     case 'summitBless': FX.blessing(); break;

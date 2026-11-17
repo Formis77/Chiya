@@ -184,7 +184,7 @@ const PASSIVES = {
   freeze:      { n: 'Freeze',          col: 'ice',   need: 20, d: 'Every 20 Ice abilities: 3 Frost Marks appear around you.' },
   updraft:     { n: 'Updraft',         col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: a Kite Gust sweeps your field.' },
   renewal:     { n: 'Renewal',         col: 'any',   need: 40, d: 'Every 40 abilities: every flower in your field regrows instantly.' },
-  strike:      { n: 'Danphe Strike',   col: 'spice', need: 20, d: 'Every 20 Spice abilities: a fiery Danphe Dive through your field.' },
+  strike:      { n: 'Ring of Fire',    col: 'spice', need: 25, cd: 30, d: 'Every 25 Spice abilities: 16 flames burst up in a ring around you and burn for 18s. 30s cooldown.' },
   stomp:       { n: 'Yeti Stomp',      col: 'ice',   need: 20, d: 'Every 20 Ice abilities: giant Yeti Steps around you.' },
   dance:       { n: 'Wind Dance',      col: 'cloud', need: 20, d: 'Every 20 Cloud abilities: two Kite Gusts sweep your field.' },
   summitBless: { n: 'Summit Blessing', col: 'any',   need: 30, d: 'Every 30 abilities: a free Blessing (+25% everything for 15s).' },

@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '33';
+const VERSION = '34';
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
 function uiInit() {
@@ -44,9 +44,13 @@ function uiTick(dt) {
   const bf = [];
   const BI = { popstar: 'snow', swell: 'drop', lbless: 'diya', inspire: 'sparkle', saw: 'star', precision: 'focus', darkheat: 'flame', kukur: 'paw', litfield: 'diya', heat: 'flame', chill: 'snow', nimbusb: 'cloud', butterbomb: 'drop', gtea: 'cup', masala: 'bottle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', boost_spice: 'flame', boost_ice: 'snow', boost_cloud: 'cloud', love: 'heart', supercrit: 'focus', blaze: 'flame', popstar: 'drop', bear: 'paw', comet: 'star', wildfire: 'flame', polar: 'snow', cloudburst: 'cloud', spirit: 'mountain', herd: 'horns', haste: 'speed', spiceRush: 'chili', focus: 'focus', roar: 'roar', caravan: 'horns', blessing: 'sparkle', shot_spice: 'bottle', shot_ice: 'crystal', shot_cloud: 'cheese', incense: 'incense' };
   { const fl = frostAt(player.x, player.y); if (fl) bf.push(`<button class="chip frostc" data-b="frostmark">${ic('snow')}<b>x${FROST_MUL[fl]}</b></button>`); }
-  if (S.sawN > 0 && now - (S.sawLast || -99) <= 20) bf.push(`<button class="chip" data-b="sawcount">${ic('marigold')}<b>${S.sawN}/3</b></button>`); else if (S.sawN) S.sawN = 0;
-  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'popstar' ? '<i>x' + (2 + Math.min(1, B[k].st * .01)).toFixed(2) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'swell' ? '<i>x' + swellMul().toFixed(1) + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : k === 'lbless' ? '<i>x' + B[k].st + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
-  for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0; bf.push(`<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
+  if (S.sawN > 0 && now - (S.sawLast || -99) <= 20) bf.push(`<button class="chip schip side" data-b="sawcount">${ic('marigold')}<b>${S.sawN}/3</b></button>`); else if (S.sawN) S.sawN = 0;
+  for (const k in B) bf.push(`<button class="chip ${k === 'darkheat' ? 'dark' : k === 'popstar' ? 'schip main' : k === 'saw' || k === 'inspire' ? 'schip side' : ''}" data-b="${k}">${ic(BI[k] || 'dot')}${B[k].perm ? '<b>x' + Math.floor(B[k].st) + '</b>' : k === 'inspire' ? '<i>x' + (B[k].st + 1) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'popstar' ? '<i>x' + (2 + Math.min(1, B[k].st * .01)).toFixed(2) + '</i><b>' + Math.ceil(B[k].t) + 's</b>' : k === 'swell' ? '<i>x' + swellMul().toFixed(1) + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : k === 'lbless' ? '<i>x' + B[k].st + '</i><b>' + Math.ceil(B[k].t / 60) + 'm</b>' : (B[k].st > 1 ? '<i>x' + Math.floor(B[k].st) + '</i>' : '') + '<b>' + Math.ceil(B[k].t) + 's</b>'}</button>`);
+  for (const g of equippedGear()) if (g.pas && PASSIVES[g.pas].col !== 'always') { const p = PASSIVES[g.pas], n = S.pas[g.pas] || 0, cdl = p.cd ? Math.ceil((((S.pasCd || {})[g.pas] || 0) - Date.now()) / 1000) : 0;
+    bf.push(cdl > 0 ? `<button class="chip pchip" data-p="${g.pas}">${ic('clock')}<b>${cdl}s</b></button>` : `<button class="chip pchip" data-p="${g.pas}"><span class="pring" style="--p:${n / p.need * 100}%"></span>${n}/${p.need}</button>`); }
+  /* star amulet counters: main star gold, side star mint */
+  if (mpas('glacierStar')) { const cdl = Math.ceil(((S.popCd || 0) - Date.now()) / 1000); if (!B.popstar) bf.push(`<button class="chip schip main" data-b="glaciercount">${ic('snow')}<b>${cdl > 0 ? cdl + 's' : (S.blueN || 0) + '/45'}</b></button>`); }
+  if (mpas('guidingStar')) bf.push(`<button class="chip schip side" data-b="guidecount">${ic('star')}<b>${S.pilgrim ? Math.ceil((S.pilgrim.until - Date.now()) / 60000) + 'm' : (S.guideN || 0) + '/250'}</b></button>`);
   const bh = bf.join(''); if (bh !== lastBuffs) { $('buffs').innerHTML = bh; lastBuffs = bh; }
   $('quest').innerHTML = questTracker();
   renderHotbar();
@@ -765,6 +769,8 @@ function showPop(el, html, above) {
 function hidePop() { $('pop').className = ''; }
 function buffTip(k, el) {
   el = el || document.querySelector(`[data-b="${k}"]`); if (!el) return;
+  if (k === 'glaciercount') { const cdl = Math.ceil(((S.popCd || 0) - Date.now()) / 1000); showPop(el, `<b>Glacier Star</b><span>${cdl > 0 ? `Cooling down for ${cdl}s.` : `${S.blueN || 0}/45 Ice Boost bubbles collected.`}</span>`); return; }
+  if (k === 'guidecount') { showPop(el, `<b>Wayfinder Star</b><span>${S.pilgrim ? `${FIELDS[S.pilgrim.f].n} gathers x2.5 for ${Math.ceil((S.pilgrim.until - Date.now()) / 60000)} more minutes.` : `${S.guideN || 0}/250 boost bubbles collected.`}</span>`); return; }
   if (k === 'sawcount') { showPop(el, `<b>Chakra Saw</b><span>${S.sawN}/3 Marigolds used. Use ${3 - S.sawN} more within ${Math.max(0, Math.ceil(20 - (now - S.sawLast)))}s.</span>`); return; }
   if (k === 'frostmark') { const fl = frostAt(player.x, player.y); showPop(el, `<b>Frost Mark level ${fl}</b><span>Ice flowers here are gathered at x${FROST_MUL[fl]}.</span>`); return; }
   const b = BUFFS[k]; if (!b || !B[k]) return;

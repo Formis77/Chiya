@@ -378,3 +378,5 @@ body.panel #quest{display:none}
 .item.badge.tier .qbar{background:rgba(255,255,255,.6)}
 
 .chip.dark{background:#2b1a40;color:#d3b2ff}.chip.dark b,.chip.dark i{color:#fff}
+
+.chip.schip.main{background:#fff1c2;color:#a5700a;box-shadow:0 2px 8px rgba(165,112,10,.22)}.chip.schip.side{background:#d9f7e4;color:#1f8a4c;box-shadow:0 2px 8px rgba(31,138,76,.2)}
