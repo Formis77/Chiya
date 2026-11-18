@@ -370,7 +370,7 @@ const ITEMS = {
   lotusSeed:   { n: 'Lotus Seed',    i: 'sprout', d: 'Plant it to grow a sprout in the field you stand in. Planted sprouts are rarer than wild ones.', use: true },
   marigold:    { n: 'Marigold',      i: 'marigold', d: 'Tihar festival flower. Light the great lantern on Diyo Night for 1 to 10 (higher fields give more). With the Chakra Saw star, using 3 spins up the saw. Also spent at the Tihar Stall.', use: true },
   garland:     { n: 'Marigold Garland', i: 'garland', d: 'Welcomes the Tihar Dog into your crew. Needs a free bed.', use: true },
-  tilak:       { n: 'Kukur Tilak',   i: 'paw', d: 'A red tilak from a stray dog you befriended on Diyo Night. The Tihar Stall needs 5 of them, plus marigolds, for a Marigold Garland.' },
+  tilak:       { n: 'Kukur Tilak',   i: 'paw', d: 'A red tilak from a stray dog you befriended on Diyo Night. The Tihar Stall needs 15 of them, plus 250 Marigolds, for a Marigold Garland.' },
   permit:      { n: 'Trekking Permit', i: 'ticket', d: 'Recruit a random crew member into an empty bed.' },
   mysticWheel: { n: 'Mystic Wheel',  i: 'wheel', d: 'Reroll a crew member. Never gives Commons.' },
   goldenMomo:  { n: 'Golden Momo',   i: 'star', d: 'Makes a crew member Blessed.', price: 2.5e5 }
@@ -577,8 +577,8 @@ const BADGES = [
 /* ---------------- Tihar festival ---------------- */
 const tiharOn = () => true;   /* permanent festival */
 const NIGHT_EVERY = 600, NIGHT_LEN = 150;
-const STRAY_CHANCE = .4, TILAK_NEED = 5;
+const STRAY_CHANCE = .4, TILAK_NEED = 15;
 const TIHAR_SHOP = [
-  { k: 'garland', p: 40, tilak: TILAK_NEED }, { k: 'lotusSeed', p: 3 }, { k: 'mysticWheel', p: 6 }, { k: 'goldenTea', p: 4 },
-  { k: 'incense', p: 2 }, { k: 'dalbhat', p: 1 }, { k: 'goldenMomo', p: 25 }
+  { k: 'garland', p: 250, tilak: TILAK_NEED }, { k: 'lotusSeed', p: 3 }, { k: 'mysticWheel', p: 6 }, { k: 'goldenTea', p: 4 },
+  { k: 'incense', p: 2 }, { k: 'dalbhat', p: 1 }, { k: 'goldenMomo', p: 100 }
 ];

@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '48';
+const VERSION = '49';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -883,7 +883,7 @@ function claimBadge(id) {
 function pTihar() {
   const clk = (S.nightClock || 0) % NIGHT_EVERY, night = isNight(), left = night ? NIGHT_EVERY - clk : NIGHT_EVERY - NIGHT_LEN - clk;
   let h = `<div class="ph"><h2>Tihar Stall</h2><span class="pill">${ic('marigold')}${fmt(S.items.marigold || 0)}</span></div>
-    <p class="mut small">Every 10 minutes the mountain goes dark for a Diyo Night, and one great lantern appears in a random field (lower fields more often). Gather right next to it to light it: higher fields take far more but give more Marigolds, from 1 in the Tea Garden up to 10 on the Summit. Some nights a stray dog wanders in: gather near it until it trusts you for a Kukur Tilak. Five tilaks and 40 Marigolds buy the Marigold Garland for the Tihar Dog.</p>
+    <p class="mut small">Every 10 minutes the mountain goes dark for a Diyo Night, and one great lantern appears in a random field (lower fields more often). Gather right next to it to light it: higher fields take far more but give more Marigolds, from 1 in the Tea Garden up to 10 on the Summit. Some nights a stray dog wanders in: gather near it until it trusts you for a Kukur Tilak. Fifteen tilaks and 250 Marigolds buy the Marigold Garland for the Tihar Dog.</p>
     <div class="item gear">${ib('paw', '#e5484d')}<div class="it"><b>Kukur Tilak ${S.items.tilak || 0}/${TILAK_NEED}</b><span class="mut small">${E.stray && E.stray.on ? `A stray is in ${FIELDS[E.stray.fi].n} right now` : 'Strays show up on about 2 nights in 5'}</span></div></div>
     <div class="item gear">${ib('diya', '#ff9f1a')}<div class="it"><b>${night ? 'Diyo Night is on' : 'Next Diyo Night'}</b><span class="mut small">${night ? `Ends in ${mmss(left * 1000)}` : `Starts in ${mmss(left * 1000)}`}</span></div></div><h3>Festival goods</h3>`;
   h += TIHAR_SHOP.map((g, i) => { const it = ITEMS[g.k], ok = (S.items.marigold || 0) >= g.p && (S.items.tilak || 0) >= (g.tilak || 0);
