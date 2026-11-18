@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '51';
+const VERSION = '52';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -219,7 +219,7 @@ function addCrew(id, bl) {
 }
 function reveal(id, bl, isNew, title) {
   const d = CREW[id];
-  SND.fx('reveal', RAR[d.r].o); if (bl) setTimeout(() => SND.fx('blessed'), 380);
+  SND.fx('crew', [RAR[d.r].o, bl]);
   showModal(`<div class="reveal" style="--rc:${RAR[d.r].c}"><div class="burst"></div><img src="${portrait(id, bl)}" alt=""></div>
     ${isNew ? '<div class="new">New</div>' : ''}<h2>${d.n}</h2><div class="badges center">${rarBadge(d.r)}${colBadge(d.c)}${bl ? `<span class="rb gold">${ic('star')}Blessed</span>` : ''}</div>
     <p class="mut small">${d.ab ? `<b>${ABIL[d.ab].n}</b> ${info('ab', d.ab)}` : d.pas ? `Passive ${info('cp', id)}` : ''}</p>
@@ -256,8 +256,9 @@ function reroll(i, until) {
   const stop = { leg: r => RAR[CREW[r.id].r].o >= 3, myth: r => CREW[r.id].r === 'mythic', blessed: r => r.bl }[until];
   let res, n = 0, anyNew = false;
   do { res = rollOnce(i); n++; anyNew = anyNew || res.isNew; } while (stop && !stop(res) && S.items.mysticWheel > 0 && n < 1000);
-  SND.fx('roll'); rebuildCrew(); save(); renderPanel();
+  rebuildCrew(); save(); renderPanel();
   const d = CREW[res.id], hit = !stop || stop(res);
+  SND.fx('crew', [RAR[d.r].o, res.bl]);
   showModal(`<div class="reveal" style="--rc:${RAR[d.r].c}"><div class="burst"></div><img src="${portrait(res.id, res.bl)}" alt=""></div>
     ${anyNew ? '<div class="new">New</div>' : ''}<h2>${d.n}</h2><div class="badges center">${rarBadge(d.r)}${colBadge(d.c)}${res.bl ? `<span class="rb gold">${ic('star')}Blessed</span>` : ''}</div>
     <p class="mut small">${n > 1 ? `${n} Mystic Wheels used${hit ? '' : ', stopped (out of wheels or 1000 rolls)'}. ` : ''}${S.items.mysticWheel || 0} left.</p>

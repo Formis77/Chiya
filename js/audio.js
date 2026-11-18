@@ -26,12 +26,12 @@ const SND = (() => {
     const comp = c.createDynamicsCompressor();
     comp.threshold.value = -16; comp.knee.value = 10; comp.ratio.value = 4; comp.attack.value = .004; comp.release.value = .25;
     const out = c.createGain(); out.gain.value = .9; out.connect(comp); comp.connect(c.destination);
-    const mus = c.createGain(), sfx = c.createGain(); mus.connect(out); sfx.connect(out);
+    const mus = c.createGain(), sfx = c.createGain(), duck = c.createGain(); mus.connect(duck); duck.connect(out); sfx.connect(out);
     const rev = c.createConvolver(); rev.buffer = impulse(c, 2.8, 2.6); const rr = c.createGain(); rr.gain.value = .8; rev.connect(rr); rr.connect(out);
     const mRev = c.createGain(), sRev = c.createGain(); mRev.connect(rev); sRev.connect(rev);
     const nb = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
     const pw = (h) => c.createPeriodicWave(new Float32Array(h.length), new Float32Array(h));
-    G = { out, mus, sfx, mRev, sRev, noise: nb,
+    G = { out, mus, duck, sfx, mRev, sRev, noise: nb,
       W: { flute: pw([0, 1, .16, .05, .025, .01]), reed: pw([0, 1, .75, .55, .45, .32, .26, .2, .14, .1, .08, .06]), horn: pw([0, 1, .9, .7, .55, .4, .3, .22, .16]) },
       KS: {} };
     G.fx = strip(sfx, sRev, 1, 0, .22);
@@ -372,6 +372,52 @@ const SND = (() => {
     w.frequency.linearRampToValueAtTime(f * .8, t + dur); adsr(g.gain, t, dur, v, .05, .2, .8, .2); chain(am, ag, g.gain); chain(w, lp, g, G.fxW); w.start(t); am.start(t); w.stop(t + dur + .3); am.stop(t + dur + .3); };
   const bark = (t, v) => [0, .18].forEach(o => { const w = osc('sawtooth'), bp = filt('bandpass', 1100, 2.5), g = gain(0); w.frequency.setValueAtTime(560, t + o); w.frequency.exponentialRampToValueAtTime(330, t + o + .1); perc(g.gain, t + o, v, .12, .01); chain(w, bp, g, G.fx); w.start(t + o); w.stop(t + o + .15); });
 
+  function duck(t, dur, to = .3) { const g = G.duck.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(to, t + .15); g.setValueAtTime(to, t + dur); g.linearRampToValueAtTime(1, t + dur + 1.2); }
+  /* bell chord: all notes at once, long ring */
+  const chord = (t, notes, v, dec, dest) => notes.forEach(s => bell(t, s, v, dec, dest || G.fxW));
+  const roll = (t, dur, inst, v0, v1, n0 = 6, n1 = 22) => { let tt = 0; const n = Math.round((n0 + n1) / 2 * dur); for (let k = 0; k < n; k++) { const u = k / n; I[inst](t + tt, inst === 'madalT' ? 1 + u * .1 : 0, 1, v0 + (v1 - v0) * u, G.fxW); tt += 1 / (n0 + (n1 - n0) * u); if (tt > dur) break; } };
+  const riser = (t, dur, v) => { hiss(t, dur, 'bandpass', 300, 1.2, v, G.fxW, { f1: 6000, swell: .95 }); const w = osc('sawtooth'), lp = filt('lowpass', 400, 4), g = gain(0); w.frequency.setValueAtTime(hz(-24), t); w.frequency.exponentialRampToValueAtTime(hz(0), t + dur); lp.frequency.exponentialRampToValueAtTime(3000, t + dur); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * .5, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + .05); chain(w, lp, g, G.fxW); w.start(t); w.stop(t + dur + .1); };
+  const sparkle = (t, dur, n, v, base = 31) => { for (let k = 0; k < n; k++) bell(t + Math.random() * dur, base + pent(Math.floor(R(0, 8))), v * R(.5, 1), .5, G.fxW); };
+  const impact = (t, v) => { thud(t, v, 70); hiss(t, 1.4, 'highpass', 3000, .6, v * .35, G.fxW, { a: .002 }); I.ching(t, 1, 1, v * 1.2, G.fxW); I.damB(t, 0, 1, v * 1.2, G.fxW); };
+  /* crew reveal: o = rarity order (0 common .. 4 mythic, 5 event), bl = blessed. Returns when the main hit lands. */
+  function crewReveal(t, o, bl) {
+    let end = t;
+    if (o <= 1) { arp(t, o ? [12, 16, 19, 24] : [12, 16, 19], .075, .13, .8, G.fxW); end = t + .3; }
+    else if (o === 2) {              // Epic: madal flourish into a bright bell run and ring
+      duck(t, 1.6, .5);
+      I.madalT(t, 1, 1, .5, G.fxW); I.madalT(t + .09, 1.05, 1, .55, G.fxW); I.madalB(t + .18, 0, 1, .7, G.fxW);
+      arp(t + .2, [12, 16, 19, 24, 28], .07, .14, 1, G.fxW); chord(t + .55, [12, 19, 24], .07, 1.6); I.ching(t + .55, 1, 1, .8, G.fxW); I.bowl(t + .55, 0, 5, .3, G.fxW);
+      end = t + .55;
+    } else if (o === 3) {            // Legendary: accelerating madal roll, riser, big chord with bowl and cymbals
+      duck(t, 2.8, .3);
+      roll(t, .9, 'madalT', .25, .6, 8, 26); riser(t, .9, .1);
+      const h = t + .95; impact(h, .55); chord(h, [7, 12, 16, 19, 24], .085, 2.4); I.bowl(h, -12, 7, .5, G.fxW);
+      arp(h + .15, [24, 28, 31, 36], .08, .1, 1.2, G.fxW); sparkle(h + .2, 1.2, 10, .06); I.tingsha(h + .5, 0, 1, .45, G.fxW);
+      end = h;
+    } else if (o === 4) {            // Mythic: dungchen horn, damphu roll and long riser, huge hit, cascading gold
+      duck(t, 4.2, .15);
+      I.horn(t, -24, 1.6, .55, G.fxW); roll(t + .2, 1.3, 'damT', .2, .6, 6, 24); riser(t + .1, 1.4, .14);
+      const h = t + 1.55; impact(h, .75); I.horn(h, -12, 2.2, .45, G.fxW);
+      chord(h, [0, 7, 12, 16, 19, 24], .085, 3); I.bowl(h, -12, 8, .6, G.fxW); I.bowl(h + .02, 7, 7, .35, G.fxW);
+      arp(h + .2, [24, 28, 31, 36, 40, 43], .075, .1, 1.4, G.fxW); arp(h + .75, [43, 40, 36, 31], .09, .07, 1.2, G.fxW);
+      sparkle(h + .3, 2, 22, .06); I.tingsha(h + .6, 0, 1, .5, G.fxW); I.tingsha(h + 1.2, 0, 1, .4, G.fxW);
+      end = h + .3;
+    } else {                         // Event: festival, madal and jhyamta groove into a bright fanfare
+      duck(t, 2.4, .3);
+      [[0, 'madalB', .7], [.13, 'madalT', .5], [.26, 'madalT', .55], [.39, 'madalB', .6], [.52, 'madalT', .5], [.6, 'madalT', .6], [.68, 'madalT', .7]].forEach(([o2, i, v]) => I[i](t + o2, 1, 1, v, G.fxW));
+      [0, .39].forEach(o2 => I.ching(t + o2, 0, 1, .5, G.fxW));
+      const h = t + .8; impact(h, .5); chord(h, [12, 16, 19, 24], .08, 2); arp(h + .1, [24, 28, 31, 36, 31, 36], .07, .1, .8, G.fxW); sparkle(h + .2, 1, 10, .05);
+      end = h;
+    }
+    if (bl) {                        // Blessed: golden shimmer, choir swell, double tingsha, falling bells
+      const b0 = end + (o <= 1 ? .2 : .45);
+      duck(b0, 2.6, o >= 3 ? .15 : .3);
+      riser(b0, .5, .08); sparkle(b0, .6, 8, .05, 36);
+      I.choir(b0 + .4, [0, 4, 7], 2.2, .22, G.fxW); I.choir(b0 + .4, [12, 16, 19], 2.2, .12, G.fxW);
+      chord(b0 + .5, [19, 24, 28, 31], .07, 2.4); I.tingsha(b0 + .5, 0, 1, .55, G.fxW); I.tingsha(b0 + .75, 0, 1, .45, G.fxW);
+      arp(b0 + .9, [43, 40, 36, 31, 28, 24], .085, .07, 1, G.fxW);
+    }
+  }
   const FX = {
     tap(t) { wood(t, 1500, .16); },
     deny(t) { wood(t, 330, .32); wood(t + .09, 260, .28); },
@@ -388,6 +434,7 @@ const SND = (() => {
     quest(t) { arp(t, [12, 16, 19, 24], .085, .14, .7, G.fxW); I.tingsha(t + .35, 0, 1, .35, G.fxW); },
     badge(t) { arp(t, [7, 12, 16, 19, 24], .07, .13, .8, G.fxW); I.ching(t + .35, 1, 1, .7, G.fxW); },
     level(t) { arp(t, [12, 16, 19], .07, .12, .5); },
+    crew(t, a) { crewReveal(t, a[0], a[1]); },
     reveal(t, r = 0) { const n = [[12, 16, 19], [12, 16, 19, 24], [12, 16, 19, 24, 28], [7, 12, 16, 19, 24, 28], [0, 7, 12, 16, 19, 24, 28, 31]][Math.min(4, r)] || [12, 16, 19];
       arp(t, n, .075, .13, .9, G.fxW); if (r >= 2) I.bowl(t, -12, 6, .45, G.fxW); if (r >= 3) I.tingsha(t + n.length * .075, 0, 1, .4, G.fxW); },
     blessed(t) { glass(t, .5, 31); I.tingsha(t + .1, 0, 1, .35, G.fxW); },
