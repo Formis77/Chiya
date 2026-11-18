@@ -384,6 +384,7 @@ const SND = (() => {
     lock(t) { wood(t, 300, .25); tone(t + .05, 110, 'sine', .15, .2, G.fx); },
     full(t) { thud(t, .3, 140); wood(t + .08, 420, .14); },
     talk(t) { [0, .07, .14].forEach((o, k) => wood(t + o, 900 + k * 140 + R(-40, 40), .1)); },
+    questReady(t) { arp(t, [19, 24, 28, 31], .09, .16, .9, G.fxW); I.ching(t + .3, 1, 1, .6, G.fxW); I.tingsha(t + .36, 0, 1, .3, G.fxW); },
     quest(t) { arp(t, [12, 16, 19, 24], .085, .14, .7, G.fxW); I.tingsha(t + .35, 0, 1, .35, G.fxW); },
     badge(t) { arp(t, [7, 12, 16, 19, 24], .07, .13, .8, G.fxW); I.ching(t + .35, 1, 1, .7, G.fxW); },
     level(t) { arp(t, [12, 16, 19], .07, .12, .5); },

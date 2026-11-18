@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '50';
+const VERSION = '51';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -36,6 +36,7 @@ function uiInit() {
 function uiTick(dt) {
   uiT += dt; if (uiT < .12) return; uiT = 0;
   if (!player.fly) SND.setTrack(zoneAt(player.y) >= 3 ? 1 : 0);
+  questWatch(); buffPopRefresh();
   $('rp').textContent = fmt(S.rp);
   const cap = capMax(), f = S.doko / cap;
   $('dfill').style.width = Math.min(100, f * 100) + '%';
@@ -64,6 +65,15 @@ function uiTick(dt) {
   if (panel === 'shop' || panel === 'crew') refreshCosts();
 }
 
+/* a chime the moment a quest is ready to hand in */
+let qReady = null, qwT = 0;
+function questWatch() {
+  if (++qwT < 8) return; qwT = 0;
+  const ids = [...Object.keys(GIVERS), ...Object.keys(REPEAT)], now2 = new Set();
+  for (const g of ids) { try { if (giverState(g) === 'ready') now2.add(g); } catch (e) {} }
+  if (qReady) for (const g of now2) if (!qReady.has(g)) { SND.fx('questReady'); toast(`Quest complete! Talk to ${npcOf(g).n}`, 'flag'); break; }
+  qReady = now2;
+}
 /* ---------------- toast & modal ---------------- */
 let toastT = null;
 function toast(msg, icon) {
@@ -777,22 +787,77 @@ function showPop(el, html, above) {
   if (above) { p.style.top = ''; p.style.bottom = (innerHeight - r.top + 8) + 'px'; } else { p.style.bottom = ''; p.style.top = (r.bottom + 8) + 'px'; }
   clearTimeout(popT); popT = setTimeout(hidePop, 4500);
 }
-function hidePop() { $('pop').className = ''; }
+function hidePop() { $('pop').className = ''; popBuff = null; }
+const pcs = v => '+' + (+(v * 100).toFixed(1)) + '%', xs = v => 'x' + (+v.toFixed(2));
+/* what each buff adds right now, with its current stacks */
+function buffNow(k) {
+  const b = B[k], st = b ? b.st : 0, cn = c => COL[c].n;
+  switch (k) {
+    case 'haste': return [`${pcs(.2 * st)} move speed for you and your crew`];
+    case 'spiceRush': return [`${pcs(.5 * (D.syn.has('kitchen') ? 1.5 : 1))} Spice gathering`];
+    case 'focus': return ['+15% crit chance', `Crits hit x${critMul()}`];
+    case 'roar': return ['Crew gather 50% faster'];
+    case 'caravan': return ['Yaks gather x2 and move x1.5'];
+    case 'blessing': return ['+25% all gathering', 'x1.25 brewing speed'];
+    case 'shot_spice': case 'shot_ice': case 'shot_cloud': return [`x1.25 ${cn(k.slice(5))} gathering`];
+    case 'gtea': return ['x1.15 all gathering'];
+    case 'masala': return ['+8% instant conversion'];
+    case 'incense': return ['Abilities recharge x1.5 faster'];
+    case 'wildfire': return ['+100% Spice gathering'];
+    case 'heat': return [`+${Math.floor(st)}% Spice gathering`, `${Math.floor(st)}/100 Heat`];
+    case 'darkheat': return [`+${st}% Super Crit chance`, `${pcs(st * .005)} instant conversion`];
+    case 'precision': return [`${pcs(st * .005)} Super Crit chance`, `Super Crit total ${pcs(superChance())}`];
+    case 'chill': return [`+${Math.floor(st)}% Ice gathering`];
+    case 'popstar': return [`${xs(2 + Math.min(1, st * .01))} Ice gathering (${Math.floor(st)} bubbles popped)`, '+10% instant Ice conversion'];
+    case 'swell': return [`${xs(swellMul())} capacity in Ice fields`, `${xs(swellMul())} brewing speed at the teahouse`];
+    case 'lbless': return [`${xs(1 + 3 * st / 100)} capacity`, `${xs(1 + 1.5 * st / 100)} teahouse brewing value`];
+    case 'nimbusb': return [`${pcs(.02 * st)} capacity`];
+    case 'inspire': return [`x${1 + st} all gathering`];
+    case 'saw': return [`Brewing ${fmt(b.rate || 0)} from your doko every second`];
+    case 'kukur': return ['+50% all gathering'];
+    case 'litfield': return ['+50% gathering in this field'];
+    case 'drum': return [`${pcs(.25 * st)} tool swing speed`];
+    case 'reach': return ['+50% tool reach', `${Math.max(0, Math.floor(st))} swings left`];
+    case 'sfork': return ['Vajra bolts strike 3 times', `${Math.max(0, Math.floor(st))} bolts left`];
+    case 'polar': return ['+100% Ice gathering', '+10% crit chance'];
+    case 'cloudburst': return ['x1.5 tool reach', 'x2 tool gathering'];
+    case 'electric': return ['Flowers in this field do not run down'];
+    case 'spirit': return ['+100% all gathering'];
+    case 'herd': return ['Crew move x1.5 faster'];
+    case 'comet': return ['Every crit hits x5'];
+    case 'boost_spice': case 'boost_ice': case 'boost_cloud': { const c = k.slice(6); return [`${pcs(.1 * st)} ${cn(c)} gathering`, `${cn(c)} gathering now ${xs(gMult(c))} in total`]; }
+    case 'love': return ['x1.5 all gathering'];
+    case 'bear': return ['x2 tool gathering', '+30% reach, +20% speed'];
+  }
+  return null;
+}
+function buffHtml(k) {
+  if (k === 'vajra') return `<b>Vajra ${S.swingN || 0}/${mpas('butterStar') ? 2 : 3}</b><span>Every ${mpas('butterStar') ? 2 : 3}${mpas('butterStar') ? 'nd' : 'rd'} swing releases a bolt. Stand inside a lightning pole to send it through the poles for Storm Charge.</span>`;
+  if (k === 'hazec') return E.haze ? `<b>Static Haze</b><span>A random flower gets +1 level every 0.5s.</span><small>${Math.ceil(E.haze.t)}s left</small>` : null;
+  if (k === 'storm') return S.storm > 0 ? `<b>Storm Charge</b><span class="now">${xs(1 + stormSt())} Lightning gathering</span><span class="now">${xs(1 + stormSw())} tool swing speed</span><small>${Math.ceil(((S.stormUntil || 0) - Date.now()) / 60000)} min left · max x6 gathering, x4 speed</small>` : null;
+  if (k === 'glaciercount') { const cdl = Math.ceil(((S.popCd || 0) - Date.now()) / 1000); return `<b>Glacier Star</b><span>${cdl > 0 ? `Cooling down for ${cdl}s.` : `${S.blueN || 0}/45 Ice Boost bubbles collected.`}</span>`; }
+  if (k === 'guidecount') return `<b>Wayfinder Star</b><span>${S.pilgrim ? `${FIELDS[S.pilgrim.f].n} gathers x2.5 for ${Math.ceil((S.pilgrim.until - Date.now()) / 60000)} more minutes.` : `${S.guideN || 0}/250 boost bubbles collected.`}</span>`;
+  if (k === 'sawcount') return S.sawN ? `<b>Chakra Saw</b><span>${S.sawN}/3 Marigolds used. Use ${3 - S.sawN} more within ${Math.max(0, Math.ceil(20 - (now - S.sawLast)))}s.</span>` : null;
+  if (k === 'frostmark') { const fl = frostAt(player.x, player.y); return fl ? `<b>Frost Mark level ${fl}</b><span class="now">x${FROST_MUL[fl]} Ice gathering here</span>` : null; }
+  const b = BUFFS[k]; if (!b || !B[k]) return null;
+  const nowL = buffNow(k);
+  return `<b>${b.n}${B[k].st > 1 ? ' x' + Math.floor(B[k].st) : ''}</b>${nowL ? nowL.map(l => `<span class="now">${l}</span>`).join('') : `<span>${b.d}</span>`}${B[k].perm ? '' : `<small>${Math.ceil(B[k].t)}s left</small>`}`;
+}
+let popBuff = null;
 function buffTip(k, el) {
   el = el || document.querySelector(`[data-b="${k}"]`); if (!el) return;
-  if (k === 'vajra') { showPop(el, `<b>Vajra</b><span>Every ${mpas('butterStar') ? 2 : 3}${mpas('butterStar') ? 'nd' : 'rd'} swing releases a bolt. Stand inside a lightning pole to send it through the poles for Storm Charge.</span>`); return; }
-  if (k === 'hazec') { showPop(el, `<b>Static Haze</b><span>A random flower gets +1 level every 0.5s until it lifts.</span>`); return; }
-  if (k === 'storm') { showPop(el, `<b>Storm Charge x${(1 + stormSt()).toFixed(2)}</b><span>Lightning gathering up to x6, tool swing speed up to x4 (now x${(1 + stormSw()).toFixed(2)}). ${Math.ceil(((S.stormUntil || 0) - Date.now()) / 60000)} min left.</span>`); return; }
-  if (k === 'poles') { showPop(el, `<b>Prayer flags</b><span>${E.poles.length} poles up. ${E.sacred ? 'You can tie a new shape when the current sacred ground fades.' : E.poles.length >= 3 ? 'Walk to the glowing first pole to tie the flags into sacred ground.' : 'Lightning abilities plant poles. With 3 or more, walk to the glowing first pole to tie them into sacred ground.'}</span>`); return; }
-  if (k === 'sacred') { showPop(el, `<b>Sacred ground</b><span>Flowers inside count +${E.sacred.lv} level and Lightning flowers gather x1.5.</span>`); return; }
-  if (k === 'glaciercount') { const cdl = Math.ceil(((S.popCd || 0) - Date.now()) / 1000); showPop(el, `<b>Glacier Star</b><span>${cdl > 0 ? `Cooling down for ${cdl}s.` : `${S.blueN || 0}/45 Ice Boost bubbles collected.`}</span>`); return; }
-  if (k === 'guidecount') { showPop(el, `<b>Wayfinder Star</b><span>${S.pilgrim ? `${FIELDS[S.pilgrim.f].n} gathers x2.5 for ${Math.ceil((S.pilgrim.until - Date.now()) / 60000)} more minutes.` : `${S.guideN || 0}/250 boost bubbles collected.`}</span>`); return; }
-  if (k === 'sawcount') { showPop(el, `<b>Chakra Saw</b><span>${S.sawN}/3 Marigolds used. Use ${3 - S.sawN} more within ${Math.max(0, Math.ceil(20 - (now - S.sawLast)))}s.</span>`); return; }
-  if (k === 'frostmark') { const fl = frostAt(player.x, player.y); showPop(el, `<b>Frost Mark level ${fl}</b><span>Ice flowers here are gathered at x${FROST_MUL[fl]}.</span>`); return; }
-  const b = BUFFS[k]; if (!b || !B[k]) return;
-  showPop(el, `<b>${b.n}${B[k].st > 1 ? ' x' + Math.floor(B[k].st) : ''}</b><span>${b.d}</span>${B[k].perm ? '' : `<small>${Math.ceil(B[k].t)}s left</small>`}`);
+  const h = buffHtml(k); if (!h) return;
+  showPop(el, h); popBuff = k; clearTimeout(popT); popT = setTimeout(hidePop, 12000);
+}
+/* keep an open buff popover ticking while you watch it */
+function buffPopRefresh() {
+  if (!popBuff) return; const p = $('pop');
+  if (!p.classList.contains('on')) { popBuff = null; return; }
+  const h = buffHtml(popBuff); if (!h) { hidePop(); popBuff = null; return; }
+  if (p.innerHTML !== h) p.innerHTML = h;
 }
 function pasTip(id, el) {
+  popBuff = null;
   el = el || document.querySelector(`[data-p="${id}"]`); if (!el) return;
   const p = PASSIVES[id];
   showPop(el, `<b>${p.n}</b><span>${p.d}</span><small>${S.pas[id] || 0} / ${p.need} charged · counts ${p.col !== 'any' ? COL[p.col].n + ' abilities' : 'every ability'}</small>`);
