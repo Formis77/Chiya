@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '49';
+const VERSION = '50';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -16,6 +16,7 @@ function uiInit() {
   $('menub').addEventListener('click', () => { if (panel) { closePanel(); document.body.classList.remove('menu'); } else document.body.classList.toggle('menu'); });
   $('gearq').addEventListener('click', ev => { const b = ev.target.closest('[data-g]'); if (b) gearPop(b); });
   addEventListener('pointerdown', ev => { if (!ev.target.closest('#pop,[data-g],[data-b],[data-p]')) hidePop(); }, true);
+  addEventListener('pointerdown', ev => { const b = ev.target.closest('button,.hslot,input[type=range]'); if (!b || b.closest('#sheet') && b.classList.contains('x')) return; const c = b.dataset.cost; SND.fx(c && S && S.rp < +c || b.disabled ? 'deny' : 'tap'); }, true);
   if (!S.hotbar || S.hotbar.length !== HOTBAR_N || S.hbv !== 2) { S.hotbar = Array(HOTBAR_N).fill(null); S.hbv = 2; }
   $('hotbar').addEventListener('pointerdown', ev => { const sl = ev.target.closest('.hslot'); if (!sl) return; ev.preventDefault(); dragStart(ev, S.hotbar[+sl.dataset.i], +sl.dataset.i); });
   addEventListener('pointermove', dragMove); addEventListener('pointerup', dragEnd); addEventListener('pointercancel', dragEnd);
@@ -34,6 +35,7 @@ function uiInit() {
 
 function uiTick(dt) {
   uiT += dt; if (uiT < .12) return; uiT = 0;
+  if (!player.fly) SND.setTrack(zoneAt(player.y) >= 3 ? 1 : 0);
   $('rp').textContent = fmt(S.rp);
   const cap = capMax(), f = S.doko / cap;
   $('dfill').style.width = Math.min(100, f * 100) + '%';
@@ -65,6 +67,7 @@ function uiTick(dt) {
 /* ---------------- toast & modal ---------------- */
 let toastT = null;
 function toast(msg, icon) {
+  SND.toast(icon);
   const t = $('toast'); t.innerHTML = (icon ? ic(icon) : '') + '<span>' + msg + '</span>'; t.classList.add('on');
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2400);
 }
@@ -85,11 +88,12 @@ function showIntro() {
 /* ---------------- panels ---------------- */
 function openPanel(name, tab) {
   if (panel === name && !tab) { closePanel(); return; }
+  if (!panel) SND.fx('open');
   panel = name; panelTab = tab || panelTab;
   $('sheet').classList.add('on'); document.body.classList.add('panel', 'menu');
   renderPanel();
 }
-function closePanel() { panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel', 'menu'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
+function closePanel() { if (panel) SND.fx('close'); panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel', 'menu'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
   const fn = { inv: pItems, tihar: pTihar, badges: pBadges, blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
   if (!fn) return;
@@ -205,6 +209,7 @@ function addCrew(id, bl) {
 }
 function reveal(id, bl, isNew, title) {
   const d = CREW[id];
+  SND.fx('reveal', RAR[d.r].o); if (bl) setTimeout(() => SND.fx('blessed'), 380);
   showModal(`<div class="reveal" style="--rc:${RAR[d.r].c}"><div class="burst"></div><img src="${portrait(id, bl)}" alt=""></div>
     ${isNew ? '<div class="new">New</div>' : ''}<h2>${d.n}</h2><div class="badges center">${rarBadge(d.r)}${colBadge(d.c)}${bl ? `<span class="rb gold">${ic('star')}Blessed</span>` : ''}</div>
     <p class="mut small">${d.ab ? `<b>${ABIL[d.ab].n}</b> ${info('ab', d.ab)}` : d.pas ? `Passive ${info('cp', id)}` : ''}</p>
@@ -226,7 +231,7 @@ function feed(i, f) {
   if (m.lvl >= 20) m.xp = 0;
   const e = E.crew.find(x => x.m === m);
   if (e) { burst(e.x, e.y - 20, up ? 20 : 6, { type: up ? 'star' : 'heart', col: '#ffd24a', spd: 70, life: 1, size: up ? 2.6 : 4, g: -40 }); if (up) pop(e.x, e.y - 50, 'LEVEL ' + m.lvl, '#ffd24a', true); }
-  if (up) toast(`${d.n} reached level ${m.lvl}`, 'up');
+  SND.fx(up ? 'level' : 'use'); if (up) toast(`${d.n} reached level ${m.lvl}`, 'up');
   renderPanel();
 }
 function rollOnce(i) {
@@ -241,7 +246,7 @@ function reroll(i, until) {
   const stop = { leg: r => RAR[CREW[r.id].r].o >= 3, myth: r => CREW[r.id].r === 'mythic', blessed: r => r.bl }[until];
   let res, n = 0, anyNew = false;
   do { res = rollOnce(i); n++; anyNew = anyNew || res.isNew; } while (stop && !stop(res) && S.items.mysticWheel > 0 && n < 1000);
-  rebuildCrew(); save(); renderPanel();
+  SND.fx('roll'); rebuildCrew(); save(); renderPanel();
   const d = CREW[res.id], hit = !stop || stop(res);
   showModal(`<div class="reveal" style="--rc:${RAR[d.r].c}"><div class="burst"></div><img src="${portrait(res.id, res.bl)}" alt=""></div>
     ${anyNew ? '<div class="new">New</div>' : ''}<h2>${d.n}</h2><div class="badges center">${rarBadge(d.r)}${colBadge(d.c)}${res.bl ? `<span class="rb gold">${ic('star')}Blessed</span>` : ''}</div>
@@ -301,7 +306,7 @@ function shopExtra(t) {
   let h = '';
   if (t === 'sprinklers') {
     const sp = S.spr, cur = SPRINKLERS[sp.lv], nx = SPRINKLERS[sp.lv + 1];
-    h += `<p class="mut small">Sprinklers water a circle of flowers: they regrow faster and give more when gathered. Each tier gives you a set number of sprinklers; the Spirit Saturator is a single huge one that keeps its flowers almost always full. Stand in a field and tap <b>Place</b>.</p>`;
+    h += `<p class="mut small">Sprinklers water a circle of flowers: they regrow faster and give more when gathered. Each tier gives you a set number of sprinklers; the Spirit Saturator is a single huge one that keeps its flowers almost always full. Once bought, the sprinkler sits in your inventory: drag it to the hotbar and use it while standing in a field.</p>`;
     if (sp.n > 0) h += `<div class="item eq">${ib('drop', '#2ea4dc')}<div class="it"><b>${cur.n}</b><span class="mut small">${cur.cnt} sprinkler${cur.cnt > 1 ? 's' : ''} · radius ${cur.r} · x${cur.wet} gathering · x${cur.rg} regrowth</span></div><span class="tag">${sp.placed.length}/${sp.n} placed</span></div>`;
     const nxt = sp.n > 0 ? nx : SPRINKLERS[0];
     h += `<div class="item">${ib('up', '#9b6ef3')}<div class="it"><b>${nxt ? (sp.n > 0 ? 'Upgrade to ' : 'Buy ') + nxt.n : 'Fully upgraded'}</b><span class="mut small">${nxt ? `${nxt.cnt} sprinkler${nxt.cnt > 1 ? 's' : ''} · radius ${nxt.r} · x${nxt.wet} gathering · x${nxt.rg} regrowth` : 'The best sprinkler on the mountain.'}</span></div>${nxt ? `<button class="btn sm primary" data-cost="${nxt.cost}" onclick="upgradeSprinkler()">${money(nxt.cost)}</button>` : ''}</div>`;
@@ -345,7 +350,7 @@ function buyGear(key, id) {
   ({ tool: S.tools, doko: S.dokos, boots: S.bootsOwned, hat: S.hats, charm: S.charms })[key].push(id);
   equip(key, id); toast(`${it.n} crafted`, it.i); save();
 }
-function equip(key, id) { const car = $('car'), pos = car ? car.scrollLeft : 0; setTimeout(() => { const c2 = $('car'); if (c2) c2.scrollLeft = pos; }, 0); if (key === 'tool') S.tool = id; if (key === 'doko') S.dokoId = id; if (key === 'boots') S.boots = id; if (key === 'hat') S.hat = id; if (key === 'charm') S.charm = id; recompute(); renderPanel(); }
+function equip(key, id) { SND.fx('equip'); const car = $('car'), pos = car ? car.scrollLeft : 0; setTimeout(() => { const c2 = $('car'); if (c2) c2.scrollLeft = pos; }, 0); if (key === 'tool') S.tool = id; if (key === 'doko') S.dokoId = id; if (key === 'boots') S.boots = id; if (key === 'hat') S.hat = id; if (key === 'charm') S.charm = id; recompute(); renderPanel(); }
 function buyItem(k, cost, n = 1) {
   if (S.rp < cost) return; spend(cost); S.items[k] = (S.items[k] || 0) + n;
   if (k === 'permit') S.recruits++; if (k === 'mysticWheel') S.wheels += n;
@@ -416,6 +421,7 @@ function dragEnd(ev) {
 }
 function useItem(k) {
   if (!(S.items[k] > 0)) return; S.items[k]--;
+  if (k !== 'sprinkler') SND.fx('use');
   if (k === 'sprinkler') { S.items[k]++; const pf = fieldAt(player.x, player.y); if (pf < 0 || !fieldOpen(pf)) { toast('Stand in a field to place a sprinkler', 'drop'); return; } placeSprinkler(); return; }
   if (k === 'butterTea') { addTimed('haste', 180, 1800); B.haste.st = Math.max(B.haste.st, 3); }
   if (k === 'spiceShot') addTimed('shot_spice', 600);
@@ -559,6 +565,7 @@ function gliderMenu(id) {
 }
 function talk(gid) {
   gid = gid || nearNpc; if (!gid) return;
+  SND.fx('talk');
   if (gid === 'tihar') { openPanel('tihar', 'x'); return; }
   if (gid === 'blender') { openPanel('blender', 'x'); return; }
   if (gid === 'mandala') { panelTab = null; openPanel('mandala', 'x'); return; }
@@ -594,6 +601,7 @@ function claimQuest(gid) {
   const g = npcOf(gid); burst(g.x, g.y - 40, 40, { type: 'star', col: '#ffd24a', spd: 200, life: 1.2, size: 3 });
   closeModal(); updateTalk();
   if (q.rw.crew) { addCrew(q.rw.crew, false); return; }
+  SND.fx('quest');
   toast(rwText(q.rw), 'gift'); save();
 }
 
@@ -696,6 +704,9 @@ function pSettings() {
   h += `<div class="row2"><button class="btn" onclick="checkUpdate()">${ic('refresh')}<span>Check for update</span></button>
     <button class="btn primary" onclick="forceUpdate()">${ic('download')}<span>Update now</span><small>Reloads the latest version</small></button></div>`;
   h += `<p class="mut small">Your progress is saved on this phone and stays when you update.</p>`;
+  h += `<h3>Sound</h3>` + [['mus', 'music', 'Music', '#9b6ef3'], ['sfx', 'speaker', 'Effects', '#2ea4dc']].map(([k, i, n, c]) => { const v = Math.round(SND.cfg[k] * 100);
+    return `<div class="item">${ib(i, c)}<div class="it"><b>${n}</b><input class="vol" type="range" min="0" max="100" step="5" value="${v}" style="--v:${v}%" oninput="SND.setVol('${k}', this.value / 100); this.style.setProperty('--v', this.value + '%'); this.closest('.item').querySelector('.tag').textContent = this.value + '%'"></div><span class="tag">${v}%</span></div>`; }).join('');
+  h += `<p class="mut small">If you hear nothing, check that the silent switch on the side of your iPhone is off.</p>`;
   h += `<h3>Profiles</h3><p class="mut small">Three separate saves. Switching keeps your other progress safe.</p>`;
   for (let n = 1; n <= 3; n++) {
     const cur = n === curSlot();
@@ -831,6 +842,7 @@ function genMandala(i, dbl) {
   const tr = MANDALA_TIERS[i], cost = tr.cost * (dbl ? 10 : 1);
   if (blessedCount() < tr.bl || S.rp < cost) return;
   spend(cost);
+  SND.fx('roll'); setTimeout(() => SND.fx('reveal', 2), 420);
   pendingMandala = rollMandala(i, dbl); S.stats.mandalas = (S.stats.mandalas || 0) + 1; save();
   showModal(`<div class="reveal" style="--rc:${tr.col}"><div class="burst"></div><div class="mbig" style="--tc:${tr.col}">${ic('wheel')}</div></div><h2>${tr.n}</h2>${pendingMandala.pas.length > 1 ? '<div class="new">Double passive</div>' : ''}
     ${mandalaCard(pendingMandala, 'New')}${S.mandala ? mandalaCard(S.mandala, 'Current') : ''}
@@ -851,7 +863,7 @@ function pBlender() {
 function blend(i, n) {
   const b = BLENDS[i]; if (!canBlend(b, n)) return;
   for (const k in b.req) S.items[k] -= b.req[k] * n;
-  S.items[b.out] = (S.items[b.out] || 0) + n; S.stats.blends = (S.stats.blends || 0) + n;
+  SND.fx('blend'); S.items[b.out] = (S.items[b.out] || 0) + n; S.stats.blends = (S.stats.blends || 0) + n;
   burst(BLENDER.x, BLENDER.y - 80, 24, { type: 'star', col: '#bfe6ff', spd: 120, life: .8, size: 2.4 });
   toast(`+${n} ${ITEMS[b.out].n}`, ITEMS[b.out].i); save(); renderPanel();
 }
@@ -876,7 +888,7 @@ function claimBadge(id) {
   const b = BADGES.find(x => x.id === id); if (!b || !badgeReady(b)) return;
   const tr = badgeTier(b); S.badges[id] = tr + 1;
   for (const k in BADGE_RW[tr]) S.items[k] = (S.items[k] || 0) + BADGE_RW[tr][k];
-  rebuildCrew(); toast(`${BADGE_T[tr].n} ${b.n} badge`, 'badge'); save(); renderPanel();
+  SND.fx('badge'); rebuildCrew(); toast(`${BADGE_T[tr].n} ${b.n} badge`, 'badge'); save(); renderPanel();
 }
 
 /* ---------------- TIHAR ---------------- */
@@ -893,7 +905,7 @@ function pTihar() {
 }
 function buyTihar(i) {
   const g = TIHAR_SHOP[i]; if ((S.items.marigold || 0) < g.p || (S.items.tilak || 0) < (g.tilak || 0)) return;
-  S.items.marigold -= g.p; if (g.tilak) S.items.tilak -= g.tilak; S.items[g.k] = (S.items[g.k] || 0) + 1;
+  SND.fx('buy'); S.items.marigold -= g.p; if (g.tilak) S.items.tilak -= g.tilak; S.items[g.k] = (S.items[g.k] || 0) + 1;
   if (g.k === 'mysticWheel') S.wheels++;
   toast(`+1 ${ITEMS[g.k].n}`, ITEMS[g.k].i); save(); renderPanel();
 }

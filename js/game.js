@@ -264,8 +264,8 @@ function collect(t, base, srcCol, extra = 1, isTool = false) {
   let crit = false;
   const gooHit = lastGoo;
   let sup = false;
-  if (Math.random() < critChance()) { amt *= critMul(); crit = true; S.stats.crits++;
-    if (Math.random() < superChance()) { amt *= 2; sup = true; S.stats.supers = (S.stats.supers || 0) + 1; }
+  if (Math.random() < critChance()) { amt *= critMul(); crit = true; S.stats.crits++; SND.fx('crit');
+    if (Math.random() < superChance()) { amt *= 2; sup = true; S.stats.supers = (S.stats.supers || 0) + 1; SND.fx('super'); }
     if (t.col === 'spice' && Math.random() < .06 && E.decals.some(d => d.kind === 'flame' && dist(t.x, t.y, d.x, d.y) < d.r)) addFlame(t.f, t.x + rand(-30, 30), t.y + rand(-20, 20), base); }
   if (S.pilgrim && t.f === S.pilgrim.f && Date.now() < S.pilgrim.until) amt *= 2.5;
   if (E.litF && E.litF[t.f]) amt *= 1.5;
@@ -390,10 +390,10 @@ function useAbility(e, fi) {
     E.tokens.push({ x: e.x + rand(-18, 18), y: e.y + rand(-10, 10), ab: a === 'sbomb' && e.m.bl && Math.random() < .3 ? 'haze' : a, e, fi, life: 10, age: 0 });
     if (e.m.bl && fi >= 0 && Math.random() < .035) E.tokens.push({ x: e.x + rand(-30, 30), y: e.y + rand(-20, 20), ab: 'inspire', e, fi, life: 10, age: 0 });
     burst(e.x, e.y - 20, 6, { type: 'star', col: '#fff6c8', spd: 60, life: .5, size: 2 });
-  } else { FX[a](e, fi); S.stats.ab[a] = (S.stats.ab[a] || 0) + 1; abilityFired(CREW[e.m.id].c); }
+  } else { SND.ab(a); FX[a](e, fi); S.stats.ab[a] = (S.stats.ab[a] || 0) + 1; abilityFired(CREW[e.m.id].c); }
 }
 function takeToken(tk) {
-  const a = tk.ab; S.stats.ab[a] = (S.stats.ab[a] || 0) + 1;
+  const a = tk.ab; S.stats.ab[a] = (S.stats.ab[a] || 0) + 1; SND.fx('token'); SND.ab(a);
   ring(tk.x, tk.y, 40, '#ffffff', .4, 3);
   burst(tk.x, tk.y, 14, { type: 'star', col: '#fff6c8', spd: 120, life: .6, size: 2.4 });
   if (!abNameT[a] || now - abNameT[a] > 8) { abNameT[a] = now; pop(tk.x, tk.y - 22, ABIL[a].n, '#ffffff', true); }
@@ -402,7 +402,7 @@ function takeToken(tk) {
   if (a === 'inspire') return;
   if (a === 'iceBoost' && mpas('glacierStar') && !B.popstar && Date.now() > (S.popCd || 0) && (S.blueN = (S.blueN || 0) + 1) >= 45) {
     S.blueN = 0; S.popCd = Date.now() + 45000 + 60000; B.popstar = { t: 45, st: 0 }; addTimed('swell', 120, 3600);
-    ring(player.x, player.y, 140, '#bfefff', .7, 8); burst(player.x, player.y - 40, 50, { type: 'snow', col: '#e3f6ff', spd: 240, life: 1.2, size: 3 }); shake(8);
+    SND.fx('glacier'); ring(player.x, player.y, 140, '#bfefff', .7, 8); burst(player.x, player.y - 40, 50, { type: 'snow', col: '#e3f6ff', spd: 240, life: 1.2, size: 3 }); shake(8);
     toast('Glacier Star! x2 Ice and +10% Ice conversion for 45s. Pop bubbles to grow it', 'snow'); }
   if ((a === 'spiceBoost' || a === 'iceBoost' || a === 'cloudBoost') && mpas('guidingStar') && ++S.guideN >= 250) {
     S.guideN = 0; const open = FIELDS.map((f, i) => i).filter(fieldOpen); S.pilgrim = { f: pick(open), until: Date.now() + 6e5 };
@@ -637,7 +637,7 @@ function update(dt) {
     const f = player.fly; f.t += dt / f.dur; const u = Math.min(1, f.t), e2 = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
     player.x = f.x0 + (f.x1 - f.x0) * e2; player.y = f.y0 + (f.y1 - f.y0) * e2; player.h = Math.sin(u * Math.PI) * 260; ix = iy = 0;
     if (Math.random() < .6) E.parts.push({ type: 'snow', x: player.x + rand(-20, 20), y: player.y - player.h + rand(0, 20), vx: 0, vy: 30, g: 0, life: .7, max: .7, size: 2, col: 'rgba(255,255,255,.8)' });
-    if (u >= 1) { player.fly = null; player.h = 0; E.crew.forEach(e => { e.x = player.x + rand(-60, 60); e.y = player.y + rand(-40, 40); e.st = 'idle'; e.tile = null; }); ring(player.x, player.y, 90, '#ffffff', .5, 5); burst(player.x, player.y, 24, { type: 'smoke', col: 'rgba(255,255,255,.6)', spd: 120, life: .8, size: 8 }); }
+    if (u >= 1) { player.fly = null; player.h = 0; SND.fx('land'); E.crew.forEach(e => { e.x = player.x + rand(-60, 60); e.y = player.y + rand(-40, 40); e.st = 'idle'; e.tile = null; }); ring(player.x, player.y, 90, '#ffffff', .5, 5); burst(player.x, player.y, 24, { type: 'smoke', col: 'rgba(255,255,255,.6)', spd: 120, life: .8, size: 8 }); }
   } else {
     player.x = clamp(player.x + ix * sp * dt, 20, WORLD.w - 20);
     player.y = clamp(player.y + iy * sp * dt, 40, WORLD.h - 20);
@@ -659,7 +659,7 @@ function update(dt) {
     wasNight = nt;
     if (nt && E.stray) {
       const st = E.stray;
-      if (!st.on) { st.wait -= dt; if (st.wait <= 0) { st.on = true; toast(`A stray dog wandered into ${FIELDS[st.fi].n}. Gather near it to win its trust`, 'paw'); } }
+      if (!st.on) { st.wait -= dt; if (st.wait <= 0) { st.on = true; SND.fx('bark'); toast(`A stray dog wandered into ${FIELDS[st.fi].n}. Gather near it to win its trust`, 'paw'); } }
       else { st.hop -= dt; const f = FIELDS[st.fi]; if (st.hop <= 0) { st.hop = rand(4, 7); st.tx = rand(f.x + 50, f.x + f.w - 50); st.ty = rand(f.yy + 50, f.yy + f.h - 40); }
         const dx = st.tx - st.x, dy = st.ty - st.y, d2 = Math.hypot(dx, dy); st.mv = d2 > 4; if (st.mv) { st.x += dx / d2 * Math.min(d2, 150 * dt); st.y += dy / d2 * Math.min(d2, 150 * dt); st.face = dx > 0 ? 1 : -1; } st.anim += dt; }
     }
@@ -671,7 +671,7 @@ function update(dt) {
   player.swingT -= dt;
   const pf = fieldAt(player.x, player.y);
   if (pf >= 0 && fieldOpen(pf) && S.doko < capMax() && player.swingT <= 0) {
-    const tl = tool(); player.swingT = tl.sw / ((1 + stormSw()) * (B.drum ? 1 + .25 * B.drum.st : 1)); player.swing = 1;
+    const tl = tool(); player.swingT = tl.sw / ((1 + stormSw()) * (B.drum ? 1 + .25 * B.drum.st : 1)); player.swing = 1; SND.fx('swing', tl.col);
     const cx = player.x + player.face * 10, cy = player.y - 4;
     let sum = 0;
     const reach = tl.r * (B.cloudburst ? 1.5 : 1) * (B.bear ? 1.3 : 1) * (B.reach ? 1.5 : 1);
@@ -702,17 +702,17 @@ function update(dt) {
     else if (d.kind === 'starspot' && d.age + dt >= d.dur) {
       const sx2 = d.x, sy2 = d.y, inside = dist(player.x, player.y, sx2, sy2) < d.r + 8;
       E.proj.push({ kind: 'fallstar', x0: sx2 + 80, y0: sy2 - 260, x1: sx2, y1: sy2, t: 0, dur: .35, arc: 0, hit() {
-        ring(sx2, sy2, 40, '#7ee08a', .35, 4); burst(sx2, sy2, 10, { type: 'star', col: '#ffe066', spd: 120, life: .6, size: 2.4 });
+        SND.fx('star'); ring(sx2, sy2, 40, '#7ee08a', .35, 4); burst(sx2, sy2, 10, { type: 'star', col: '#ffe066', spd: 120, life: .6, size: 2.4 });
         if (dist(player.x, player.y, sx2, sy2) < 42) { if (!B.inspire) B.inspire = { t: 5, st: 1 }; else { B.inspire.st = Math.min(10, B.inspire.st + 1); B.inspire.t = 5; } pop(player.x, player.y - 64, `Inspire x${B.inspire.st + 1}`, '#3fae6b', true); } } });
     }
     else if (d.kind === 'flame') {
       d.tick += dt; if (d.tick > (mpas('blazingStar') ? .5 : 1)) { d.tick = 0; kilnFlame = doko().pas === 'kiln'; let got = 0; tilesNear(d.fi, d.x, d.y, d.r).forEach(t => got += collect(t, d.base, 'spice', d.dark ? 2 : 1)); kilnFlame = false; }
       if (Math.random() < dt * 4) E.parts.push({ type: 'ember', x: d.x + rand(-20, 20), y: d.y + rand(-8, 8), vx: 0, vy: -40, g: -20, life: .7, max: .7, size: 2.6, col: d.dark ? '#b06cff' : '#ff8a3d' });
     } else if (d.kind === 'target' && dist(player.x, player.y, d.x, d.y) < d.r) {
-      E.decals.splice(i, 1); bullHits++; ring(d.x, d.y, 44, '#e5484d', .35, 4); pop(d.x, d.y - 24, `${bullHits}/3`, '#ffd24a', true);
-      if (bullHits >= 3) { bullHits = 0; addBuff('precision', 25, 40); ring(player.x, player.y, 80, '#c06bff', .5, 5); }
+      E.decals.splice(i, 1); bullHits++; SND.fx('target', bullHits); ring(d.x, d.y, 44, '#e5484d', .35, 4); pop(d.x, d.y - 24, `${bullHits}/3`, '#ffd24a', true);
+      if (bullHits >= 3) { bullHits = 0; SND.fx('precision'); addBuff('precision', 25, 40); ring(player.x, player.y, 80, '#c06bff', .5, 5); }
     } else if (d.kind === 'bubble' && dist(player.x, player.y, d.x, d.y) < d.r + 10) {
-      E.decals.splice(i, 1); let sum = 0; const fz = frostAt(d.x, d.y), vault = doko().pas === 'deepfreeze';
+      E.decals.splice(i, 1); SND.fx('pop'); let sum = 0; const fz = frostAt(d.x, d.y), vault = doko().pas === 'deepfreeze';
       tilesNear(d.fi, d.x, d.y, fz ? 78 : 52).forEach(t => sum += collect(t, d.base, 'ice', t.col === 'ice' ? 2.5 : 1.5));
       for (let k = 0; k < (fz && vault ? 2 : 1); k++) addBuff('chill', vault ? 60 : 30, vault ? 40 : 20);
       if (B.popstar && d.mine !== false) { B.popstar.st++; addTimed('swell', 4, 3600); }
@@ -732,7 +732,7 @@ function update(dt) {
   // Chakra Saw: brews a big share of the doko straight into rupees while it spins (works with a full bag too)
   if (pf >= 0 && fieldOpen(pf) && mpas('starSaw') && B.saw) { sawT -= dt; if (sawT <= 0) { sawT = .12;
     const sx = player.x + Math.cos(now * 3.2) * 72, sy = player.y + Math.sin(now * 3.2) * 50;
-    const take = Math.min(S.doko, (B.saw.rate || 0) * .12), val = take * brewValue(); S.doko -= take; S.rp += val; S.stats.earn += val; if (val > 0) { sawAcc += val; burst(sx, sy - 6, 3, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.4 }); }
+    const take = Math.min(S.doko, (B.saw.rate || 0) * .12), val = take * brewValue(); S.doko -= take; S.rp += val; S.stats.earn += val; if (val > 0) { sawAcc += val; SND.fx('saw'); burst(sx, sy - 6, 3, { type: 'star', col: '#ffd24a', spd: 90, life: .5, size: 2.4 }); }
     sawPopT += .12; if (sawPopT >= .6 && sawAcc > 0) { pop(sx, sy - 30, '+' + fmt(sawAcc), '#ff9f1a', true); sawAcc = 0; sawPopT = 0; } } }
   if (pf >= 0 && fieldOpen(pf) && S.doko < capMax()) {
     if (mpas('starShower')) { showerT -= dt; if (showerT <= 0 && !E.decals.some(d => d.kind === 'starspot')) { showerT = 45; const f = FIELDS[pf];
@@ -741,7 +741,7 @@ function update(dt) {
   // Kiln bag: instant conversion while gathering
   if (doko().pas === 'kiln' && pf >= 0 && S.doko > 0) {
     kilnT += dt;
-    if (kilnT >= 20) { kilnT = 0; const conv = S.doko * .06, val = conv * brewValue(); S.doko -= conv; S.rp += val; S.stats.earn += val; pop(player.x, player.y - 70, 'Kiln +' + fmt(val), '#ffb347', true); burst(player.x, player.y - 30, 20, { type: 'ember', col: '#ff8a3d', spd: 140, life: .8, size: 3, g: -60 }); }
+    if (kilnT >= 20) { kilnT = 0; const conv = S.doko * .06, val = conv * brewValue(); S.doko -= conv; S.rp += val; S.stats.earn += val; SND.fx('kiln'); pop(player.x, player.y - 70, 'Kiln +' + fmt(val), '#ffb347', true); burst(player.x, player.y - 30, 20, { type: 'ember', col: '#ff8a3d', spd: 140, life: .8, size: 3, g: -60 }); }
   }
   gT += dt; if (gT >= 1) { gRate = gRate * .95 + gAcc / gT * .05; gAcc = 0; gT = 0; }   /* slow average of how much you gather per second */
   // static haze: a random flower +1 level every 0.5s
@@ -758,7 +758,7 @@ function update(dt) {
       if (bl.t <= 0 || bl.held >= bl.cap) { bl.home = true; if (bl.held <= 0) E.balloons.splice(i, 1); }
     } else {
       const hx = HLANT.x, hy = HLANT.y, dx = hx - bl.x, dy = hy - bl.y, L = Math.hypot(dx, dy);
-      if (L < 20) { S.hiveBal = (S.hiveBal || 0) + bl.held; S.hiveBalTot = (S.hiveBalTot || 0) + bl.held; E.balloons.splice(i, 1); pop(hx, hy - 60, '+' + fmt(bl.held), '#bfe6ff', true); continue; }
+      if (L < 20) { S.hiveBal = (S.hiveBal || 0) + bl.held; S.hiveBalTot = (S.hiveBalTot || 0) + bl.held; E.balloons.splice(i, 1); SND.fx('lantern'); pop(hx, hy - 60, '+' + fmt(bl.held), '#bfe6ff', true); continue; }
       bl.x += dx / L * Math.min(L, 320 * dt); bl.y += dy / L * Math.min(L, 320 * dt);
     }
   }
@@ -779,14 +779,14 @@ function update(dt) {
       const conv = Math.min(S.hiveBal, Math.max(rate, S.hiveBal / 20) * dt);
       S.hiveBal -= conv; const val = conv * brewValue() * honey; S.rp += val; S.stats.earn += val;
       if (S.hiveBal < 1) { S.hiveBal = 0; const st = blessStacks(S.hiveBalTot); S.hiveBalTot = 0;
-        if (!B.lbless || st > B.lbless.st) { B.lbless = { t: 3600, st }; toast(`The teahouse lantern granted you x${st} Lantern Blessing!`, 'diya'); }
+        SND.fx('blessing'); if (!B.lbless || st > B.lbless.st) { B.lbless = { t: 3600, st }; toast(`The teahouse lantern granted you x${st} Lantern Blessing!`, 'diya'); }
         else { B.lbless.t = 3600; toast('The teahouse lantern refreshed your Lantern Blessing!', 'diya'); }
         burst(HLANT.x, HLANT.y - 40, 40, { type: 'star', col: '#ffd27a', spd: 200, life: 1.1, size: 3 }); }
     }
-    brewing = true;
+    brewing = true; SND.fx('brew');
     if (Math.random() < .5) E.parts.push({ type: 'coin', x: BREW.x + rand(-30, 30), y: BREW.y - rand(0, 20), vx: rand(-20, 20), vy: -rand(60, 120), g: 60, life: 1, max: 1, size: 3.4, col: '#ffd24a' });
     if (S.doko === 0 && !S.hiveBal) {
-      toast('All brewed. Back to the fields', 'cup'); S.stats.brews++;
+      SND.fx('brewed'); toast('All brewed. Back to the fields', 'cup'); S.stats.brews++;
     }
   }
   if (Math.random() < dt * (brewing ? 12 : 3)) E.parts.push({ type: 'steam', x: brewing && Math.random() < .6 ? STALL.x - 2 : HOUSE.x + teaChimney(), y: brewing && Math.random() < .6 ? STALL.y - 48 : HOUSE.y + houseTop() - 6, vx: rand(-6, 6), vy: -rand(18, 30), g: 0, life: 2.4, max: 2.4, size: rand(5, 8), col: 'rgba(255,255,255,.55)' });
@@ -1087,7 +1087,7 @@ function render() {
 
 function glideTo(id) {
   const g = GLIDERS.find(q => q.id === id); if (!g || player.fly) return;
-  player.auto = null; player.fly = { x0: player.x, y0: player.y, x1: g.x, y1: g.y + 40, t: 0, dur: 1.2 + Math.abs(player.y - g.y) / 2500 };
+  SND.fx('fly'); player.auto = null; player.fly = { x0: player.x, y0: player.y, x1: g.x, y1: g.y + 40, t: 0, dur: 1.2 + Math.abs(player.y - g.y) / 2500 };
   burst(player.x, player.y, 20, { type: 'smoke', col: 'rgba(255,255,255,.6)', spd: 120, life: .8, size: 8 });
 }
 function drawGate(c, g) {
@@ -1395,9 +1395,10 @@ function startNight() {
     for (const i of open) { q -= 5 - FIELDS[i].z; if (q <= 0) { fi = i; break; } }
     const f = FIELDS[fi]; E.diyas.push({ fi, x: f.x + f.w * rand(.3, .7), y: f.yy + f.h * rand(.35, .7), need: Math.min(cap * (.6 + f.z * .45), LANTERN_HP[f.z]), prog: 0, lit: false, ph: rand(0, TAU), big: true }); }
   E.stray = Math.random() < STRAY_CHANCE ? (() => { const open = FIELDS.map((f, i) => i).filter(fieldOpen), fi = pick(open), f = FIELDS[fi]; return { fi, x: f.x + f.w / 2, y: f.yy + f.h / 2, tx: f.x + f.w / 2, ty: f.yy + f.h / 2, need: Math.min(cap * (.8 + f.z * .15), LANTERN_HP[f.z] * 2), trust: 0, wait: rand(10, 60), on: false, hop: 0, face: 1, anim: 0 }; })() : null;
-  toast(`Diyo Night! A great lantern waits in ${FIELDS[E.diyas[0].fi].n}`, 'diya');
+  SND.fx('nightOn'); toast(`Diyo Night! A great lantern waits in ${FIELDS[E.diyas[0].fi].n}`, 'diya');
 }
 function endNight() {
+  SND.fx('nightOff');
   if (E.stray && E.stray.on) toast('The stray dog wandered off into the dark', 'paw');
   E.diyas = []; E.stray = null; delete B.litfield; E.litF = {};
 }
@@ -1407,7 +1408,7 @@ function nightHit(t, add) {
     d.prog += add;
     if (d.prog >= d.need) {
       d.lit = true; const z = FIELDS[d.fi].z, n = ri(1 + z * 2, 2 + z * 2);
-      giveMari(n, d.x, d.y); burst(d.x, d.y - 14, 30, { type: 'star', col: '#ffcf5a', spd: 160, life: 1, size: 2.8 }); ring(d.x, d.y, 90, '#ffb347', .5, 6); shake(6);
+      SND.fx('lit'); giveMari(n, d.x, d.y); burst(d.x, d.y - 14, 30, { type: 'star', col: '#ffcf5a', spd: 160, life: 1, size: 2.8 }); ring(d.x, d.y, 90, '#ffb347', .5, 6); shake(6);
       toast(`The great lantern is lit: +${n} Marigold${n > 1 ? 's' : ''}`, 'marigold'); save();
     }
   }
@@ -1433,7 +1434,7 @@ function spawnSprout(fi, odds, wild) {
   if (fi === fieldAt(player.x, player.y) && !wild) { sp.x = clamp(player.x, f.x + 60, f.x + f.w - 60); sp.y = clamp(player.y - 40, f.yy + 60, f.yy + f.h - 40); }
   sp.hp = sp.max; S.sprouts.push(sp);
   burst(sp.x, sp.y - 10, 18, { type: 'leaf', col: def.c, spd: 120, life: .8, size: 3.4, g: 80 });
-  if (wild) toast(`A ${def.n} appeared in ${f.n}`, 'sprout');
+  SND.fx('sproutIn'); if (wild) toast(`A ${def.n} appeared in ${f.n}`, 'sprout');
   return true;
 }
 function plantSprout(fi) {
@@ -1456,7 +1457,7 @@ function popSprout(i) {
   const sp = S.sprouts.splice(i, 1)[0], def = SPROUT[sp.r], got = {};
   for (let k = 0; k < def.drops; k++) { const it = sproutLoot(def.o); const n = ['chili', 'berry', 'apple', 'momo'].includes(it) ? ri(2, 4) * (1 + def.o) : it === 'marigold' ? 1 : 1; got[it] = (got[it] || 0) + n; }
   for (const k in got) { S.items[k] = (S.items[k] || 0) + got[k]; if (k === 'marigold') S.stats.marigolds = (S.stats.marigolds || 0) + got[k]; }
-  S.stats.sprouts = (S.stats.sprouts || 0) + 1;
+  S.stats.sprouts = (S.stats.sprouts || 0) + 1; SND.fx('sprout');
   burst(sp.x, sp.y - 20, 40, { type: 'star', col: def.c, spd: 220, life: 1.1, size: 3 });
   burst(sp.x, sp.y - 10, 20, { type: 'leaf', col: '#6cc87a', spd: 160, life: 1, size: 3.5, g: 120 });
   ring(sp.x, sp.y, 110, def.c, .6, 5); cam.shake = Math.max(cam.shake, 5);
@@ -1467,7 +1468,7 @@ function dropMat(fi) {
   const f = FIELDS[fi], r = Math.random();
   let k; if (f.z === 4 && r < .08) k = 'gem'; else if (f.z >= 2 && r < .2) k = 'walnut'; else { let q = Math.random(); k = 'apple'; for (const c2 in f.cw) { q -= f.cw[c2]; if (q <= 0) { k = { spice: 'chili', ice: 'berry', cloud: 'apple' }[c2]; break; } } }
   S.items[k] = (S.items[k] || 0) + 1;
-  pop(player.x, player.y - 62, '+1 ' + ITEMS[k].n, '#d6b4ff', true);
+  pop(player.x, player.y - 62, '+1 ' + ITEMS[k].n, '#d6b4ff', true); SND.fx('mat');
   burst(player.x, player.y - 30, 8, { type: 'star', col: '#d6b4ff', spd: 80, life: .7, size: 2 });
 }
 const abNameT = {};
@@ -1488,11 +1489,11 @@ function runChain(ms, start) {
   const order = [start], left = ms.filter(p => p !== start);
   while (left.length) { const last = order[order.length - 1]; left.sort((a, b) => dist(a.x, a.y, last.x, last.y) - dist(b.x, b.y, last.x, last.y)); order.push(left.shift()); }
   let px = player.x, py = player.y - 40;
-  order.forEach((p, i) => later(i * .09, () => { boltFx(px, py, p.x, p.y - 47); px = p.x; py = p.y - 47; burst(p.x, p.y - 47, 6, { type: 'spark', col: '#ffe36e', spd: 140, life: .4, size: 2 }); }));
+  order.forEach((p, i) => later(i * .09, () => { SND.fx('chain'); boltFx(px, py, p.x, p.y - 47); px = p.x; py = p.y - 47; burst(p.x, p.y - 47, 6, { type: 'spark', col: '#ffe36e', spd: 140, life: .4, size: 2 }); }));
   const n = Math.min(5, order.length), endP = order[order.length - 1];
   later(order.length * .09, () => {
     const base = tool().amt * 5 * (doko().pas === 'nimbus' ? 1.5 : 1); let sum = 0; tilesNear(endP.fi, endP.x, endP.y, endP.r).forEach(t => sum += collect(t, base, 'neutral', 1, true));
-    ring(endP.x, endP.y, endP.r, '#ffe36e', .5, 6); burst(endP.x, endP.y - 20, 26, { type: 'star', col: '#e9ddff', spd: 200, life: .8, size: 2.6 }); shake(5);
+    SND.fx('chainEnd'); ring(endP.x, endP.y, endP.r, '#ffe36e', .5, 6); burst(endP.x, endP.y - 20, 26, { type: 'star', col: '#e9ddff', spd: 200, life: .8, size: 2.6 }); shake(5);
     S.storm = Math.min(5, (S.storm || 0) + STORM_GAIN[n]); S.stormUntil = Date.now() + 3600e3;
     pop(endP.x, endP.y - 70, `Storm +${STORM_GAIN[n].toFixed(3)}`, '#d8c6ff', true); if (sum) pop(endP.x, endP.y - 50, '+' + fmt(sum), '#ffe36e');
   });
@@ -1503,7 +1504,7 @@ function vajraBolt(fi) {
   const hits = B.sfork ? 3 : 1; if (B.sfork && --B.sfork.st <= 0) delete B.sfork;
   if (grp) { for (let k = 0; k < hits; k++) later(k * .25, () => runChain(grp.ms, grp.ms.slice().sort((a, b) => dist(a.x, a.y, player.x, player.y) - dist(b.x, b.y, player.x, player.y))[0])); return; }
   const ts = tilesNear(fi, player.x, player.y, tool().r * 1.6); if (!ts.length) return; const t0 = pick(ts);
-  for (let k = 0; k < hits; k++) later(k * .2, () => { boltFx(t0.x + 20, t0.y - 260, t0.x, t0.y); let sum = 0; tilesNear(fi, t0.x, t0.y, 65).forEach(t => sum += collect(t, tool().amt * 4 * (doko().pas === 'nimbus' ? 1.5 : 1), 'neutral', 1, true)); ring(t0.x, t0.y, 65, '#c9b0ff', .35, 4); if (sum) pop(t0.x, t0.y - 30, '+' + fmt(sum), '#d8c6ff'); });
+  for (let k = 0; k < hits; k++) later(k * .2, () => { SND.fx('bolt'); boltFx(t0.x + 20, t0.y - 260, t0.x, t0.y); let sum = 0; tilesNear(fi, t0.x, t0.y, 65).forEach(t => sum += collect(t, tool().amt * 4 * (doko().pas === 'nimbus' ? 1.5 : 1), 'neutral', 1, true)); ring(t0.x, t0.y, 65, '#c9b0ff', .35, 4); if (sum) pop(t0.x, t0.y - 30, '+' + fmt(sum), '#d8c6ff'); });
 }
 /* ---------------- Prayer flags (Cloud, retired) ---------------- */
 const POLE_LIFE = 40, FLAG_COLS = ['#2e7bd6', '#ffffff', '#e5484d', '#3fae6b', '#f5c518'];
@@ -1579,7 +1580,7 @@ function abilityFired(col) {
 }
 function runPassive(id, fi) {
   const p = PASSIVES[id];
-  pop(player.x, player.y - 70, p.n + '!', '#ffd24a', true);
+  pop(player.x, player.y - 70, p.n + '!', '#ffd24a', true); SND.fx(id === 'cloudburst' ? 'electrify' : 'passive');
   ring(player.x, player.y, 120, '#ffd24a', .6, 6); ring(player.x, player.y, 70, '#ffffff', .45, 4); shake(5);
   burst(player.x, player.y - 20, 30, { type: 'star', col: '#ffe066', spd: 180, life: 1, size: 2.6 });
   switch (id) {
@@ -1607,7 +1608,7 @@ function statDefaults() {
   for (const k in d) if (S.stats[k] == null) S.stats[k] = d[k];
   if (!S.start) S.start = Date.now();
 }
-function spend(n) { S.rp -= n; S.stats.spent += n; }
+function spend(n) { S.rp -= n; S.stats.spent += n; SND.fx('buy'); }
 function boot() {
   S = load();
   const fresh = !S;

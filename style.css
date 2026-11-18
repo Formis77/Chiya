@@ -408,3 +408,8 @@ body.panel #quest{display:none}
 #sheet.fit .ph h2{font-size:20px}
 #sheet.fit .tabs{margin-bottom:8px}
 #sheet.fit .gcard{max-height:calc(100vh - 150px)}
+
+/* sound sliders */
+input.vol{-webkit-appearance:none;appearance:none;width:100%;height:22px;margin:4px 0 0;background:transparent;touch-action:none}
+input.vol::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(90deg,var(--acc2) var(--v),#e9e4dc var(--v))}
+input.vol::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;background:#fff;border:2px solid var(--acc2);box-shadow:0 1px 3px rgba(0,0,0,.2)}
