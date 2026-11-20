@@ -264,7 +264,7 @@ const LODGE = [
 
 /* shops on the map: each zone sells gear for its stage of the game */
 const SHOPS = [
-  { id: 'bazaar',    n: 'Base Bazaar',      col: '#ff8a3d', x: 800,  y: 5300, z: 0, sells: { tool: ['sickle', 'trowel', 'rake', 'hook', 'axe', 'scoop', 'shears'], doko: ['basket', 'woven', 'frame'], boots: ['sandals', 'runners'], hat: ['woolCap', 'gingerTopi', 'iceHood'] }, extra: ['supplies', 'lodge'] },
+  { id: 'bazaar',    n: 'Base Bazaar',      col: '#ff8a3d', x: 800,  y: 5300, z: 0, sells: { tool: ['sickle', 'trowel', 'rake', 'hook', 'axe', 'scoop', 'shears'], doko: ['basket', 'woven', 'frame'], boots: ['sandals', 'runners'], hat: ['woolCap', 'gingerTopi', 'iceHood'] }, extra: ['supplies'] },
   { id: 'outfitter', n: 'Forest Outfitter', col: '#3fae6b', x: 1250, y: 3600, z: 1, sells: { tool: ['broom', 'staff'], doko: ['saddle', 'exped'], boots: ['crampon'], hat: ['sherpaHat'] }, extra: ['sprinklers'] },
   { id: 'smithy',    n: 'Pasture Smithy',   col: '#b0784a', x: 1750, y: 2700, z: 2, sells: { tool: ['esickle', 'gpick', 'crake', 'claw'], doko: ['glacier'], boots: ['sherpa'] } },
   { id: 'snowshop',  n: 'Snowline Lodge',   col: '#2ea4dc', x: 420,  y: 1450, z: 3, sells: { tool: ['talon', 'scythe', 'fan', 'wheel'], doko: ['spirit'], boots: ['wind'], hat: ['emberCrown', 'frostCrown', 'cloudCrown'] } },
@@ -403,7 +403,7 @@ const SYN = [
 
 const HIVE = {
   spice: { n: 'Spice Teahouse', i: 'flame', d: 'Ability cooldowns −15%, +5% crit chance. Rewards active play.' },
-  ice:   { n: 'Ice Teahouse',   i: 'snow', d: '+30% rupees from brewing, +20% offline earnings. Great for idle days.' },
+  ice:   { n: 'Ice Teahouse',   i: 'snow', d: '+30% rupees from brewing.' },
   cloud: { n: 'Lightning Teahouse', i: 'cloud', d: 'Your tool gathers ×1.5, +15% doko capacity. For hands-on farming.' }
 };
 

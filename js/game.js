@@ -1352,19 +1352,6 @@ function frame(t) {
   }
   requestAnimationFrame(frame);
 }
-function offlineEarnings() {
-  const secs = Math.min(8 * 3600, (Date.now() - S.last) / 1000);
-  if (secs < 90 || !S.rate) return;
-  const eff = LODGE[S.lodge].eff * (D.hive === 'ice' ? 1.2 : 1) * (1 + bp('offline'));
-  const amt = S.rate * secs * eff;
-  if (amt < 1) return;
-  S.rp += amt; S.stats.earn += amt; S.stats.offline += amt;
-  const h = Math.floor(secs / 3600), m = Math.floor(secs % 3600 / 60);
-  showModal(`<div class="big-ico">${ic('moon')}</div><h2>While you were away</h2>
-    <p class="mut">Your crew kept brewing for ${h ? h + 'h ' : ''}${m}m at ${Math.round(eff * 100)}% efficiency.</p>
-    <div class="reward">${ic('coin')} ${fmt(amt)}</div>
-    <button class="btn primary" onclick="closeModal()">Collect</button>`);
-}
 function refreshWet() {
   const sp = SPRINKLERS[S.spr.lv];
   for (const arr of TILES) for (const t of arr) { t.wet = 1; t.rg = 1; }
@@ -1615,6 +1602,8 @@ function boot() {
   if (!S) S = newSave();
   statDefaults();
   if (!S.spr) S.spr = { n: 0, lv: 0, placed: [] };
+  /* offline earnings removed (v53): refund any lodge managers that were bought */
+  if (S.offv !== 1) { S.offv = 1; const paid = LODGE.slice(1, (S.lodge || 0) + 1).reduce((a, l) => a + l.cost, 0); if (paid > 0) { S.rp += paid; setTimeout(() => toast(`Offline earnings are gone. Lodge managers refunded: ${fmt(paid)}`, 'coin'), 1500); } S.lodge = 0; }
   if (S.sprv !== 2) { S.sprv = 2; if (S.spr.n > 0) { S.spr.lv = [0, 1, 2, 3, 3, 4][Math.min(5, S.spr.lv || 0)]; S.spr.n = SPRINKLERS[S.spr.lv].cnt; S.spr.placed = S.spr.placed.slice(-S.spr.n); } else S.spr.lv = 0; }
   if (!S.hats) { S.hats = []; S.hat = null; S.charms = []; S.charm = null; S.pas = {}; }
   if (S.charms && S.charms.length) { let refund = 0; for (const id of S.charms) { const ch = CHARMS.find(c2 => c2.id === id); if (ch) refund += ch.cost; } S.rp += refund; S.charms = []; S.charm = null; S.charmRefund = refund; }
@@ -1644,7 +1633,7 @@ function boot() {
   E.crew.forEach(e => { e.x = player.x + rand(-50, 50); e.y = player.y + rand(-30, 30); });
   resize(); addEventListener('resize', resize);
   uiInit();
-  if (fresh) showIntro(); else offlineEarnings();
-  document.addEventListener('visibilitychange', () => { if (!S) return; if (document.hidden) save(); else { const gap = (Date.now() - S.last) / 1000; if (gap > 90) offlineEarnings(); } });
+  if (fresh) showIntro();
+  document.addEventListener('visibilitychange', () => { if (!S) return; if (document.hidden) save(); });
   requestAnimationFrame(frame);
 }

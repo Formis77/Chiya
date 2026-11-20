@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '52';
+const VERSION = '53';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -331,13 +331,6 @@ function shopExtra(t) {
       h += `<div class="item">${ib(it.i, icol(it.i))}<div class="it"><b>${it.n} <span class="mut">x${S.items[k] || 0}</span> ${info('it', k)}</b></div><div class="buyrow"><button class="btn sm primary" data-cost="${it.price}" onclick="buyItem('${k}',${it.price})">${money(it.price)}</button>${it.price * 10 < 1e9 ? `<button class="btn sm" data-cost="${it.price * 10}" onclick="buyItem('${k}',${it.price * 10},10)"><span>x10</span></button>` : ''}</div></div>`;
     }
   }
-  if (t === 'lodge') {
-    h += `<p class="mut small">Your lodge manager keeps the teahouse running while the app is closed. Offline earnings are based on your recent income, up to 8 hours.</p>`;
-    LODGE.forEach((l, i) => {
-      h += `<div class="item ${S.lodge === i ? 'eq' : ''}">${ib('key', icol('key'))}<div class="it"><b>${l.n}</b><span class="mut small">${Math.round(l.eff * 100)}% offline efficiency</span></div>${S.lodge >= i ? '<span class="tag">' + (S.lodge === i ? 'Current' : 'Done') + '</span>' : S.lodge === i - 1 ? `<button class="btn sm primary" data-cost="${l.cost}" onclick="buyLodge(${i})">${money(l.cost)}</button>` : '<span class="tag dim">Locked</span>'}</div>`;
-    });
-    h += `<p class="mut small">Recent income: ${fmt(S.rate)} per second</p>`;
-  }
   return h;
 }
 /* gear panel: what you wear, what you own, where the shops are */
@@ -367,7 +360,6 @@ function buyItem(k, cost, n = 1) {
   if (k === 'permit') S.recruits++; if (k === 'mysticWheel') S.wheels += n;
   toast(`+${n} ${ITEMS[k].n}`, ITEMS[k].i); renderPanel();
 }
-function buyLodge(i) { const l = LODGE[i]; if (S.rp < l.cost) return; spend(l.cost); S.lodge = i; toast(`Hired: ${l.n}`, 'key'); save(); renderPanel(); }
 
 /* ---------------- ITEMS ---------------- */
 let invSel = null;
@@ -746,7 +738,6 @@ function pStats() {
     ${tile('clock', '#2ea4dc', 'Time played', dur(st.time))}
     ${tile('pin', '#9b6ef3', 'Distance walked', (st.walk / 100).toFixed(1) + ' km')}
     ${tile('cup', '#b0784a', 'Doko brewed', fmt(st.brews))}
-    ${tile('moon', '#6f7fd0', 'Earned offline', fmt(st.offline))}
     ${tile('shop', '#e5484d', 'Rupees spent', fmt(st.spent))}
     ${tile('star', '#f0b429', 'Biggest single gather', fmt(st.best))}</div>`;
   const ct = (st.col.spice || 0) + (st.col.ice || 0) + (st.col.cloud || 0);
