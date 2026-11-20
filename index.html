@@ -14,6 +14,21 @@
 <title>Chiya</title>
 </head>
 <body>
+<div id="loader"><div class="ld">
+  <svg class="ldcup" viewBox="0 0 120 120" aria-hidden="true">
+    <g class="steam" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"><path d="M47 40c-6-7 6-11 0-19"/><path d="M60 36c-6-7 6-11 0-19"/><path d="M73 40c-6-7 6-11 0-19"/></g>
+    <path d="M28 52h64l-7 42a9 9 0 0 1-9 8H44a9 9 0 0 1-9-8z" fill="#e07a43" stroke="#2b2233" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M33 70h54" stroke="#fff3e3" stroke-width="4" stroke-dasharray="7 6" stroke-linecap="round" opacity=".7"/>
+    <ellipse cx="60" cy="52" rx="32" ry="8" fill="#f6b27d" stroke="#2b2233" stroke-width="4"/>
+    <ellipse cx="60" cy="52" rx="25" ry="4.5" fill="#a85a2a"/>
+  </svg>
+  <h1>Chiya</h1><p class="ldsub">A Himalayan teahouse tycoon</p>
+  <div class="ldbar"><i id="ldfill"></i></div>
+  <p class="ldtip" id="ldtip">Boiling the kettle</p>
+</div>
+<svg class="ldmtn" viewBox="0 0 800 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120V84l90-46 60 30 110-62 80 50 70-34 120 72 60-30 100 40 110-58v74z" fill="#1d2440"/><path d="M260 6l-28 16 14 2 14-8 16 10 12-4zM610 42l-22 12 12 1 10-6 12 7 9-3z" fill="#e8eef7"/></svg>
+</div>
+<script>(function(){var t=['Boiling the kettle','Waking up the yaks','Counting momos','Tying prayer flags','Sharpening the sickle'],i=0,f=document.getElementById('ldfill'),p=8;window.__ldT=setInterval(function(){p=Math.min(92,p+(92-p)*.18);f.style.width=p+'%';if(++i%4===0)document.getElementById('ldtip').textContent=t[(i/4)%t.length];},120);})();</script>
 <canvas id="cv"></canvas>
 <div id="hud">
   <div class="hcard">
@@ -39,12 +54,14 @@
 <div id="modal"></div>
 <script src="js/icons.js"></script>
 <script src="js/audio.js"></script>
+<script src="js/changelog.js"></script>
 <script src="js/data.js"></script>
 <script src="js/art.js"></script>
 <script src="js/game.js"></script>
 <script src="js/ui.js"></script>
 <script>
 boot();
+loaderReady();
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 </script>
 </body>

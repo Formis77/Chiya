@@ -50,7 +50,7 @@ p{margin:6px 0}
 #toast .ic{color:#ffc35e}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 /* sheet */
-#sheet{position:fixed;left:0;right:0;bottom:0;max-height:76vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--paper);border-radius:28px 28px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom) + 100px);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.3,1);z-index:4;touch-action:pan-y;box-shadow:0 -10px 40px rgba(43,34,51,.18)}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-height:76vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--paper);border-radius:28px 28px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom) + 100px);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.3,1);z-index:4;touch-action:pan-x pan-y;box-shadow:0 -10px 40px rgba(43,34,51,.18)}
 #sheet.on{transform:none}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
 .x{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;color:var(--mut)}
@@ -227,7 +227,7 @@ html.gapfix #toast{bottom:150px}
 .lg-you i{background:#2b2233;box-shadow:0 0 0 2px #ffd24a}
 #talk .gl{width:44px;height:44px;border-radius:14px;background:#e0f3fc;color:#2ea4dc;display:flex;align-items:center;justify-content:center}
 #talk .gl .ic{width:24px;height:24px}
-.car{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 6% 10px;margin:0 -16px;touch-action:pan-x;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.car{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 6% 10px;margin:0 -16px;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
 .car::-webkit-scrollbar{display:none}
 .gcard{flex:0 0 82%;scroll-snap-align:center;background:var(--card);border-radius:24px;padding:16px;box-shadow:0 2px 10px rgba(43,34,51,.08);display:flex;flex-direction:column;align-items:center;text-align:center;border:2px solid transparent}
 .gcard.eq{border-color:#ffc79a}
@@ -265,10 +265,10 @@ html.gapfix #toast{bottom:150px}
 .ibtn{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;border:1.6px solid #b9b3c2;background:#fff;color:#7d7689;font:italic 800 11px Georgia,serif;padding:0;vertical-align:middle;margin-left:3px;cursor:pointer}
 .ibtn:active{background:#eef6fc;border-color:#2ea4dc;color:#2ea4dc}
 .chip.frostc{background:#e3f6ff;color:#2a8fc4}
-#sheet.fit{overflow-y:hidden;touch-action:pan-x}
+#sheet.fit{overflow-y:hidden;touch-action:pan-x pan-y}
 #sheet.fit .gcard{max-height:calc(76vh - 150px);overflow:hidden}
 .car{overflow-y:hidden;overscroll-behavior:contain}
-.gcard{touch-action:pan-x}
+.gcard{touch-action:pan-x pan-y}
 
 /* ================= LANDSCAPE LAYOUT (Bee Swarm mobile style) ================= */
 :root{--sl:env(safe-area-inset-left);--sr:env(safe-area-inset-right);--st:env(safe-area-inset-top);--sb:env(safe-area-inset-bottom);--pw:min(400px,46vw)}
@@ -387,7 +387,7 @@ body.panel #quest{display:none}
 .item{flex-wrap:wrap}
 .item .it{flex:1 1 140px;min-width:0}
 .item>.buyrow{margin-left:auto}
-#sheet.fit .gcard{max-height:calc(100vh - 175px);overflow-y:auto;overscroll-behavior:contain}
+#sheet.fit .gcard{max-height:calc(100vh - 175px);max-height:calc(100dvh - 175px);overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;overscroll-behavior-x:auto}
 .gcard{grid-template-columns:58px 1fr;padding:10px;column-gap:10px}
 .gcard .gart{width:58px;height:58px;border-radius:18px}
 .gcard .gart .ic{width:32px;height:32px}
@@ -414,3 +414,30 @@ input.vol{-webkit-appearance:none;appearance:none;width:100%;height:22px;margin:
 input.vol::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(90deg,var(--acc2) var(--v),#e9e4dc var(--v))}
 input.vol::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;background:#fff;border:2px solid var(--acc2);box-shadow:0 1px 3px rgba(0,0,0,.2)}
 #pop span.now{display:block;opacity:1;font-weight:800;color:#ffe9b0}
+/* loading screen */
+#loader{position:fixed;inset:0;z-index:100;background:radial-gradient(120% 90% at 50% 20%,#27305a 0%,#14182a 70%);color:#fff;display:flex;align-items:center;justify-content:center;transition:opacity .45s;overflow:hidden}
+#loader.out{opacity:0;pointer-events:none}
+#loader .ld{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;margin-top:-4vh}
+.ldcup{width:min(120px,24vh);height:min(120px,24vh);filter:drop-shadow(0 6px 18px rgba(224,122,67,.35))}
+.ldcup .steam path{opacity:0;animation:steam 2.2s ease-in-out infinite}
+.ldcup .steam path:nth-child(2){animation-delay:.5s}.ldcup .steam path:nth-child(3){animation-delay:1s}
+@keyframes steam{0%{opacity:0;transform:translateY(8px)}35%{opacity:.85}100%{opacity:0;transform:translateY(-10px)}}
+#loader h1{margin:6px 0 0;font-size:min(44px,10vh);letter-spacing:.5px;font-weight:900}
+.ldsub{margin:2px 0 16px;opacity:.6;font-weight:700;font-size:13px}
+.ldbar{width:min(260px,60vw);height:8px;border-radius:8px;background:rgba(255,255,255,.12);overflow:hidden}
+.ldbar i{display:block;height:100%;width:8%;border-radius:8px;background:linear-gradient(90deg,#ff8a3d,#ffc95c);transition:width .3s}
+.ldtip{margin:12px 0 0;font-weight:800;font-size:13px;opacity:.75;min-height:18px}
+#loader.ready .ldtip{opacity:1;animation:tapPulse 1.4s ease-in-out infinite}
+@keyframes tapPulse{50%{opacity:.45}}
+.ldmtn{position:absolute;left:0;right:0;bottom:0;width:100%;height:24vh}
+/* changelog */
+.clog{text-align:left;margin-top:12px;max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.clog.full{max-height:none}
+.clv{background:var(--soft);border-radius:16px;padding:10px 14px;margin-bottom:8px}
+.clh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.clh span{font-size:12px;opacity:.55;font-weight:700}
+.clv ul{margin:6px 0 2px;padding-left:18px}.clv li{font-size:13px;line-height:1.4;margin:3px 0}
+.btn.wide{flex-direction:row;gap:8px;width:100%;margin:8px 0}
+.btn.wide .ic{width:18px;height:18px}
+.clhead{display:flex;align-items:center;gap:12px;text-align:left}.clhead h2{margin:0}.clhead p{margin:2px 0 0}
+.mcard .clog{max-height:calc(100vh - 210px);max-height:calc(100dvh - 210px)}
+.mcard .clog+.btn{margin-top:10px}

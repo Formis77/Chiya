@@ -1633,7 +1633,7 @@ function boot() {
   E.crew.forEach(e => { e.x = player.x + rand(-50, 50); e.y = player.y + rand(-30, 30); });
   resize(); addEventListener('resize', resize);
   uiInit();
-  if (fresh) showIntro();
+  if (fresh) { S.seenV = VERSION; showIntro(); }
   document.addEventListener('visibilitychange', () => { if (!S) return; if (document.hidden) save(); });
   requestAnimationFrame(frame);
 }

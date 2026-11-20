@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '53';
+const VERSION = '54';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -83,6 +83,35 @@ function toast(msg, icon) {
 }
 function showModal(html) { $('modal').innerHTML = `<div class="mcard">${html}</div>`; $('modal').classList.add('on'); }
 function closeModal() { $('modal').classList.remove('on'); }
+/* ---------------- loading screen, fullscreen, changelog ---------------- */
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function goFull() {
+  if (IS_IOS || S && S.noFull) return;
+  if (document.fullscreenElement || document.webkitFullscreenElement || matchMedia('(display-mode: fullscreen)').matches) return;
+  const d = document.documentElement, rq = d.requestFullscreen || d.webkitRequestFullscreen; if (!rq) return;
+  try { const p = rq.call(d, { navigationUI: 'hide' }); if (p && p.then) p.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }).catch(() => {}); } catch (e) {}
+}
+/* Android: if fullscreen was left (back gesture), the next tap brings it back */
+let fullT = 0;
+addEventListener('pointerup', () => { if (IS_IOS || !S || S.noFull || document.getElementById('loader')) return; const t = Date.now(); if (t - fullT < 3000) return; fullT = t; goFull(); }, true);
+function loaderReady() {
+  const L = $('loader'); if (!L) return;
+  clearInterval(window.__ldT);
+  setTimeout(() => { $('ldfill').style.width = '100%'; $('ldtip').textContent = 'Tap to play'; L.classList.add('ready');
+    const go = () => { L.removeEventListener('pointerup', go); goFull(); L.classList.add('out'); setTimeout(() => { L.remove(); afterLoad(); }, 450); };
+    L.addEventListener('pointerup', go); }, 500);
+}
+function afterLoad() {
+  if (S.seenV !== VERSION) { const from = S.seenV; S.seenV = VERSION; save(); if (from !== undefined || S.stats.time > 60) showChangelog(from); }
+}
+function clogHtml(e) { return `<div class="clv"><div class="clh"><b>Version ${e.v}</b><span>${e.d}</span></div><ul>${e.items.map(i => `<li>${i}</li>`).join('')}</ul></div>`; }
+function showChangelog(from) {
+  let list = CHANGELOG.filter(e => from === undefined ? e.v === VERSION : +e.v > +from).slice(0, 6);
+  if (!list.length) list = CHANGELOG.slice(0, 1);
+  if ($('modal').classList.contains('on')) { setTimeout(() => showChangelog(from), 800); return; }
+  showModal(`<div class="clhead"><span class="ib" style="--c:#ff8a3d">${ic('sparkle')}</span><div><h2>What's new</h2><p class="mut small">You're on version ${VERSION}</p></div></div><div class="clog">${list.map(clogHtml).join('')}</div><button class="btn primary" onclick="closeModal()">Let's go</button>`);
+}
+function pChangelog() { return `<div class="ph"><h2>What's new</h2><span class="pill">v${VERSION}</span></div><div class="clog full">${CHANGELOG.map(clogHtml).join('')}</div>`; }
 function showIntro() {
   showModal(`<div class="big-ico">${ic('cup')}</div><h2>Welcome to Chiya</h2>
   <p class="mut">Mansoon left you her little teahouse at the foot of the mountain. Make it legendary.</p>
@@ -105,7 +134,7 @@ function openPanel(name, tab) {
 }
 function closePanel() { if (panel) SND.fx('close'); panel = null; crewSel = null; $('sheet').classList.remove('on'); document.body.classList.remove('panel', 'menu'); document.querySelectorAll('#bar button').forEach(b => b.classList.remove('on')); }
 function renderPanel() {
-  const fn = { inv: pItems, tihar: pTihar, badges: pBadges, blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats }[panel];
+  const fn = { inv: pItems, tihar: pTihar, badges: pBadges, blender: pBlender, crew: pCrew, shop: pShop, gear: pGear, mandala: pMandala, items: pItems, quests: pQuests, codex: pCodex, map: pMap, settings: pSettings, stats: pStats, changelog: pChangelog }[panel];
   if (!fn) return;
   $('sheet').classList.toggle('fit', panel === 'shop' && ['tool', 'doko', 'boots', 'hat'].includes(panelTab));
   $('sheet').innerHTML = `<div class="grab" onclick="closePanel()"></div><button class="x" onclick="closePanel()" aria-label="Close">${ic('close')}</button>` + fn();
@@ -284,7 +313,7 @@ function gearStats(k, it) {
   return st;
 }
 let curShop = null;
-function openShop(id) { curShop = SHOPS.find(s2 => s2.id === id); panelTab = null; openPanel('shop', 'x'); }
+function openShop(id) { curShop = SHOPS.find(s2 => s2.id === id); openPanel('shop', Object.keys(curShop.sells).concat(curShop.extra || [])[0]); }
 function pShop() {
   const sh = curShop; if (!sh) return pGear();
   const cats = Object.keys(sh.sells).concat(sh.extra || []);
@@ -707,6 +736,8 @@ function pSettings() {
   h += `<div class="row2"><button class="btn" onclick="checkUpdate()">${ic('refresh')}<span>Check for update</span></button>
     <button class="btn primary" onclick="forceUpdate()">${ic('download')}<span>Update now</span><small>Reloads the latest version</small></button></div>`;
   h += `<p class="mut small">Your progress is saved on this phone and stays when you update.</p>`;
+  h += `<button class="btn wide" onclick="openPanel('changelog')">${ic('sparkle')}<span>What's new in this version</span></button>`;
+  if (!IS_IOS) h += `<div class="item">${ib('expand', '#6f7fd0')}<div class="it"><b>Fullscreen</b><span class="mut small">Hide the browser bar and status bar (Android)</span></div><button class="btn sm ${S.noFull ? '' : 'primary'}" onclick="S.noFull = !S.noFull; save(); if (!S.noFull) goFull(); else if (document.fullscreenElement) document.exitFullscreen(); renderPanel()"><span>${S.noFull ? 'Off' : 'On'}</span></button></div>`;
   h += `<h3>Sound</h3>` + [['mus', 'music', 'Music', '#9b6ef3'], ['sfx', 'speaker', 'Effects', '#2ea4dc']].map(([k, i, n, c]) => { const v = Math.round(SND.cfg[k] * 100);
     return `<div class="item">${ib(i, c)}<div class="it"><b>${n}</b><input class="vol" type="range" min="0" max="100" step="5" value="${v}" style="--v:${v}%" oninput="SND.setVol('${k}', this.value / 100); this.style.setProperty('--v', this.value + '%'); this.closest('.item').querySelector('.tag').textContent = this.value + '%'"></div><span class="tag">${v}%</span></div>`; }).join('');
   h += `<p class="mut small">If you hear nothing, check that the silent switch on the side of your iPhone is off.</p>`;
