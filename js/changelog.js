@@ -1,6 +1,11 @@
 'use strict';
 /* What's new. Newest first. Shown once after an update, and any time from Settings. */
 const CHANGELOG = [
+  { v: '56', d: '21 Nov 2026', items: [
+    'New Sandbox profile in Settings: every zone open, all gear, 9,999,999,999 Mystic Wheels, a million of every item and plenty of rupees. It keeps your changes until you rebuild it.',
+    'In the Sandbox you can add any crew member at level 20 (normal or Blessed), set levels to 1, 10 or 20, and toggle Blessed, so you can test each crew member or build your own teams.',
+    'You can now release a crew member from their page (tap twice). Works in every profile, and you always keep at least one.'
+  ] },
   { v: '55', d: '21 Nov 2026', items: [
     'A red dot appears on Quests when a quest is ready to hand in, and on Stats when a badge is ready to claim. The menu button shows it too.',
     'A chime and a message when a badge becomes ready to claim.',

@@ -446,3 +446,7 @@ input.vol::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;m
 #bar button.dot::after,#menub.dot::after{content:'';position:absolute;top:4px;right:calc(50% - 17px);width:10px;height:10px;border-radius:50%;background:#e5484d;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);animation:dotIn .3s ease-out}
 #menub.dot::after{top:6px;right:6px}
 @keyframes dotIn{from{transform:scale(0)}}
+.pkimg{width:42px;height:42px;border-radius:12px;object-fit:cover;background:var(--soft);flex:none}
+.item .btn.sm.gold{min-width:40px}
+.pkb{display:flex;gap:6px;flex:none}.pkb .btn{margin:0}
+.item.pk{flex-wrap:nowrap}.item.pk .it{min-width:0;flex:1}.item.pk .it span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}

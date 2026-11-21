@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '55';
+const VERSION = '56';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -191,6 +191,7 @@ const icol = name => ICOL[name] || '#ff8a3d';
 
 /* ---------------- CREW ---------------- */
 function pCrew() {
+  if (crewSel === 'pick') return pCrewPick();
   if (crewSel != null && S.crew[crewSel]) return pCrewDetail(crewSel);
   const free = S.beds - S.crew.length;
   const hasPermit = (S.items.permit || 0) > 0;
@@ -198,6 +199,7 @@ function pCrew() {
   h += `<div class="row2">
     <button class="btn primary" ${free ? '' : 'disabled'} ${hasPermit ? 'data-free="1"' : `data-cost="${permitCost()}"`} onclick="doRecruit()">${ic('ticket')}<span>Recruit</span><small>${hasPermit ? `Use permit (${S.items.permit})` : money(permitCost())}</small></button>
     <button class="btn" ${S.beds >= 50 ? 'disabled' : `data-cost="${bedCost()}"`} onclick="buyBed()">${ic('bed')}<span>New bed</span><small>${S.beds >= 50 ? 'Max' : money(bedCost())}</small></button></div>`;
+  if (S.sandbox) h += `<button class="btn wide" ${free ? '' : 'disabled'} onclick="crewSel='pick';renderPanel()">${ic('plus')}<span>${free ? 'Add any crew member' : 'Beds full: release someone first'}</span></button>`;
   h += hiveBox();
   const act = SYN.filter(s => D.syn.has(s.id));
   h += `<div class="synrow">${act.length ? act.map(s => `<span class="chip on">${ic(s.i)}${s.n}</span>`).join('') : `<span class="mut small">No synergies yet. The Codex lists every combo.</span>`}</div>`;
@@ -236,6 +238,35 @@ function pCrewDetail(i) {
     <button class="btn" ${(S.items.mysticWheel || 0) ? '' : 'disabled'} onclick="reroll(${i},'leg')"><span>Legendary+</span></button>
     <button class="btn" ${(S.items.mysticWheel || 0) ? '' : 'disabled'} onclick="reroll(${i},'myth')"><span>Mythic</span></button>
     <button class="btn" ${(S.items.mysticWheel || 0) ? '' : 'disabled'} onclick="reroll(${i},'blessed')"><span>Blessed</span></button></div>`;
+  if (S.sandbox) h += `<h3>Sandbox</h3><div class="row3">${[1, 10, 20].map(l => `<button class="btn ${m.lvl === l ? 'fav' : ''}" onclick="sbLevel(${i},${l})"><span>Level ${l}</span></button>`).join('')}</div>
+    <button class="btn wide" onclick="sbBless(${i})">${ic('star')}<span>${m.bl ? 'Remove Blessed' : 'Make Blessed'}</span></button>`;
+  h += `<h3>Release</h3><p class="mut small">Sends ${d.n} home and frees the bed. Cannot be undone.</p>
+    <button class="btn wide ${relArm === i ? 'danger' : ''}" ${S.crew.length > 1 ? '' : 'disabled'} onclick="releaseCrew(${i})">${ic('trash')}<span>${S.crew.length > 1 ? (relArm === i ? 'Tap again to release' : 'Release ' + d.n) : 'You need at least one crew member'}</span></button>`;
+  return h;
+}
+/* release (delete) a crew member: two taps */
+let relArm = null, relT = null;
+function releaseCrew(i) {
+  if (S.crew.length <= 1 || !S.crew[i]) return;
+  if (relArm !== i) { relArm = i; clearTimeout(relT); relT = setTimeout(() => { relArm = null; if (panel === 'crew') renderPanel(); }, 3000); renderPanel(); return; }
+  relArm = null; const n = CREW[S.crew[i].id].n; S.crew.splice(i, 1); crewSel = null;
+  SND.fx('close'); rebuildCrew(); save(); renderPanel(); toast(`${n} went home`, 'crew');
+}
+/* sandbox helpers */
+function sbLevel(i, l) { const m = S.crew[i]; if (!m || !S.sandbox) return; m.lvl = l; m.xp = 0; rebuildCrew(); save(); renderPanel(); }
+function sbBless(i) { const m = S.crew[i]; if (!m || !S.sandbox) return; m.bl = !m.bl; if (m.bl) SND.fx('crew', [RAR[CREW[m.id].r].o, true]); rebuildCrew(); save(); renderPanel(); }
+function sbAdd(id, bl) {
+  if (!S.sandbox || S.crew.length >= S.beds) return; const m = mk(id, bl); m.lvl = 20; S.crew.push(m); S.found[id] = true;
+  SND.fx('crew', [RAR[CREW[id].r].o, bl]); rebuildCrew(); save(); renderPanel(); toast(`${CREW[id].n}${bl ? ' (Blessed)' : ''} joined`, 'crew');
+}
+function pCrewPick() {
+  let h = `<button class="back" onclick="crewSel=null;renderPanel()">${ic('back')}Crew</button><div class="ph"><h2>Add crew</h2><span class="pill">${ic('bed')}${S.crew.length} / ${S.beds}</span></div><p class="mut small">Joins at level 20. Tap the star to add them Blessed.</p>`;
+  for (const r of Object.keys(RAR).sort((a, b) => RAR[a].o - RAR[b].o)) {
+    const ids = CREW_IDS.filter(id => CREW[id].r === r); if (!ids.length) continue;
+    h += `<h3>${RAR[r].n || r}</h3>` + ids.map(id => { const d = CREW[id], have = S.crew.filter(m => m.id === id).length;
+      return `<div class="item pk">${`<img class="pkimg" src="${portrait(id, false)}" alt="">`}<div class="it"><b>${d.n}</b><span class="mut small">${COL[d.c] ? COL[d.c].n : 'Neutral'}${d.ab ? ' · ' + ABIL[d.ab].n : ''}${have ? ` · have ${have}` : ''}</span></div>
+        <div class="pkb"><button class="btn sm" onclick="sbAdd('${id}',false)"><span>Add</span></button><button class="btn sm gold" onclick="sbAdd('${id}',true)">${ic('star')}</button></div></div>`; }).join('');
+  }
   return h;
 }
 const STATN = { cdr: 'ability recharge', conv: 'instant conversion', cap: 'doko capacity', gather: 'all gathering', spice: 'Spice gathering', ice: 'Ice gathering', cloud: 'Lightning gathering', brew: 'brewing value', speed: 'move speed', crit: 'crit chance', offline: 'offline earnings', tool: 'tool gathering' };
@@ -761,7 +792,10 @@ function pSettings() {
     h += `<div class="item ${cur ? 'eq' : ''}">${ib('crew', cur ? '#ff8a3d' : '#9aa0ad')}<div class="it"><b>Profile ${n}</b><span class="mut small">${d ? `${d.crew.length} crew · ${fmt(d.stats.earn)} rupees earned` : 'Empty. Start fresh.'}</span></div>${cur ? '<span class="tag">Playing</span>' : `<button class="btn sm" onclick="switchProfile(${n})"><span>${d ? 'Play' : 'Start'}</span></button>`}</div>`;
   }
   h += `<h3>Test builds</h3><p class="mut small">Temporary maxed profiles for testing each color: 50 crew at level 20, best gear, best mandala. Rebuilt fresh every time you tap.</p><div class="row3">${[['spice', 7], ['ice', 8], ['cloud', 9]].map(([c2, n]) => `<button class="btn" onclick="testProfile('${c2}',${n})">${ic(COL[c2].i)}<span>${COL[c2].n}</span></button>`).join('')}</div>`;
-  if (curSlot() >= 7) h += `<div class="item eq">${ib('star', '#9b6ef3')}<div class="it"><b>Playing a test build</b></div><button class="btn sm" onclick="switchProfile(1)"><span>Back to Profile 1</span></button></div>`;
+  { const has = curSlot() === 6 || !!localStorage.getItem(slotKey(6));
+    h += `<div class="item">${ib('crew', '#4cb782')}<div class="it"><b>Sandbox</b><span class="mut small">Every zone, all gear, 9,999,999,999 Mystic Wheels, a million of every item. Add or release any crew to test teams. Keeps your changes.</span></div>
+      ${curSlot() === 6 ? '<span class="tag">Playing</span>' : `<button class="btn sm primary" onclick="${has ? 'switchProfile(6)' : 'sandboxProfile()'}"><span>${has ? 'Play' : 'Create'}</span></button>`}${has ? `<button class="btn sm ${sbArm ? 'danger' : ''}" onclick="sandboxReset()"><span>${sbArm ? 'Sure?' : 'Rebuild'}</span></button>` : ''}</div>`; }
+  if (curSlot() >= 6) h += `<div class="item eq">${ib('star', '#9b6ef3')}<div class="it"><b>Playing a test build</b></div><button class="btn sm" onclick="switchProfile(1)"><span>Back to Profile 1</span></button></div>`;
   h += `<h3>Game</h3><div class="item">${ib('cup', '#ff8a3d')}<div class="it"><b>How to play</b><span class="mut small">Show the intro again</span></div><button class="btn sm" onclick="closePanel();showIntro()"><span>Show</span></button></div>`;
   h += `<div class="item">${ib('trash', '#ef4d5f')}<div class="it"><b>Reset progress</b><span class="mut small">Deletes your teahouse and crew. Cannot be undone.</span></div><button class="btn sm ${resetArm ? 'danger' : ''}" onclick="resetProgress()"><span>${resetArm ? 'Tap again' : 'Reset'}</span></button></div>`;
   return h;
@@ -1025,7 +1059,7 @@ function buildTestSave(col) {
   s2.beds = 50; s2.crew = [];
   for (const id in b.crew) for (let k = 0; k < b.crew[id]; k++) { const m = mk(id, CREW[id].r !== 'event'); m.lvl = 20; s2.crew.push(m); }
   s2.rp = 1e12; s2.tools = TOOLS.map(t => t.id); s2.tool = b.tool; s2.dokos = DOKOS.map(d => d.id); s2.dokoId = b.doko; s2.bootsOwned = BOOTS.map(x => x.id); s2.boots = 'wind';
-  s2.hats = HEADGEAR.map(x => x.id); s2.hat = b.hat; s2.lodge = LODGE.length - 1;
+  s2.hats = HEADGEAR.map(x => x.id); s2.hat = b.hat; s2.lodge = 0; s2.offv = 1;
   s2.mandala = { tier: 'celestial', lines: b.lines, pas: b.stars };
   s2.spr = { n: 1, lv: SPRINKLERS.length - 1, placed: [] }; s2.sprv = 2;
   s2.items = {}; for (const k in ITEMS) s2.items[k] = 500; s2.hotbar = ['marigold', 'butterTea', 'spiceShot', 'glacierShard', 'yakCheese', 'incense', 'lotusSeed'];
@@ -1034,6 +1068,18 @@ function buildTestSave(col) {
   const f = FIELDS.find(x => x.id === b.field); s2.px = f.x + f.w / 2; s2.py = f.yy + f.h / 2; s2.mapv = 2;
   return s2;
 }
+function buildSandbox() {
+  const s2 = buildTestSave('cloud');
+  s2.sandbox = true; s2.crew = [Object.assign(mk('sherpa', false), { lvl: 20 })];
+  s2.tool = TOOLS[0].id; s2.dokoId = DOKOS[0].id; s2.hat = null; s2.boots = BOOTS[0].id;
+  s2.mandala = { tier: 'celestial', lines: [['gather', .4], ['crit', .1], ['conv', .1], ['tool', .4], ['cap', .6], ['cdr', .2]], pas: [] };
+  for (const k in ITEMS) s2.items[k] = 1e6; s2.items.mysticWheel = 9999999999; s2.hotbar = [];
+  s2.rp = 1e15; s2.seenV = VERSION; const f = FIELDS[0]; s2.px = f.x + f.w / 2; s2.py = f.yy + f.h / 2;
+  return s2;
+}
+function sandboxProfile() { save(); try { localStorage.setItem(slotKey(6), JSON.stringify(buildSandbox())); localStorage.setItem('chiya_slot', '6'); } catch (e) {} S = null; location.reload(); }
+let sbArm = false;
+function sandboxReset() { if (!sbArm) { sbArm = true; renderPanel(); setTimeout(() => { sbArm = false; if (panel === 'settings') renderPanel(); }, 3000); return; } sbArm = false; sandboxProfile(); }
 function testProfile(col, n) {
   save(); try { localStorage.setItem(slotKey(n), JSON.stringify(buildTestSave(col))); localStorage.setItem('chiya_slot', String(n)); } catch (e) {}
   S = null; location.reload();

@@ -143,14 +143,14 @@ function buildWorld() {
 }
 let DECOR = [], FLAGS = [], SCATTER = [], BANDS = [], STONES = [], TRAIL = [], PATHPTS = [];
 const zoneAt = y => { for (let i = 0; i < ZONES.length; i++) if (y >= ZONES[i].top) return i; return ZONES.length - 1; };
-const zoneOpen = z => S.crew.length >= ZONES[z].gate;
+const zoneOpen = z => S.sandbox || S.crew.length >= ZONES[z].gate;
 let GATES = [];
 function segDist(x, y, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy; const u = clamp(((x - a[0]) * dx + (y - a[1]) * dy) / l, 0, 1); return Math.hypot(x - a[0] - u * dx, y - a[1] - u * dy); }
 const PATH = [[PLAZA.x, PLAZA.y - 40], [1100, 4900], [1100, 4450], [700, 4300], [700, 3500], [1100, 3420], [1500, 3250], [1500, 2720], [1100, 2620], [700, 2450], [700, 1450], [1100, 1330], [1100, 1010]];
 const BRANCH = [];
 
 function fieldAt(x, y) { for (let i = 0; i < FIELDS.length; i++) { const f = FIELDS[i]; if (x > f.x && x < f.x + f.w && y > f.yy && y < f.yy + f.h) return i; } return -1; }
-const fieldOpen = fi => S.crew.length >= FIELDS[fi].gate;
+const fieldOpen = fi => S.sandbox || S.crew.length >= FIELDS[fi].gate;
 
 /* ---------------- derived stats ---------------- */
 function recompute() {
