@@ -441,3 +441,8 @@ input.vol::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;m
 .clhead{display:flex;align-items:center;gap:12px;text-align:left}.clhead h2{margin:0}.clhead p{margin:2px 0 0}
 .mcard .clog{max-height:calc(100vh - 210px);max-height:calc(100dvh - 210px)}
 .mcard .clog+.btn{margin-top:10px}
+/* notification dots */
+#bar button{position:relative}
+#bar button.dot::after,#menub.dot::after{content:'';position:absolute;top:4px;right:calc(50% - 17px);width:10px;height:10px;border-radius:50%;background:#e5484d;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);animation:dotIn .3s ease-out}
+#menub.dot::after{top:6px;right:6px}
+@keyframes dotIn{from{transform:scale(0)}}

@@ -417,7 +417,18 @@ const FX = {
     ring(tk.x, tk.y, 85, '#c9b0ff', .45, 6); burst(tk.x, tk.y, 20, { type: 'spark', col: '#e9ddff', spd: 220, life: .5, size: 2.4 }); shake(4); if (sum) pop(tk.x, tk.y - 24, '+' + fmt(sum), '#d8c6ff', true); },
   haze(e, fi) { if (fi < 0) return; E.haze = { fi, t: 90, tick: 0 }; toast('A static haze settles over the field', 'cloud'); },
   stormCall(e) { const base = crewAmount(e); for (const p of E.decals) if (p.kind === 'lpole') { tilesNear(p.fi, p.x, p.y, p.r).forEach(t => collect(t, base * .5, 'cloud', 1)); boltFx(p.x, p.y - 260, p.x, p.y - 44); } },
-  sfork() { B.sfork = { t: 30, st: 3 }; },
+  /* Spark Fork: three forked bolts around the bubble for everyone (crew power, not tool power);
+     with the Vajra Staff your next 3 Vajra bolts also strike 3 times */
+  sfork(e, fi, tk) {
+    if (tool().pas === 'vajra') B.sfork = { t: 30, st: 3 };
+    if (fi < 0) return; const o = tk || e, base = crewAmount(e) * (e.m.bl ? 1.25 : 1), rot = Math.random() * 6.28;
+    for (let k = 0; k < 3; k++) later(k * .12, () => {
+      const ang = rot + k * 2.094, x = o.x + Math.cos(ang) * 48, y = o.y + Math.sin(ang) * 32; let sum = 0;
+      SND.fx('chain'); boltFx(x + 20, y - 260, x, y);
+      tilesNear(fi, x, y, 55).forEach(t => sum += collect(t, base, 'cloud', 2));
+      ring(x, y, 55, '#c9b0ff', .35, 4); if (sum) pop(x, y - 20, '+' + fmt(sum), '#d8c6ff');
+    });
+  },
   reach() { B.reach = { t: 60, st: 15 }; },
   drum() { addBuff('drum', 10, 3); },
   inflate(e, fi) {

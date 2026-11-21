@@ -1,6 +1,11 @@
 'use strict';
 /* What's new. Newest first. Shown once after an update, and any time from Settings. */
 const CHANGELOG = [
+  { v: '55', d: '21 Nov 2026', items: [
+    'A red dot appears on Quests when a quest is ready to hand in, and on Stats when a badge is ready to claim. The menu button shows it too.',
+    'A chime and a message when a badge becomes ready to claim.',
+    'Storm Lama: Spark Fork now always releases three forked bolts around the bubble, gathering Lightning flowers with the lama\'s own power, so it helps at any stage of the game. With the Vajra Staff it still makes your next 3 Vajra bolts strike 3 times.'
+  ] },
   { v: '54', d: '20 Nov 2026', items: [
     'New loading screen. Tap to play once the kettle is ready.',
     'This changelog: it pops up after every update, and you can open it any time from Settings.',

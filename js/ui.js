@@ -5,7 +5,7 @@
 const $ = id => document.getElementById(id);
 let lastBuffs = '', panel = null, panelTab = null, uiT = 0, crewSel = null;
 
-const VERSION = '54';
+const VERSION = '55';
 const SAW_K = 60;   /* Chakra Saw brews 20x your average gathering per second out of the doko */
 const NAV = [['crew', 'crew', 'Crew'], ['items', 'bag', 'Items'], ['quests', 'flag', 'Quests'], ['map', 'map', 'Map'], ['stats', 'chart', 'Stats'], ['codex', 'book', 'Codex'], ['settings', 'gear', 'Settings']];
 const HOTBAR_N = 7;
@@ -73,7 +73,19 @@ function questWatch() {
   for (const g of ids) { try { if (giverState(g) === 'ready') now2.add(g); } catch (e) {} }
   if (qReady) for (const g of now2) if (!qReady.has(g)) { SND.fx('questReady'); toast(`Quest complete! Talk to ${npcOf(g).n}`, 'flag'); break; }
   qReady = now2;
+  const bReady = BADGES.filter(b => { try { return badgeReady(b); } catch (e) { return false; } }).map(b => b.id);
+  if (bReadyPrev && bReady.some(id => !bReadyPrev.includes(id))) { SND.fx('questReady'); toast('Badge ready! Claim it in Stats', 'badge'); }
+  bReadyPrev = bReady;
+  setDots(now2.size > 0, bReady.length > 0);
 }
+let bReadyPrev = null;
+/* little red dots on the nav (and the menu button when the nav is folded away) */
+function setDots(q, b) {
+  const qb = document.querySelector('#bar [data-a="quests"]'), sb = document.querySelector('#bar [data-a="stats"]');
+  if (qb) qb.classList.toggle('dot', q); if (sb) sb.classList.toggle('dot', b);
+  const mb = $('menub'); if (mb) mb.classList.toggle('dot', q || b);
+}
+function dotsNow() { qwT = 99; questWatch(); }
 /* ---------------- toast & modal ---------------- */
 let toastT = null;
 function toast(msg, icon) {
@@ -632,6 +644,7 @@ function claimQuest(gid) {
   else { S.stats.quests++; S.q[gid] = (S.q[gid] || 0) + 1; S.qb[gid] = qBaseNow(gid); }
   const g = npcOf(gid); burst(g.x, g.y - 40, 40, { type: 'star', col: '#ffd24a', spd: 200, life: 1.2, size: 3 });
   closeModal(); updateTalk();
+  setTimeout(dotsNow, 50);
   if (q.rw.crew) { addCrew(q.rw.crew, false); return; }
   SND.fx('quest');
   toast(rwText(q.rw), 'gift'); save();
@@ -976,7 +989,7 @@ function claimBadge(id) {
   const b = BADGES.find(x => x.id === id); if (!b || !badgeReady(b)) return;
   const tr = badgeTier(b); S.badges[id] = tr + 1;
   for (const k in BADGE_RW[tr]) S.items[k] = (S.items[k] || 0) + BADGE_RW[tr][k];
-  SND.fx('badge'); rebuildCrew(); toast(`${BADGE_T[tr].n} ${b.n} badge`, 'badge'); save(); renderPanel();
+  SND.fx('badge'); rebuildCrew(); toast(`${BADGE_T[tr].n} ${b.n} badge`, 'badge'); save(); renderPanel(); dotsNow();
 }
 
 /* ---------------- TIHAR ---------------- */

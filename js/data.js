@@ -92,7 +92,7 @@ const ABIL = {
   sbomb:       { n: 'Static Bomb',   i: 'bolt',   tok: true,  d: 'Bubble. Explodes when you grab it: gathers everything within 85 at x3.5 and raises those flowers +1 level for 12s. Blessed Storm Leopards sometimes drop a Static Haze instead.' },
   haze:        { n: 'Static Haze',   i: 'cloud',  tok: true,  d: 'Bubble (Blessed Storm Leopard). A violet haze settles over the field for 90s: every 0.5s a random flower inside gets +1 level until the haze lifts.' },
   stormCall:   { n: 'Storm Call',    i: 'bolt',   tok: true,  d: 'Bubble. Every lightning pole on the field strikes once, gathering the flowers inside its radius.' },
-  sfork:       { n: 'Spark Fork',    i: 'bolt',   tok: true,  d: 'Bubble. Your next 3 Vajra bolts each strike 3 times in the same spot.' },
+  sfork:       { n: 'Spark Fork',    i: 'bolt',   tok: true,  d: 'Bubble. Three forked bolts strike around it, gathering Lightning flowers. With the Vajra Staff, your next 3 Vajra bolts also strike 3 times.' },
   reach:       { n: 'Long Reach',    i: 'tool',   tok: true,  d: 'Bubble. Your next 15 tool swings reach 50% further.' },
   drum:        { n: 'Thunder Drum',  i: 'drum',   tok: true,  d: 'Bubble. +25% tool swing speed for 10s, stacks up to 3 times.' },
   firecracker: { n: 'Firecracker',   i: 'burst',  tok: true,  d: 'Bubble. Explodes on pickup, gathering every flower within 60 range at x2. Each firecracker within 12s of the last adds +1 combo (max 10): +6 range and +0.3x per combo. Combos of 5 or more leave a flame.' },
